@@ -1,0 +1,142 @@
+/**
+ * tokens.css — THE THEME CONTRACT
+ *
+ * This file declares every CSS variable used by components.css and the viewer.
+ * Theme files under themes/ override these values scoped to [data-theme="…"].
+ * Component styles MUST only reference variables defined here — never hard-code colors.
+ *
+ * Sections:
+ *  1. Semantic color palette (foreground + bg + text for each role)
+ *  2. Surface / background stack
+ *  3. Text scale
+ *  4. Border & shadow
+ *  5. Spacing scale
+ *  6. Typography
+ *  7. Border radius
+ *  8. Component-specific tokens (code, callout, chip, progress…)
+ */
+
+:root {
+  /* ─── 1. Semantic color palette ───────────────────────────────────────── */
+  /* Each role has three values:
+     --c-{role}       : main accent (border, icon, bullet)
+     --c-{role}-bg    : subtle background fill
+     --c-{role}-text  : legible text on light bg        */
+
+  --c-primary:      #c05a28;   /* terracotta */
+  --c-primary-bg:   #faeee7;
+  --c-primary-text: #9a3f18;
+
+  --c-success:      #3a7a4e;   /* forest green */
+  --c-success-bg:   #e4f2ea;
+  --c-success-text: #2a5a39;
+
+  --c-warning:      #b07220;   /* deep amber */
+  --c-warning-bg:   #fdf2d8;
+  --c-warning-text: #8a5610;
+
+  --c-danger:       #b83030;   /* warm crimson */
+  --c-danger-bg:    #fae8e8;
+  --c-danger-text:  #8a1f1f;
+
+  --c-info:         #2a5f7a;   /* deep teal */
+  --c-info-bg:      #dff1f8;
+  --c-info-text:    #1a4560;
+
+  --c-gray:         #7a6954;
+  --c-gray-bg:      #ece5d8;
+  --c-gray-text:    #4a3e30;
+
+  --c-low:          #caa000;   /* golden yellow */
+  --c-low-bg:       #fbf3cf;
+  --c-low-text:     #7a5c00;
+
+  /* ─── 2. Surface stack ────────────────────────────────────────────────── */
+  --bg-base:    #faf6ef;   /* warm parchment */
+  --bg-surface: #f2ebe0;   /* inset / code block bg */
+  --bg-raised:  #fdf9f4;   /* card, modal bg */
+  --bg-overlay: #ece5d8;   /* hover states, toolbar */
+
+  /* ─── 3. Text ─────────────────────────────────────────────────────────── */
+  --text-base:     #2c2018;
+  --text-muted:    #7a6954;
+  --text-faint:    #b0a090;
+  --text-on-solid: #ffffff;  /* text on solid-colored backgrounds */
+
+  /* ─── 4. Border & shadow ──────────────────────────────────────────────── */
+  --border-color:       #ddd4c4;
+  --border-color-muted: #ece5d8;
+  --shadow-sm:  0 1px 2px rgba(44, 32, 24, .06);
+  --shadow-md:  0 4px 12px rgba(44, 32, 24, .09);
+  --shadow-lg:  0 8px 24px rgba(44, 32, 24, .14);
+
+  /* ─── 5. Spacing scale ────────────────────────────────────────────────── */
+  --sp-xs:  0.25rem;   /*  4px */
+  --sp-sm:  0.5rem;    /*  8px */
+  --sp-md:  1rem;      /* 16px */
+  --sp-lg:  1.5rem;    /* 24px */
+  --sp-xl:  2rem;      /* 32px */
+  --sp-2xl: 3rem;      /* 48px */
+
+  /* ─── 6. Typography ───────────────────────────────────────────────────── */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-sans:    'DM Sans', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  --font-size-sm:   0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg:   1.125rem;
+  --font-size-xl:   1.25rem;
+  --font-size-2xl:  1.5rem;
+  --line-height-base: 1.7;
+  --line-height-tight: 1.35;
+
+  /* ─── 7. Border radius ────────────────────────────────────────────────── */
+  --radius-sm:  0.25rem;
+  --radius-md:  0.5rem;
+  --radius-lg:  0.75rem;
+  --radius-xl:  1rem;
+  --radius-full: 9999px;
+
+  /* ─── 8. Component tokens ─────────────────────────────────────────────── */
+
+  /* Code blocks */
+  --code-bg:         var(--bg-surface);
+  --code-border:     var(--border-color);
+  --code-title-bg:   var(--bg-overlay);
+  --code-title-text: var(--text-muted);
+  --code-hl-bg:      rgba(192, 90, 40, 0.08);
+
+  /* Callout */
+  --callout-border-width: 4px;
+  --callout-radius:       var(--radius-md);
+  --callout-padding:      var(--sp-md) var(--sp-lg);
+
+  /* Card */
+  --card-bg:      var(--bg-raised);
+  --card-border:  var(--border-color);
+  --card-radius:  var(--radius-lg);
+  --card-padding: var(--sp-lg);
+  --card-shadow:  var(--shadow-sm);
+
+  /* Tab */
+  --tab-active-color:  var(--c-primary);
+  --tab-border:        var(--border-color);
+
+  /* Timeline */
+  --timeline-line-color:   var(--border-color);
+  --timeline-dot-size:     18px;
+
+  /* Progress */
+  --progress-track-bg:  var(--bg-overlay);
+  --progress-radius:    var(--radius-full);
+  --progress-height:    8px;
+
+  /* Chip */
+  --chip-radius: var(--radius-full);
+  --chip-font-size: 0.75rem;
+
+  /* Tooltip */
+  --tooltip-bg:     #2c2018;
+  --tooltip-text:   #faf6ef;
+  --tooltip-radius: var(--radius-md);
+}

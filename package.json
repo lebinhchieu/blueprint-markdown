@@ -1,0 +1,66 @@
+{
+  "name": "enhanced-markdown-preview",
+  "displayName": "Enhanced Markdown Preview",
+  "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
+  "version": "0.1.0",
+  "publisher": "enhanced-markdown",
+  "engines": { "vscode": "^1.90.0" },
+  "categories": ["Other"],
+  "keywords": ["markdown", "preview", "directives", "callout", "cards"],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "markdown.markdownItPlugins": true,
+    "markdown.previewStyles": [
+      "./media/reset.css",
+      "./media/tokens.css",
+      "./media/base.css",
+      "./media/components.css",
+      "./media/em-theme.css",
+      "./media/fonts.css",
+      "./media/hljs.css"
+    ],
+    "markdown.previewScripts": [
+      "./dist/preview.js"
+    ],
+    "configuration": {
+      "title": "Enhanced Markdown Preview",
+      "properties": {
+        "enhancedMarkdownPreview.theme": {
+          "type": "string",
+          "enum": ["light", "dark", "auto"],
+          "enumDescriptions": [
+            "Warm Artisan light palette (terracotta on parchment)",
+            "Warm Artisan dark palette (bright terracotta on near-black)",
+            "Follow VS Code's active light/dark theme"
+          ],
+          "default": "light",
+          "description": "Color theme for the Enhanced Markdown preview. 'auto' follows VS Code's active theme."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "vscode:prepublish": "node esbuild.mjs --production",
+    "package": "vsce package"
+  },
+  "dependencies": {
+    "highlight.js": "^11.10.0",
+    "markdown-it": "^14.1.0",
+    "markdown-it-mark": "^4.0.0",
+    "markdown-it-task-lists": "^2.1.1",
+    "mermaid": "^11.4.1"
+  },
+  "devDependencies": {
+    "@fontsource-variable/dm-sans": "*",
+    "@fontsource-variable/playfair-display": "*",
+    "@fontsource/jetbrains-mono": "*",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.21.0",
+    "typescript": "^5.6.0"
+  }
+}

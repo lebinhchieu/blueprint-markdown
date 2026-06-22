@@ -1,0 +1,19 @@
+/**
+ * reset.css — Neutralise VS Code's built-in markdown.css defaults.
+ *
+ * VS Code injects its own markdown.css before any extension styles, which
+ * sets opinionated colours, margins, and font sizes on h1-h6, p, code,
+ * blockquote, table, etc.  Those leak into Enhanced Markdown's components.
+ *
+ * This file is loaded FIRST in previewStyles so every subsequent file
+ * (tokens, base, components, em-theme, fonts, hljs) re-applies cleanly on top.
+ *
+ * `all: revert` strips author-layer styles back to the browser UA sheet —
+ * it does NOT clear CSS custom properties (--vars stay intact).
+ * The .mermaid subtree is excluded so Mermaid's injected SVG/styles survive.
+ */
+
+.md-output,
+.md-output *:not(.mermaid):not(.mermaid *) {
+  all: revert;
+}

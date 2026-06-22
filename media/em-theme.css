@@ -1,0 +1,173 @@
+/**
+ * em-theme.css — Warm Artisan token palette for Enhanced Markdown Preview.
+ *
+ * The theme is driven by the extension config `enhancedMarkdownPreview.theme`
+ * (light | dark | auto), not by VS Code's own light/dark theme.
+ *
+ * preview.js reads the injected <div class="em-theme-config" data-em-theme="…">
+ * and stamps body[data-em-theme="dark"] so the dark block below activates.
+ *
+ * Light tokens live on :root so the palette works even before JS runs
+ * (no flash of unstyled content).  components.css reads only var(--*).
+ */
+
+/* ─── Light theme (default, mirrors themes/light.css) ───────────────────── */
+
+:root {
+  --c-primary:      #c05a28;
+  --c-primary-bg:   #faeee7;
+  --c-primary-text: #9a3f18;
+
+  --c-success:      #3a7a4e;
+  --c-success-bg:   #e4f2ea;
+  --c-success-text: #2a5a39;
+
+  --c-warning:      #b07220;
+  --c-warning-bg:   #fdf2d8;
+  --c-warning-text: #8a5610;
+
+  --c-danger:       #b83030;
+  --c-danger-bg:    #fae8e8;
+  --c-danger-text:  #8a1f1f;
+
+  --c-info:         #2a5f7a;
+  --c-info-bg:      #dff1f8;
+  --c-info-text:    #1a4560;
+
+  --c-gray:         #7a6954;
+  --c-gray-bg:      #ece5d8;
+  --c-gray-text:    #4a3e30;
+
+  --c-low:          #caa000;
+  --c-low-bg:       #fbf3cf;
+  --c-low-text:     #7a5c00;
+
+  --bg-base:    #faf6ef;
+  --bg-surface: #f2ebe0;
+  --bg-raised:  #fdf9f4;
+  --bg-overlay: #ece5d8;
+
+  --text-base:     #2c2018;
+  --text-muted:    #7a6954;
+  --text-faint:    #b0a090;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #ddd4c4;
+  --border-color-muted: #ece5d8;
+
+  --shadow-sm: 0 1px 2px rgba(44, 32, 24, .06);
+  --shadow-md: 0 4px 12px rgba(44, 32, 24, .09);
+  --shadow-lg: 0 8px 24px rgba(44, 32, 24, .14);
+
+  --code-bg:     #f2ebe0;
+  --code-border: #ddd4c4;
+  --code-hl-bg:  rgba(192, 90, 40, 0.08);
+
+  --tooltip-bg:   #2c2018;
+  --tooltip-text: #faf6ef;
+}
+
+/* ─── Dark theme (mirrors themes/dark.css) ───────────────────────────────── */
+
+body[data-em-theme="dark"] {
+  --c-primary:      #e8845a;
+  --c-primary-bg:   #2e1c0e;
+  --c-primary-text: #f0a880;
+
+  --c-success:      #5aad78;
+  --c-success-bg:   #0e2018;
+  --c-success-text: #8acd9a;
+
+  --c-warning:      #d4924a;
+  --c-warning-bg:   #201408;
+  --c-warning-text: #e8b878;
+
+  --c-danger:       #e06060;
+  --c-danger-bg:    #200e0e;
+  --c-danger-text:  #f09090;
+
+  --c-info:         #5a9ab8;
+  --c-info-bg:      #0e1c28;
+  --c-info-text:    #8abcda;
+
+  --c-gray:         #9e8e7a;
+  --c-gray-bg:      #2a241c;
+  --c-gray-text:    #cbbba8;
+
+  --c-low:          #e2c24f;
+  --c-low-bg:       #211c08;
+  --c-low-text:     #ead488;
+
+  --bg-base:    #1c1914;
+  --bg-surface: #252018;
+  --bg-raised:  #2d2820;
+  --bg-overlay: #363028;
+
+  --text-base:     #f0e8d8;
+  --text-muted:    #9e8e7a;
+  --text-faint:    #6a5e50;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #3d3528;
+  --border-color-muted: #2d2820;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .40);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, .50);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, .60);
+
+  --code-bg:     #1c1914;
+  --code-border: #3d3528;
+  --code-hl-bg:  rgba(232, 132, 90, 0.10);
+
+  --tooltip-bg:   #f0e8d8;
+  --tooltip-text: #1c1914;
+}
+
+/* ─── Typography overrides ────────────────────────────────────────────────── */
+
+/* Make VS Code preview links use our primary colour */
+.md-output a {
+  color: var(--c-primary);
+}
+
+.md-output a:hover {
+  color: var(--c-primary-text);
+}
+
+/* Blockquote accent */
+.md-output blockquote {
+  border-left-color: var(--c-primary);
+  color: var(--text-muted);
+}
+
+/* Inline code inside directive bodies */
+.md-output :not(pre) > code {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  color: var(--text-base);
+}
+
+/* Mark / highlight — dark theme override
+   (base.css uses [data-theme="dark"]; we map to our data-em-theme attribute) */
+body[data-em-theme="dark"] .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}
+
+/* File-ref links — same look as the old code.file-ref, but an <a> */
+.md-output a.file-ref {
+  text-decoration: none;
+  color: inherit;
+}
+
+.md-output a.file-ref > code {
+  color: var(--c-primary);
+  background: var(--code-bg);
+  border-color: var(--code-border);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.md-output a.file-ref:hover > code {
+  background: var(--code-hl-bg);
+}
