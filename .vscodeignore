@@ -7,4 +7,6 @@ tsconfig.json
 scripts/**
 **/*.ts
 !dist/**
+dist/**/*.map
 !media/**
+media/icon.svg

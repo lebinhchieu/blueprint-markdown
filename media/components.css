@@ -59,8 +59,8 @@
   align-items: center;
   gap: var(--sp-xs);
   padding: var(--sp-xs) var(--sp-md);
-  background: var(--code-title-bg, var(--bg-overlay));
-  color: var(--code-title-text, var(--text-muted));
+  background: var(--bg-overlay);
+  color: var(--text-muted);
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   border-bottom: 1px solid var(--code-border);
@@ -147,10 +147,10 @@
 /* ─── Card ─────────────────────────────────────────────────────────────── */
 
 .card {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-color);
   border-radius: var(--card-radius);
-  box-shadow: var(--card-shadow);
+  box-shadow: var(--shadow-sm);
   overflow: hidden;
   margin-bottom: var(--sp-md);
 }
@@ -160,7 +160,7 @@
   align-items: center;
   gap: var(--sp-sm);
   padding: var(--sp-md) var(--card-padding);
-  border-bottom: 1px solid var(--card-border);
+  border-bottom: 1px solid var(--border-color);
   background: var(--bg-surface);
 }
 
@@ -374,7 +374,7 @@ details[open] > .details__summary::before {
   top: 8px;
   bottom: 8px;
   width: 2px;
-  background: var(--timeline-line-color);
+  background: var(--border-color);
 }
 
 .timeline-event {
@@ -441,7 +441,7 @@ details[open] > .details__summary::before {
 /* ─── Tabs ──────────────────────────────────────────────────────────────── */
 
 .tabs {
-  border: 1px solid var(--tab-border);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: var(--sp-md);
@@ -449,7 +449,7 @@ details[open] > .details__summary::before {
 
 .tab-list {
   display: flex;
-  border-bottom: 1px solid var(--tab-border);
+  border-bottom: 1px solid var(--border-color);
   background: var(--bg-surface);
   overflow-x: auto;
 }
@@ -475,8 +475,8 @@ details[open] > .details__summary::before {
 }
 
 .tab-btn[data-active] {
-  color: var(--tab-active-color);
-  border-bottom-color: var(--tab-active-color);
+  color: var(--c-primary);
+  border-bottom-color: var(--c-primary);
 }
 
 .tab-panels {
@@ -575,7 +575,7 @@ details[open] > .details__summary::before {
 
 .progress__track {
   height: var(--progress-height);
-  background: var(--progress-track-bg);
+  background: var(--bg-overlay);
   border-radius: var(--progress-radius);
   overflow: hidden;
 }

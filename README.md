@@ -1,4 +1,4 @@
-# Enhanced Markdown Preview
+# Blueprint Markdown
 
 Extends VS Code's built-in Markdown preview with the **enhanced-markdown** directive grammar:
 cards, callouts, columns, tabs, steps, accordions, timelines, chips, icons, colored text,
@@ -40,9 +40,9 @@ Open any `.md` file and run **Markdown: Open Preview to the Side** (`Ctrl+Shift+
 ### Package
 
 ```bash
-npm install -g @vscode/vsce
-vsce package
-# Produces enhanced-markdown-preview-0.1.0.vsix
+npm install
+npm run package
+# Produces blueprint-markdown-0.1.0.vsix
 ```
 
 Install via **Extensions: Install from VSIX…** in VS Code.
@@ -69,11 +69,11 @@ follow VS Code's own light/dark theme unless you opt into that.
 
 | Setting | Effect |
 |---------|--------|
-| `enhancedMarkdownPreview.theme: "light"` *(default)* | Warm Artisan light — terracotta on parchment |
-| `enhancedMarkdownPreview.theme: "dark"` | Warm Artisan dark — bright terracotta on near-black |
-| `enhancedMarkdownPreview.theme: "auto"` | Follows VS Code's active light/dark theme |
+| `blueprintMarkdown.theme: "light"` *(default)* | Warm Artisan light — terracotta on parchment |
+| `blueprintMarkdown.theme: "dark"` | Warm Artisan dark — bright terracotta on near-black |
+| `blueprintMarkdown.theme: "auto"` | Follows VS Code's active light/dark theme |
 
-Change the setting in **Settings** (`Ctrl+,` → search `enhancedMarkdownPreview`).
+Change the setting in **Settings** (`Ctrl+,` → search `blueprintMarkdown`).
 The preview refreshes automatically without reloading VS Code.
 
 The palette is defined in `media/em-theme.css` and all component styles use only

@@ -215,6 +215,16 @@ function scopeHljs(css, scopeSelector) {
   })
 }
 
+// Replace the hardcoded hljs background with the CSS custom property so each
+// theme's --code-bg drives the code block background automatically.
+const hljsDarkScoped = scopeHljs(hljsDark, 'body[data-em-theme="dark"]')
+  .replace(/background:#282c34/g, 'background:var(--code-bg)')
+
+// Neon themes share the atom-one-dark palette but on their own --code-bg.
+// body[data-em-theme^="neon-"] covers all three variants in one selector set.
+const hljsNeonScoped = scopeHljs(hljsDark, 'body[data-em-theme^="neon-"]')
+  .replace(/background:#282c34/g, 'background:var(--code-bg)')
+
 const hljsCss = `/* hljs.css — Syntax highlighting themes, scoped to the em-theme attribute.
  *
  * Light (atom-one-light) is the default: emitted unscoped so it applies even
@@ -222,13 +232,18 @@ const hljsCss = `/* hljs.css — Syntax highlighting themes, scoped to the em-th
  * Dark (atom-one-dark) is scoped to body[data-em-theme="dark"]; being an
  * attribute selector it has higher specificity than the unscoped class rules,
  * so it wins cleanly when the attribute is present.
+ * Neon themes (neon-synthwave, neon-cyberpunk, neon-vaporwave) also use
+ * atom-one-dark colors, scoped via the ^="neon-" attribute prefix selector.
  */
 
 /* Light theme (default, no scope needed) */
 ${hljsLight}
 
 /* Dark theme */
-${scopeHljs(hljsDark, 'body[data-em-theme="dark"]')}
+${hljsDarkScoped}
+
+/* Neon themes (all variants) */
+${hljsNeonScoped}
 `
 
 fs.writeFileSync('media/hljs.css', hljsCss)

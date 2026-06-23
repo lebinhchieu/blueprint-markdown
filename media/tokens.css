@@ -100,11 +100,9 @@
   /* ─── 8. Component tokens ─────────────────────────────────────────────── */
 
   /* Code blocks */
-  --code-bg:         var(--bg-surface);
-  --code-border:     var(--border-color);
-  --code-title-bg:   var(--bg-overlay);
-  --code-title-text: var(--text-muted);
-  --code-hl-bg:      rgba(192, 90, 40, 0.08);
+  --code-bg:    var(--bg-surface);
+  --code-border: var(--border-color);
+  --code-hl-bg:  rgba(192, 90, 40, 0.08);
 
   /* Callout */
   --callout-border-width: 4px;
@@ -112,24 +110,15 @@
   --callout-padding:      var(--sp-md) var(--sp-lg);
 
   /* Card */
-  --card-bg:      var(--bg-raised);
-  --card-border:  var(--border-color);
   --card-radius:  var(--radius-lg);
   --card-padding: var(--sp-lg);
-  --card-shadow:  var(--shadow-sm);
-
-  /* Tab */
-  --tab-active-color:  var(--c-primary);
-  --tab-border:        var(--border-color);
 
   /* Timeline */
-  --timeline-line-color:   var(--border-color);
-  --timeline-dot-size:     18px;
+  --timeline-dot-size: 18px;
 
   /* Progress */
-  --progress-track-bg:  var(--bg-overlay);
-  --progress-radius:    var(--radius-full);
-  --progress-height:    8px;
+  --progress-radius: var(--radius-full);
+  --progress-height: 8px;
 
   /* Chip */
   --chip-radius: var(--radius-full);

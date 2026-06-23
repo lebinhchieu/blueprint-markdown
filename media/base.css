@@ -264,10 +264,6 @@ body {
   padding: 0.05em 0.2em;
 }
 
-[data-theme="dark"] .md-output mark {
-  background: #3a2008;
-  color: #fde68a;
-}
 
 /* Tables */
 .md-output table {

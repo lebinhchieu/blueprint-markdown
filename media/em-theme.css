@@ -1,73 +1,15 @@
 /**
- * em-theme.css — Warm Artisan token palette for Enhanced Markdown Preview.
+ * em-theme.css — Theme overrides for Enhanced Markdown Preview.
  *
- * The theme is driven by the extension config `enhancedMarkdownPreview.theme`
- * (light | dark | auto), not by VS Code's own light/dark theme.
- *
+ * The theme is driven by `blueprintMarkdown.theme` (light | dark | auto | neon-*).
  * preview.js reads the injected <div class="em-theme-config" data-em-theme="…">
- * and stamps body[data-em-theme="dark"] so the dark block below activates.
+ * and stamps body[data-em-theme="…"] so the matching block below activates.
  *
- * Light tokens live on :root so the palette works even before JS runs
- * (no flash of unstyled content).  components.css reads only var(--*).
+ * Light (default) tokens live in tokens.css :root — no redefinition here.
+ * This file only adds overrides for dark and neon themes.
  */
 
-/* ─── Light theme (default, mirrors themes/light.css) ───────────────────── */
-
-:root {
-  --c-primary:      #c05a28;
-  --c-primary-bg:   #faeee7;
-  --c-primary-text: #9a3f18;
-
-  --c-success:      #3a7a4e;
-  --c-success-bg:   #e4f2ea;
-  --c-success-text: #2a5a39;
-
-  --c-warning:      #b07220;
-  --c-warning-bg:   #fdf2d8;
-  --c-warning-text: #8a5610;
-
-  --c-danger:       #b83030;
-  --c-danger-bg:    #fae8e8;
-  --c-danger-text:  #8a1f1f;
-
-  --c-info:         #2a5f7a;
-  --c-info-bg:      #dff1f8;
-  --c-info-text:    #1a4560;
-
-  --c-gray:         #7a6954;
-  --c-gray-bg:      #ece5d8;
-  --c-gray-text:    #4a3e30;
-
-  --c-low:          #caa000;
-  --c-low-bg:       #fbf3cf;
-  --c-low-text:     #7a5c00;
-
-  --bg-base:    #faf6ef;
-  --bg-surface: #f2ebe0;
-  --bg-raised:  #fdf9f4;
-  --bg-overlay: #ece5d8;
-
-  --text-base:     #2c2018;
-  --text-muted:    #7a6954;
-  --text-faint:    #b0a090;
-  --text-on-solid: #ffffff;
-
-  --border-color:       #ddd4c4;
-  --border-color-muted: #ece5d8;
-
-  --shadow-sm: 0 1px 2px rgba(44, 32, 24, .06);
-  --shadow-md: 0 4px 12px rgba(44, 32, 24, .09);
-  --shadow-lg: 0 8px 24px rgba(44, 32, 24, .14);
-
-  --code-bg:     #f2ebe0;
-  --code-border: #ddd4c4;
-  --code-hl-bg:  rgba(192, 90, 40, 0.08);
-
-  --tooltip-bg:   #2c2018;
-  --tooltip-text: #faf6ef;
-}
-
-/* ─── Dark theme (mirrors themes/dark.css) ───────────────────────────────── */
+/* ─── Dark theme ─────────────────────────────────────────────────────────── */
 
 body[data-em-theme="dark"] {
   --c-primary:      #e8845a;
@@ -123,6 +65,200 @@ body[data-em-theme="dark"] {
   --tooltip-text: #1c1914;
 }
 
+/* ─── Neon Synthwave theme (cyan + magenta on blue-black) ───────────────── */
+
+body[data-em-theme="neon-synthwave"] {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 46, 136, 0.16), transparent 55%),
+    radial-gradient(120% 80% at 50% 110%, rgba(0, 229, 255, 0.12), transparent 55%),
+    linear-gradient(165deg, #0a0a16 0%, #140a20 45%, #0a0e1c 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #00e5ff;
+  --c-primary-bg:   #07232b;
+  --c-primary-text: #6df3ff;
+
+  --c-success:      #39ff8b;
+  --c-success-bg:   #072214;
+  --c-success-text: #8effc0;
+
+  --c-warning:      #ffd23f;
+  --c-warning-bg:   #2a2207;
+  --c-warning-text: #ffe588;
+
+  --c-danger:       #ff2e88;
+  --c-danger-bg:    #2b0a1a;
+  --c-danger-text:  #ff84b8;
+
+  --c-info:         #4d9fff;
+  --c-info-bg:      #0a1a2e;
+  --c-info-text:    #93c4ff;
+
+  --c-gray:         #8a8fb0;
+  --c-gray-bg:      #1a1b2a;
+  --c-gray-text:    #c2c6e0;
+
+  --c-low:          #c77dff;
+  --c-low-bg:       #1c1030;
+  --c-low-text:     #e0b8ff;
+
+  --bg-base:    #0a0a14;
+  --bg-surface: #12121f;
+  --bg-raised:  #16162a;
+  --bg-overlay: #1e1e34;
+
+  --text-base:     #e8ecff;
+  --text-muted:    #8a8fb0;
+  --text-faint:    #4a4e6a;
+  --text-on-solid: #06060c;
+
+  --border-color:       #2a2a44;
+  --border-color-muted: #1c1c30;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.50), 0 0 8px  rgba(0,229,255,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.55), 0 0 18px rgba(0,229,255,.10);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,.65), 0 0 36px rgba(255,46,136,.12);
+
+  --code-bg:     #0d0d18;
+  --code-border: #2a2a44;
+  --code-hl-bg:  rgba(0, 229, 255, 0.10);
+
+  --tooltip-bg:   #e8ecff;
+  --tooltip-text: #0a0a14;
+}
+
+/* ─── Neon Cyberpunk theme (electric green on black) ─────────────────────── */
+
+body[data-em-theme="neon-cyberpunk"] {
+  background:
+    radial-gradient(100% 70% at 50% 0%, rgba(57, 255, 20, 0.12), transparent 55%),
+    radial-gradient(80% 60% at 100% 100%, rgba(0, 229, 255, 0.15), transparent 50%),
+    linear-gradient(170deg, #050805 0%, #08120a 50%, #050505 100%)
+  background-attachment: fixed;
+
+  --c-primary:      #39ff14;
+  --c-primary-bg:   #082007;
+  --c-primary-text: #9bff7e;
+
+  --c-success:      #00ffa3;
+  --c-success-bg:   #042018;
+  --c-success-text: #7dffd2;
+
+  --c-warning:      #ffb000;
+  --c-warning-bg:   #2a1d00;
+  --c-warning-text: #ffd166;
+
+  --c-danger:       #ff0055;
+  --c-danger-bg:    #2b0010;
+  --c-danger-text:  #ff6f9c;
+
+  --c-info:         #00e5ff;
+  --c-info-bg:      #04222a;
+  --c-info-text:    #7df0ff;
+
+  --c-gray:         #7d8a7d;
+  --c-gray-bg:      #141a14;
+  --c-gray-text:    #b8c4b8;
+
+  --c-low:          #f5ff3d;
+  --c-low-bg:       #1e2200;
+  --c-low-text:     #f8ff8f;
+
+  --bg-base:    #050505;
+  --bg-surface: #0d100d;
+  --bg-raised:  #111511;
+  --bg-overlay: #1a1f1a;
+
+  --text-base:     #d6ffd6;
+  --text-muted:    #7d8a7d;
+  --text-faint:    #455045;
+  --text-on-solid: #020402;
+
+  --border-color:       #1f2a1f;
+  --border-color-muted: #161d16;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.55), 0 0 8px  rgba(57,255,20,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.60), 0 0 18px rgba(57,255,20,.10);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,.70), 0 0 36px rgba(57,255,20,.14);
+
+  --code-bg:     #080a08;
+  --code-border: #1f2a1f;
+  --code-hl-bg:  rgba(57, 255, 20, 0.10);
+
+  --tooltip-bg:   #d6ffd6;
+  --tooltip-text: #050505;
+}
+
+/* ─── Neon Vaporwave theme (purple + pink on violet-black) ───────────────── */
+
+body[data-em-theme="neon-vaporwave"] {
+  background:
+    radial-gradient(110% 80% at 15% 0%, rgba(199, 125, 255, 0.18), transparent 55%),
+    radial-gradient(110% 80% at 85% 100%, rgba(255, 93, 143, 0.14), transparent 55%),
+    linear-gradient(160deg, #150f22 0%, #1d1133 50%, #140f20 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #c77dff;
+  --c-primary-bg:   #1c1030;
+  --c-primary-text: #e0b8ff;
+
+  --c-success:      #80ffdb;
+  --c-success-bg:   #082a22;
+  --c-success-text: #b3ffec;
+
+  --c-warning:      #ffd6a5;
+  --c-warning-bg:   #2a1d0e;
+  --c-warning-text: #ffe6c7;
+
+  --c-danger:       #ff5d8f;
+  --c-danger-bg:    #2b0e1a;
+  --c-danger-text:  #ff9bbb;
+
+  --c-info:         #7aa2ff;
+  --c-info-bg:      #101a2e;
+  --c-info-text:    #b0c6ff;
+
+  --c-gray:         #9a8fb0;
+  --c-gray-bg:      #1e1a2a;
+  --c-gray-text:    #cfc6e0;
+
+  --c-low:          #fdffb6;
+  --c-low-bg:       #24220c;
+  --c-low-text:     #feffd1;
+
+  --bg-base:    #14101f;
+  --bg-surface: #1c1730;
+  --bg-raised:  #221c38;
+  --bg-overlay: #2c2548;
+
+  --text-base:     #ece6ff;
+  --text-muted:    #9a8fb0;
+  --text-faint:    #5a5278;
+  --text-on-solid: #0a0814;
+
+  --border-color:       #322a4e;
+  --border-color-muted: #221c38;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.45), 0 0 8px  rgba(199,125,255,.10);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.50), 0 0 18px rgba(199,125,255,.12);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,.60), 0 0 36px rgba(255,93,143,.14);
+
+  --code-bg:     #16121f;
+  --code-border: #322a4e;
+  --code-hl-bg:  rgba(199, 125, 255, 0.12);
+
+  --tooltip-bg:   #ece6ff;
+  --tooltip-text: #14101f;
+}
+
+/* ─── Neon themes — shared fancy overrides ───────────────────────────────── */
+
+/* Cards: faint gradient sheen from overlay → raised; solid tokens keep Mermaid safe */
+body[data-em-theme^="neon-"] .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
 /* ─── Typography overrides ────────────────────────────────────────────────── */
 
 /* Make VS Code preview links use our primary colour */
@@ -145,7 +281,10 @@ body[data-em-theme="dark"] {
 
 /* Mark / highlight — dark theme override
    (base.css uses [data-theme="dark"]; we map to our data-em-theme attribute) */
-body[data-em-theme="dark"] .md-output mark {
+body[data-em-theme="dark"] .md-output mark,
+body[data-em-theme="neon-synthwave"] .md-output mark,
+body[data-em-theme="neon-cyberpunk"] .md-output mark,
+body[data-em-theme="neon-vaporwave"] .md-output mark {
   background: #3a2008;
   color: #fde68a;
 }

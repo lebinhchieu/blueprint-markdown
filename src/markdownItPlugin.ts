@@ -34,16 +34,16 @@ import { createRenderTree } from './core/renderer'
 // ─── Theme resolution ─────────────────────────────────────────────────────────
 
 /**
- * Read enhancedMarkdownPreview.theme from workspace config and resolve it to a
+ * Read blueprintMarkdown.theme from workspace config and resolve it to a
  * concrete 'light' or 'dark' value.  When set to 'auto', falls back to VS Code's
  * active color theme kind.  Called fresh on every render so changes are picked up
  * without restarting the extension.
  */
-function resolveTheme(): 'light' | 'dark' {
+function resolveTheme(): string {
   const setting = vscode.workspace
-    .getConfiguration('enhancedMarkdownPreview')
+    .getConfiguration('blueprintMarkdown')
     .get<string>('theme', 'light')
-  if (setting === 'light' || setting === 'dark') return setting
+  if (setting !== 'auto') return setting
   // 'auto' — follow VS Code's active color theme
   const kind = vscode.window.activeColorTheme.kind
   return (kind === vscode.ColorThemeKind.Dark || kind === vscode.ColorThemeKind.HighContrast)

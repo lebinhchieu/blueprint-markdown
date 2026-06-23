@@ -5,7 +5,7 @@
  * built-in Markdown preview first opens.  All heavy lifting is in
  * markdownItPlugin.ts.
  *
- * Also registers listeners so that changing enhancedMarkdownPreview.theme
+ * Also registers listeners so that changing blueprintMarkdown.theme
  * (or VS Code's own active theme when set to "auto") forces the preview
  * to re-render via the public markdown.preview.refresh command.
  */
@@ -21,7 +21,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Re-render when the user changes the theme setting.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
-      if (e.affectsConfiguration('enhancedMarkdownPreview.theme')) {
+      if (e.affectsConfiguration('blueprintMarkdown.theme')) {
         refresh()
       }
     }),
@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.window.onDidChangeActiveColorTheme(() => {
       const setting = vscode.workspace
-        .getConfiguration('enhancedMarkdownPreview')
+        .getConfiguration('blueprintMarkdown')
         .get<string>('theme', 'light')
       if (setting === 'auto') {
         refresh()

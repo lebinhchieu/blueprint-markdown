@@ -35,8 +35,7 @@ function run(): void {
   // em-theme.css is already loaded (as a previewStyle), but the attribute must
   // be present for `body[data-em-theme="dark"]` rules to activate.
   const marker = document.querySelector<HTMLElement>('.em-theme-config')
-  const theme: 'light' | 'dark' =
-    marker?.getAttribute('data-em-theme') === 'dark' ? 'dark' : 'light'
+  const theme = marker?.getAttribute('data-em-theme') || 'light'
   root.setAttribute('data-em-theme', theme)
 
   // Tab switching + accordion coordinated collapse
@@ -46,11 +45,11 @@ function run(): void {
   renderMermaid(root, theme)
 }
 
-function renderMermaid(root: HTMLElement, theme: 'light' | 'dark'): void {
+function renderMermaid(root: HTMLElement, theme: string): void {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
 
-  const isDark = theme === 'dark'
+  const isDark = theme !== 'light'
 
   // Read our CSS token values for theming (resolved after data-em-theme is set)
   const css = getComputedStyle(document.body)

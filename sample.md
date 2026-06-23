@@ -1,4 +1,4 @@
-# Enhanced Markdown — Syntax Reference
+# Blueprint Markdown — Syntax Reference
 
 > This file is the conformance fixture for the enhanced-markdown renderer.
 > Every feature is exercised here in one readable document.

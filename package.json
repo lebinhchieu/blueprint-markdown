@@ -1,12 +1,18 @@
 {
-  "name": "enhanced-markdown-preview",
-  "displayName": "Enhanced Markdown Preview",
+  "name": "blueprint-markdown",
+  "displayName": "Blueprint Markdown",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.1.0",
-  "publisher": "enhanced-markdown",
+  "version": "0.1.1",
+  "publisher": "blueprint-markdown",
+  "license": "MIT",
+  "icon": "media/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<your-username>/blueprint-markdown-vscode"
+  },
   "engines": { "vscode": "^1.90.0" },
   "categories": ["Other"],
-  "keywords": ["markdown", "preview", "directives", "callout", "cards"],
+  "keywords": ["markdown", "preview", "directives", "callout", "cards", "blueprint"],
   "main": "./dist/extension.js",
   "activationEvents": [],
   "contributes": {
@@ -24,18 +30,21 @@
       "./dist/preview.js"
     ],
     "configuration": {
-      "title": "Enhanced Markdown Preview",
+      "title": "Blueprint Markdown",
       "properties": {
-        "enhancedMarkdownPreview.theme": {
+        "blueprintMarkdown.theme": {
           "type": "string",
-          "enum": ["light", "dark", "auto"],
+          "enum": ["light", "dark", "auto", "neon-synthwave", "neon-cyberpunk", "neon-vaporwave"],
           "enumDescriptions": [
             "Warm Artisan light palette (terracotta on parchment)",
             "Warm Artisan dark palette (bright terracotta on near-black)",
-            "Follow VS Code's active light/dark theme"
+            "Follow VS Code's active light/dark theme",
+            "Neon synthwave (cyan + magenta on blue-black)",
+            "Neon cyberpunk (electric green on black)",
+            "Neon vaporwave (purple + pink on violet-black)"
           ],
           "default": "light",
-          "description": "Color theme for the Enhanced Markdown preview. 'auto' follows VS Code's active theme."
+          "description": "Color theme for the Blueprint Markdown preview. 'auto' follows VS Code's active theme."
         }
       }
     }
@@ -44,7 +53,8 @@
     "build": "node esbuild.mjs",
     "watch": "node esbuild.mjs --watch",
     "vscode:prepublish": "node esbuild.mjs --production",
-    "package": "vsce package"
+    "package": "vsce package --no-yarn",
+    "publish:ovsx": "ovsx publish"
   },
   "dependencies": {
     "highlight.js": "^11.10.0",
@@ -60,7 +70,9 @@
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.90.0",
+    "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.21.0",
+    "ovsx": "^0.10.0",
     "typescript": "^5.6.0"
   }
 }
