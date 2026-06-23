@@ -61,28 +61,60 @@ function renderMermaid(root: HTMLElement, theme: string): void {
     theme: 'base',
     themeVariables: {
       darkMode:             isDark,
-      background:           v('--bg-raised')      || (isDark ? '#2d2820' : '#fdf9f4'),
-      fontFamily:           v('--font-sans')       || 'system-ui, sans-serif',
-      primaryColor:         v('--bg-raised')       || (isDark ? '#2d2820' : '#fdf9f4'),
-      mainBkg:              v('--bg-raised')       || (isDark ? '#2d2820' : '#fdf9f4'),
-      secondaryColor:       v('--c-info-bg')       || (isDark ? '#0e1c28' : '#dff1f8'),
-      tertiaryColor:        v('--c-success-bg')    || (isDark ? '#0e2018' : '#e4f2ea'),
-      primaryBorderColor:   v('--border-color')    || (isDark ? '#3d3528' : '#ddd4c4'),
-      nodeBorder:           v('--border-color')    || (isDark ? '#3d3528' : '#ddd4c4'),
-      secondaryBorderColor: v('--border-color')    || (isDark ? '#3d3528' : '#ddd4c4'),
-      tertiaryBorderColor:  v('--border-color')    || (isDark ? '#3d3528' : '#ddd4c4'),
-      primaryTextColor:     v('--text-base')       || (isDark ? '#f0e8d8' : '#2c2018'),
-      secondaryTextColor:   v('--text-base')       || (isDark ? '#f0e8d8' : '#2c2018'),
-      tertiaryTextColor:    v('--text-base')       || (isDark ? '#f0e8d8' : '#2c2018'),
-      textColor:            v('--text-base')       || (isDark ? '#f0e8d8' : '#2c2018'),
-      titleColor:           v('--text-base')       || (isDark ? '#f0e8d8' : '#2c2018'),
-      lineColor:            v('--c-primary')       || (isDark ? '#e8845a' : '#c05a28'),
-      edgeLabelBackground:  v('--bg-base')         || (isDark ? '#1c1914' : '#faf6ef'),
-      clusterBkg:           v('--bg-surface')      || (isDark ? '#252018' : '#f2ebe0'),
-      clusterBorder:        v('--border-color')    || (isDark ? '#3d3528' : '#ddd4c4'),
-      noteBkgColor:         v('--c-warning-bg')    || (isDark ? '#201408' : '#fdf2d8'),
-      noteBorderColor:      v('--c-warning')       || (isDark ? '#d4924a' : '#b07220'),
-      altBackground:        v('--bg-surface')      || (isDark ? '#252018' : '#f2ebe0'),
+
+      // ── Canvas & fonts ──────────────────────────────────────────────────
+      background:           v('--bg-raised')        || (isDark ? '#2d2820' : '#fdf9f4'),
+      fontFamily:           v('--font-sans')         || 'system-ui, sans-serif',
+
+      // ── Nodes / boxes (flowchart, class, state, ER) ─────────────────────
+      // KEY FIX: use --bg-overlay (not --bg-raised) so boxes are
+      // visibly distinct from the canvas in every theme.
+      primaryColor:         v('--bg-overlay')        || (isDark ? '#363028' : '#ece5d8'),
+      mainBkg:              v('--bg-overlay')        || (isDark ? '#363028' : '#ece5d8'),
+      secondaryColor:       v('--c-info-bg')         || (isDark ? '#0e1c28' : '#dff1f8'),
+      tertiaryColor:        v('--c-success-bg')      || (isDark ? '#0e2018' : '#e4f2ea'),
+      primaryBorderColor:   v('--c-primary')         || (isDark ? '#e8845a' : '#c05a28'),
+      nodeBorder:           v('--c-primary')         || (isDark ? '#e8845a' : '#c05a28'),
+      secondaryBorderColor: v('--border-color')      || (isDark ? '#3d3528' : '#ddd4c4'),
+      tertiaryBorderColor:  v('--border-color')      || (isDark ? '#3d3528' : '#ddd4c4'),
+      primaryTextColor:     v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      secondaryTextColor:   v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      tertiaryTextColor:    v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      textColor:            v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      titleColor:           v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      nodeTextColor:        v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+
+      // ── Lines / edges ────────────────────────────────────────────────────
+      // Neutral muted tone so connectors don't compete with the accent borders.
+      lineColor:            v('--text-muted')        || (isDark ? '#9e8e7a' : '#7a6954'),
+      edgeLabelBackground:  v('--bg-raised')         || (isDark ? '#2d2820' : '#fdf9f4'),
+
+      // ── Clusters / subgraphs ─────────────────────────────────────────────
+      clusterBkg:           v('--bg-surface')        || (isDark ? '#252018' : '#f2ebe0'),
+      clusterBorder:        v('--border-color')      || (isDark ? '#3d3528' : '#ddd4c4'),
+
+      // ── Sequence diagram ─────────────────────────────────────────────────
+      actorBkg:             v('--bg-overlay')        || (isDark ? '#363028' : '#ece5d8'),
+      actorBorder:          v('--c-primary')         || (isDark ? '#e8845a' : '#c05a28'),
+      actorTextColor:       v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      actorLineColor:       v('--text-faint')        || (isDark ? '#6a5e50' : '#b0a090'),
+      signalColor:          v('--text-muted')        || (isDark ? '#9e8e7a' : '#7a6954'),
+      signalTextColor:      v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      labelBoxBkgColor:     v('--bg-overlay')        || (isDark ? '#363028' : '#ece5d8'),
+      labelBoxBorderColor:  v('--border-color')      || (isDark ? '#3d3528' : '#ddd4c4'),
+      labelTextColor:       v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      loopTextColor:        v('--text-base')         || (isDark ? '#f0e8d8' : '#2c2018'),
+      activationBkgColor:   v('--bg-overlay')        || (isDark ? '#363028' : '#ece5d8'),
+      activationBorderColor:v('--c-primary')         || (isDark ? '#e8845a' : '#c05a28'),
+      sequenceNumberColor:  v('--text-on-solid')     || '#ffffff',
+
+      // ── Notes ────────────────────────────────────────────────────────────
+      noteBkgColor:         v('--c-warning-bg')      || (isDark ? '#201408' : '#fdf2d8'),
+      noteBorderColor:      v('--c-warning')         || (isDark ? '#d4924a' : '#b07220'),
+      noteTextColor:        v('--c-warning-text')    || (isDark ? '#e8b878' : '#8a5610'),
+
+      // ── Alt / misc ───────────────────────────────────────────────────────
+      altBackground:        v('--bg-surface')        || (isDark ? '#252018' : '#f2ebe0'),
     },
   })
 
