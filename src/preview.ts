@@ -49,11 +49,14 @@ function renderMermaid(root: HTMLElement, theme: string): void {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
 
-  const isDark = theme !== 'light'
-
   // Read our CSS token values for theming (resolved after data-em-theme is set)
   const css = getComputedStyle(document.body)
   const v = (name: string) => css.getPropertyValue(name).trim()
+
+  // Detect dark vs light from the resolved --bg-base luminance, so any
+  // light-background theme (not only the literal 'light' key) themes Mermaid
+  // correctly. Falls back to the name-check if the colour can't be parsed.
+  const isDark = isDarkColor(v('--bg-base'), theme !== 'light')
 
   mermaid.initialize({
     startOnLoad: false,
@@ -130,6 +133,27 @@ function renderMermaid(root: HTMLElement, theme: string): void {
   mermaid.run({ nodes: blocks }).catch(() => {
     // Mermaid parse errors are non-fatal; the block stays as text
   })
+}
+
+/** Returns true when the hex/rgb colour resolves to a dark background.
+ *  Handles #rgb, #rrggbb, rgb(r,g,b), rgba(r,g,b,a).
+ *  Falls back to `fallback` when the value can't be parsed. */
+function isDarkColor(value: string, fallback: boolean): boolean {
+  let r: number, g: number, b: number
+  const hex = value.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
+  if (hex) {
+    const h = hex[1].length === 3 ? hex[1].replace(/(.)/g, '$1$1') : hex[1]
+    r = parseInt(h.slice(0, 2), 16)
+    g = parseInt(h.slice(2, 4), 16)
+    b = parseInt(h.slice(4, 6), 16)
+  } else {
+    const rgb = value.match(/rgba?\(\s*([^)]+)\)/)
+    if (!rgb) return fallback
+    const parts = rgb[1].split(',').map(n => parseFloat(n))
+    ;[r, g, b] = parts
+  }
+  // Perceived luminance (sRGB approximation); < 0.5 → dark background
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5
 }
 
 // Re-run on each script injection (VS Code reloads on every edit)

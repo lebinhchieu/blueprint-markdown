@@ -115,6 +115,7 @@
 
   /* Timeline */
   --timeline-dot-size: 18px;
+  --timeline-icon-size: 30px;
 
   /* Progress */
   --progress-radius: var(--radius-full);

@@ -363,7 +363,7 @@ details[open] > .details__summary::before {
 
 .timeline {
   position: relative;
-  padding-left: var(--sp-xl);
+  padding-left: var(--sp-2xl);
   margin-bottom: var(--sp-md);
 }
 
@@ -371,8 +371,8 @@ details[open] > .details__summary::before {
   content: '';
   position: absolute;
   left: calc(var(--sp-xl) / 2 - 1px);
-  top: 8px;
-  bottom: 8px;
+  top: var(--sp-lg);
+  bottom: var(--sp-lg);
   width: 2px;
   background: var(--border-color);
 }
@@ -385,13 +385,14 @@ details[open] > .details__summary::before {
 .timeline-event__marker {
   position: absolute;
   top: 0;
-  left: calc(-1 * var(--sp-xl));
+  left: calc(-1 * var(--sp-2xl));
   width: var(--sp-xl);
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  background-color: var(--bg-base);
+  background: transparent;
   padding: 5px 0;
+  margin-top: calc(-1 * var(--sp-xs));
 }
 
 .timeline-event__dot {
@@ -399,22 +400,27 @@ details[open] > .details__summary::before {
   height: var(--timeline-dot-size);
   border-radius: 50%;
   background: var(--event-color, var(--c-primary));
-  border: 2px solid var(--bg-base);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   line-height: 1;
   color: var(--event-color, var(--c-primary));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--event-color, var(--c-primary)) 22%, transparent),
+              var(--shadow-sm);
 }
 
 .timeline-event__dot.material-symbols-outlined {
-  width: auto;
-  height: auto;
-  background: none;
-  border: none;
-  color: var(--event-color, var(--c-primary));
-  font-size: 18px;
+  width: var(--timeline-icon-size);
+  height: var(--timeline-icon-size);
+  line-height: var(--timeline-icon-size);
+  text-align: center;
+  border-radius: 50%;
+  background: var(--event-color, var(--c-primary));
+  color: var(--text-on-solid);
+  font-size: 16px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--event-color, var(--c-primary)) 22%, transparent),
+              var(--shadow-sm);
 }
 
 .timeline-event__date {
@@ -430,13 +436,13 @@ details[open] > .details__summary::before {
   display: none;
 }
 
-/* Variant colors via --event-color CSS var set on the element */
-.timeline-event--primary .timeline-event__dot { color: var(--c-primary); background: var(--c-primary); }
-.timeline-event--success .timeline-event__dot { color: var(--c-success); background: var(--c-success); }
-.timeline-event--warning .timeline-event__dot { color: var(--c-warning); background: var(--c-warning); }
-.timeline-event--danger  .timeline-event__dot { color: var(--c-danger);  background: var(--c-danger);  }
-.timeline-event--info    .timeline-event__dot { color: var(--c-info);    background: var(--c-info);    }
-.timeline-event--low     .timeline-event__dot { color: var(--c-low);     background: var(--c-low);     }
+/* Variant colors — set --event-color so both dot styles inherit it */
+.timeline-event--primary { --event-color: var(--c-primary); }
+.timeline-event--success { --event-color: var(--c-success); }
+.timeline-event--warning { --event-color: var(--c-warning); }
+.timeline-event--danger  { --event-color: var(--c-danger);  }
+.timeline-event--info    { --event-color: var(--c-info);    }
+.timeline-event--low     { --event-color: var(--c-low);     }
 
 /* ─── Tabs ──────────────────────────────────────────────────────────────── */
 
