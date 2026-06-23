@@ -11,7 +11,8 @@
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
 
-body[data-em-theme="dark"] {
+body[data-em-theme="dark"],
+body:has(.em-theme-config[data-em-theme="dark"]) {
   --c-primary:      #e8845a;
   --c-primary-bg:   #2e1c0e;
   --c-primary-text: #f0a880;
@@ -67,7 +68,8 @@ body[data-em-theme="dark"] {
 
 /* ─── Neon Synthwave theme (cyan + magenta on blue-black) ───────────────── */
 
-body[data-em-theme="neon-synthwave"] {
+body[data-em-theme="neon-synthwave"],
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) {
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(255, 46, 136, 0.16), transparent 55%),
     radial-gradient(120% 80% at 50% 110%, rgba(0, 229, 255, 0.12), transparent 55%),
@@ -129,7 +131,8 @@ body[data-em-theme="neon-synthwave"] {
 
 /* ─── Neon Cyberpunk theme (electric green on black) ─────────────────────── */
 
-body[data-em-theme="neon-cyberpunk"] {
+body[data-em-theme="neon-cyberpunk"],
+body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) {
   background:
     radial-gradient(100% 70% at 50% 0%, rgba(57, 255, 20, 0.12), transparent 55%),
     radial-gradient(80% 60% at 100% 100%, rgba(0, 229, 255, 0.15), transparent 50%),
@@ -191,7 +194,8 @@ body[data-em-theme="neon-cyberpunk"] {
 
 /* ─── Neon Vaporwave theme (purple + pink on violet-black) ───────────────── */
 
-body[data-em-theme="neon-vaporwave"] {
+body[data-em-theme="neon-vaporwave"],
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) {
   background:
     radial-gradient(110% 80% at 15% 0%, rgba(199, 125, 255, 0.18), transparent 55%),
     radial-gradient(110% 80% at 85% 100%, rgba(255, 93, 143, 0.14), transparent 55%),
@@ -254,7 +258,8 @@ body[data-em-theme="neon-vaporwave"] {
 /* ─── Neon themes — shared fancy overrides ───────────────────────────────── */
 
 /* Cards: faint gradient sheen from overlay → raised; solid tokens keep Mermaid safe */
-body[data-em-theme^="neon-"] .card {
+body[data-em-theme^="neon-"] .card,
+body:has(.em-theme-config[data-em-theme^="neon-"]) .card {
   background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
   border-color: var(--border-color);
 }
@@ -282,9 +287,13 @@ body[data-em-theme^="neon-"] .card {
 /* Mark / highlight — dark theme override
    (base.css uses [data-theme="dark"]; we map to our data-em-theme attribute) */
 body[data-em-theme="dark"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="dark"]) .md-output mark,
 body[data-em-theme="neon-synthwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .md-output mark,
 body[data-em-theme="neon-cyberpunk"] .md-output mark,
-body[data-em-theme="neon-vaporwave"] .md-output mark {
+body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) .md-output mark,
+body[data-em-theme="neon-vaporwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .md-output mark {
   background: #3a2008;
   color: #fde68a;
 }

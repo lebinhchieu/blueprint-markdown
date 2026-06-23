@@ -16,7 +16,6 @@ body {
   color: var(--text-base);
   background: var(--bg-base);
   min-height: 100dvh;
-  transition: background-color 0.2s, color 0.2s;
   padding: var(--sp-xl) var(--sp-2xl);
 }
 
