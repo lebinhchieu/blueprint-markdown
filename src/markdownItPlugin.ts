@@ -21,6 +21,8 @@ import type MarkdownIt from 'markdown-it'
 import type StateBlock from 'markdown-it/lib/rules_block/state_block.mjs'
 import type Token from 'markdown-it/lib/token.mjs'
 import type StateCore from 'markdown-it/lib/rules_core/state_core.mjs'
+import markdownItMark from 'markdown-it-mark'
+import markdownItTaskLists from 'markdown-it-task-lists'
 import { parseBlocks } from './core/parser'
 import { buildRegistry } from './core/directives/index'
 import { createMarkdownIt } from './core/markdownit'
@@ -137,6 +139,10 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   // Custom inline-code renderer: file refs as clickable links.
   installInlineCodeRenderer(md)
 
+  // ==highlight== and - [ ] / - [x] — must be on VS Code's md, not just privateMd.
+  md.use(markdownItMark)
+  md.use(markdownItTaskLists, { label: true })
+
   // ── Block rule ──
 
   function emDirectiveRule(
@@ -204,6 +210,9 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   // fresh on every render so config changes are picked up immediately after
   // markdown.preview.refresh fires.
   md.core.ruler.push('em_theme_marker', (state: StateCore) => {
+    // Skip nested renderInline() calls — inlineMode=true there — so the <div>
+    // is never injected inside button/tooltip/chip anchor text.
+    if (state.inlineMode) return false
     const theme = resolveTheme()
     const token = new state.Token('html_block', '', 0)
     token.content = `<div class="em-theme-config" data-em-theme="${theme}" hidden></div>\n`

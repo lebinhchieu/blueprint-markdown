@@ -4,8 +4,6 @@
  */
 
 /* ─── Reset ────────────────────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -19,6 +17,7 @@ body {
   background: var(--bg-base);
   min-height: 100dvh;
   transition: background-color 0.2s, color 0.2s;
+  padding: var(--sp-xl) var(--sp-2xl);
 }
 
 /* ─── App shell ────────────────────────────────────────────────────────── */
@@ -245,7 +244,6 @@ body {
 }
 
 .md-output a { color: var(--c-primary); text-decoration: underline; text-underline-offset: 2px; }
-.md-output a:hover { color: var(--c-primary-text); }
 
 /* Inline code */
 .md-output :not(pre) > code {
@@ -309,4 +307,5 @@ body {
   left: 0;
   top: 0.5em;
   accent-color: var(--c-primary);
+  margin: 0;
 }

@@ -683,7 +683,7 @@ kbd {
 
 /* ─── Button ─────────────────────────────────────────────────────────────── */
 
-.btn {
+.md-output .btn {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-xs);
@@ -700,7 +700,7 @@ kbd {
   border: 1.5px solid transparent;
 }
 
-.btn:hover { opacity: 0.88; }
+.md-output .btn:hover { opacity: 0.88; }
 
 /* Solid */
 .btn--solid.btn--primary { background: var(--c-primary); color: #fff; }

@@ -13,7 +13,27 @@
  * The .mermaid subtree is excluded so Mermaid's injected SVG/styles survive.
  */
 
-.md-output,
-.md-output *:not(.mermaid):not(.mermaid *) {
+html, body,
+h1, h2, h3, h4, h5, h6, pre,
+sub, sup,
+img, video,
+ul,
+ul ul:first-child,
+ul ol:first-child,
+ol,
+ol ul:first-child,
+ol ol:first-child,
+a,
+p, li p,
+hr,
+table, th, td,
+table > tbody > tr + tr > td,
+blockquote, code,
+body.wordWrap pre,
+pre:not(.hljs), pre.hljs code > div,
+pre code {
   all: revert;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }

@@ -130,10 +130,6 @@ body[data-em-theme="dark"] {
   color: var(--c-primary);
 }
 
-.md-output a:hover {
-  color: var(--c-primary-text);
-}
-
 /* Blockquote accent */
 .md-output blockquote {
   border-left-color: var(--c-primary);

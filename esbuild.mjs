@@ -259,11 +259,15 @@ const previewConfig = {
   platform: 'browser',
   format: 'iife',
   outfile: 'dist/preview.js',
-  // Bundle everything including mermaid — no dynamic imports in the output
-  // This satisfies the nonce-only CSP
+  // Bundle everything including mermaid — no dynamic imports in the output.
+  // This satisfies the nonce-only CSP.
   define: {
     'process.env.NODE_ENV': JSON.stringify(isProd ? 'production' : 'development'),
   },
+  // The built-in preview webview CSP is "default-src 'none'" — it blocks fetching
+  // an external .map file.  Use an inline source map in dev (decoded by devtools
+  // directly, no network fetch → no CSP violation) and omit it in production.
+  sourcemap: isProd ? false : 'inline',
 }
 
 if (isWatch) {
