@@ -1,5 +1,5 @@
 /**
- * parser.ts — Recursive line-based pre-parser for enhanced-markdown directives.
+ * parser.ts — Recursive line-based pre-parser for blueprint-markdown directives.
  *
  * Pipeline: source string → parseBlocks() → ASTNode[]
  *
@@ -176,7 +176,7 @@ function parseBlock(lines: string[], start: number, stopAtClose: boolean): Parse
 // ─── Public API ───────────────────────────────────────────────────────────
 
 /**
- * Parse an enhanced-markdown source string into an AST.
+ * Parse an blueprint-markdown source string into an AST.
  */
 export function parseBlocks(source: string): ASTNode[] {
   const lines = source.split('\n')

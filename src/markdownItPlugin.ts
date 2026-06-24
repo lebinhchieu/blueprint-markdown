@@ -1,5 +1,5 @@
 /**
- * markdownItPlugin.ts — Installs the enhanced-markdown directive grammar
+ * markdownItPlugin.ts — Installs the blueprint-markdown directive grammar
  * into VS Code's built-in markdown-it instance.
  *
  * Three things are installed on VS Code's md:

@@ -1,5 +1,5 @@
 /**
- * inline-code.ts — Custom code_inline renderer for enhanced-markdown.
+ * inline-code.ts — Custom code_inline renderer for blueprint-markdown.
  *
  * Overrides markdown-it's default code_inline rule to detect file references
  * such as `foo.ts:73`, `helper.ts:44-46`, or bare `helper.ts` and emit a

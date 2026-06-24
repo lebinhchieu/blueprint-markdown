@@ -1,4 +1,4 @@
-// Shared types for the enhanced-markdown core engine.
+// Shared types for the blueprint-markdown core engine.
 // Filled progressively as milestones 3–6 implement each module.
 
 export type Form = 'container' | 'leaf' | 'inline'

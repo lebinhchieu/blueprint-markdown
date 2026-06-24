@@ -1,5 +1,5 @@
 /**
- * fence.ts — Custom fence renderer for enhanced-markdown.
+ * fence.ts — Custom fence renderer for blueprint-markdown.
  *
  * Overrides markdown-it's default fence rule to handle:
  *   1. Line highlighting:  ```js {1,3-5}  → .hl class on specified line spans

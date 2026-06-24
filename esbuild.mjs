@@ -1,5 +1,5 @@
 /**
- * esbuild.mjs — Build script for enhanced-markdown-preview extension.
+ * esbuild.mjs — Build script for blueprint-markdown-preview extension.
  *
  * Produces two bundles:
  *   dist/extension.js — Node/CJS, extension host (no DOM)

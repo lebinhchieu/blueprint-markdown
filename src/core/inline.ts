@@ -1,5 +1,5 @@
 /**
- * inline.ts — markdown-it inline rule for enhanced-markdown inline directives.
+ * inline.ts — markdown-it inline rule for blueprint-markdown inline directives.
  *
  * Grammar: :name[text]{attrs}   (chip, icon, color, kbd, button, tooltip)
  *          :name{attrs}         (rating — no [text])

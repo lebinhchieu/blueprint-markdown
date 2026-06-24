@@ -1,6 +1,6 @@
 # Enhanced Markdown — Syntax Reference
 
-> This file is the conformance fixture for the enhanced-markdown renderer.
+> This file is the conformance fixture for the blueprint-markdown renderer.
 > Every feature is exercised here in one readable document.
 
 ---
@@ -193,17 +193,17 @@ Use `:::col{span=2}` to make a column span more of the grid.
 :::tabs
 :::tab{title="npm"}
 ```sh
-npm install enhanced-markdown
+npm install blueprint-markdown
 ```
 :::
 :::tab{title="pnpm"}
 ```sh
-pnpm add enhanced-markdown
+pnpm add blueprint-markdown
 ```
 :::
 :::tab{title="yarn"}
 ```sh
-yarn add enhanced-markdown
+yarn add blueprint-markdown
 ```
 :::
 :::
@@ -217,7 +217,7 @@ yarn add enhanced-markdown
 Add the package to your project.
 
 ```sh
-npm install enhanced-markdown
+npm install blueprint-markdown
 ```
 :::
 :::step{title="Create a markdown file"}

@@ -1,21 +1,21 @@
 ---
 name: blueprint-markdown
 description: >
-  Author rich markdown with the enhanced-markdown directive syntax — cards, callouts,
+  Author rich markdown with the blueprint-markdown directive syntax — cards, callouts,
   columns, timelines, tabs, steps, accordions, chips (colored), icons (Google Material
   Symbols), colored text, progress bars, line-highlighted code, and mermaid diagrams.
-  Use this skill whenever writing markdown for the enhanced-markdown viewer, or when the
+  Use this skill whenever writing markdown for the blueprint-markdown viewer, or when the
   user wants visually richer documentation, guides, release notes, status pages, or
   onboarding docs. Also use it when the user says things like "write it nicely", "make it
   pretty", "use cards", "add callouts", or references any of the component names above.
   Falls back gracefully to standard markdown for plain targets (GitHub, Slack, bare .md)
   where these directives would not render — the skill teaches you when NOT to use them too.
   Always use this skill when authoring Claude Code Plan Mode plan files (the markdown
-  written to `~/.claude/plans/*.md`) — they are reviewed in the enhanced-markdown VS Code
+  written to `~/.claude/plans/*.md`) — they are reviewed in the blueprint-markdown VS Code
   extension and should be formatted with rich directives, never plain markdown.
 ---
 
-The enhanced-markdown viewer extends CommonMark with one grammar covering every rich
+The blueprint-markdown viewer extends CommonMark with one grammar covering every rich
 component. That grammar has exactly three forms. Everything else in this skill is either
 the component catalog or the authoring judgment about when to use enhanced syntax vs plain.
 
@@ -23,7 +23,7 @@ the component catalog or the authoring judgment about when to use enhanced synta
 
 ## When to use enhanced syntax vs plain markdown
 
-**Use enhanced directives** when the document is destined for the enhanced-markdown viewer,
+**Use enhanced directives** when the document is destined for the blueprint-markdown viewer,
 when the user explicitly asks for rich components, or when a guide/report/page would clearly
 benefit from visual structure (callouts, cards, steps, timeline).
 
@@ -31,7 +31,7 @@ benefit from visual structure (callouts, cards, steps, timeline).
 or any `.md` file that won't be rendered by the viewer. The reason: directives like `:::card`
 are not valid CommonMark — a plain viewer renders them as literal text, which is broken output.
 
-**When the target is ambiguous**, ask one quick question ("Is this for the enhanced-markdown
+**When the target is ambiguous**, ask one quick question ("Is this for the blueprint-markdown
 viewer, or a plain markdown target like GitHub?") or default to plain and mention you can
 enrich it if they want.
 

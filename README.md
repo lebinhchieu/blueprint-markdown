@@ -1,6 +1,6 @@
 # Blueprint Markdown
 
-Extends VS Code's built-in Markdown preview with the **enhanced-markdown** directive grammar:
+Extends VS Code's built-in Markdown preview with the **blueprint-markdown** directive grammar:
 cards, callouts, columns, tabs, steps, accordions, timelines, chips, icons, colored text,
 progress bars, line-highlighted code, and mermaid diagrams.
 
@@ -28,7 +28,7 @@ progress bars, line-highlighted code, and mermaid diagrams.
 ### From source
 
 ```bash
-cd enhanced-markdown-vscode
+cd blueprint-markdown-vscode
 npm install
 npm run build
 ```
@@ -95,5 +95,5 @@ in the dev host picks up the latest build.
 
 ## Source
 
-Core engine: [`../enhanced-markdown`](../enhanced-markdown)  
+Core engine: [`../blueprint-markdown`](../blueprint-markdown)  
 The `src/core/` directory is a standalone copy.

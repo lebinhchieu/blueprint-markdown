@@ -1,5 +1,5 @@
 /**
- * core/index.ts — Public API for the enhanced-markdown core engine.
+ * core/index.ts — Public API for the blueprint-markdown core engine.
  *
  * Usage:
  *   import { createRenderer } from '@core'
