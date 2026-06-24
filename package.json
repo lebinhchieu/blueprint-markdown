@@ -2,8 +2,8 @@
   "name": "blueprint-markdown",
   "displayName": "Blueprint Markdown",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.1.4",
-  "publisher": "blueprint-markdown",
+  "version": "0.1.5",
+  "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
   "repository": {
