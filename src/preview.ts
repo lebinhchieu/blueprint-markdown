@@ -2,8 +2,9 @@
  * preview.ts — Browser entry point, bundled into dist/preview.js.
  *
  * VS Code injects this as a nonce'd <script> into the preview webview on
- * every content change.  The CSP forbids dynamic import(), so mermaid is
- * bundled statically (not imported lazily).
+ * first load only (since VS Code 1.63 preview scripts are not re-executed on
+ * content change — instead a 'vscode.markdown.updateContent' event fires).
+ * The CSP forbids dynamic import(), so mermaid is bundled statically.
  *
  * Responsibilities:
  *   - Add 'md-output' class to body so components.css / base.css selectors match.
@@ -23,7 +24,22 @@
 import { hydrate } from './core/hydrate'
 import mermaid from 'mermaid'
 
+// Drop VS Code's built-in markdown-language-features styles. Both files are
+// superseded by our own:
+//   - highlight.css (vs2015): competes with our atom-one hljs.css, leaks
+//     #DCDCDC into .hljs-params → invisible on light backgrounds.
+//   - markdown.css: reset.css already does `all: revert` on every element it
+//     styles, so it contributes nothing after our reset loads.
+function removeBuiltinStyles(): void {
+  document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"]').forEach((link) => {
+    if (/markdown-language-features\/media\/(highlight|markdown)\.css/i.test(link.href)) {
+      link.remove()
+    }
+  })
+}
+
 function run(): void {
+  removeBuiltinStyles()
   const root = document.body
 
   // Scope bridge: VS Code's preview has no .md-output wrapper element.
@@ -41,11 +57,11 @@ function run(): void {
   // Tab switching + accordion coordinated collapse
   hydrate(root)
 
-  // Mermaid
-  renderMermaid(root, theme)
+  // Mermaid (fire-and-forget — async font wait inside)
+  void renderMermaid(root, theme)
 }
 
-function renderMermaid(root: HTMLElement, theme: string): void {
+async function renderMermaid(root: HTMLElement, theme: string): Promise<void> {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
 
@@ -121,16 +137,35 @@ function renderMermaid(root: HTMLElement, theme: string): void {
     },
   })
 
-  // VS Code re-injects preview scripts on every content change.
-  // Restore the original source before each render so re-renders don't
-  // corrupt already-SVG'd blocks.
+  // On re-runs (via the updateContent event) the .mermaid div contains the
+  // edited source text; data-source may hold the previous render's source.
+  // Always refresh data-source from current textContent so the re-render
+  // uses the latest diagram, then clear the processed marker.
   blocks.forEach(el => {
+    // morphdom strips data-source when it patches the element with new content,
+    // so textContent here is the fresh diagram source on edits. When morphdom
+    // keeps the element unchanged (edit elsewhere in the doc), data-source is
+    // still set and we reuse it to avoid re-rendering with stale SVG text.
     if (!el.dataset.source) el.dataset.source = el.textContent ?? ''
     el.innerHTML = el.dataset.source
     delete el.dataset['processed']
   })
 
-  mermaid.run({ nodes: blocks }).catch(() => {
+  // Ensure DM Sans is loaded before mermaid measures text widths to size
+  // each node box. font-display:swap means a fallback font may be active at
+  // render time; if mermaid measures with the fallback (narrower) the boxes
+  // are undersized and DM Sans overflows them after the swap.
+  try {
+    await Promise.all([
+      document.fonts.load('400 1em "DM Sans"'),
+      document.fonts.load('700 1em "DM Sans"'),
+    ])
+    await document.fonts.ready
+  } catch {
+    // Font API unavailable — render anyway with whatever font is active
+  }
+
+  await mermaid.run({ nodes: blocks }).catch(() => {
     // Mermaid parse errors are non-fatal; the block stays as text
   })
 }
@@ -156,5 +191,11 @@ function isDarkColor(value: string, fallback: boolean): boolean {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5
 }
 
-// Re-run on each script injection (VS Code reloads on every edit)
+// Initial run on first load.
 run()
+
+// Since VS Code 1.63 contributed preview scripts run only once on first load.
+// Subsequent edits update the DOM in place (morphdom) and fire this event
+// instead of re-executing the script.  Re-run to re-hydrate components and
+// re-render mermaid blocks with the updated source.
+window.addEventListener('vscode.markdown.updateContent', () => run())

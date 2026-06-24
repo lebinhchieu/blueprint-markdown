@@ -45,6 +45,10 @@ document.getElementById('app').innerHTML = html
 document.title = 'Enhanced Markdown'
 var a = 123
 var b = 566
+const c = () => { () => }
+const d = function () {
+
+}
 ```
 
 ### Mermaid diagram

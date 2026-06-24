@@ -22,6 +22,10 @@ function hydrateTabs(root: HTMLElement): void {
   const tabContainers = root.querySelectorAll<HTMLElement>('[data-tabs]')
 
   tabContainers.forEach(container => {
+    // Morphdom may keep elements in place across updates; skip already-wired containers
+    if (container.dataset.emHydrated) return
+    container.dataset.emHydrated = '1'
+
     const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn')
     const panels  = container.querySelectorAll<HTMLElement>('.tab-panel')
 
@@ -48,6 +52,9 @@ function hydrateTabs(root: HTMLElement): void {
 
 function hydrateFileRefs(root: HTMLElement): void {
   root.querySelectorAll<HTMLElement>('code.file-ref[data-copy]').forEach(el => {
+    if (el.dataset.emHydrated) return
+    el.dataset.emHydrated = '1'
+
     el.addEventListener('click', async () => {
       const text = el.dataset.copy ?? el.textContent ?? ''
       try {
@@ -67,6 +74,9 @@ function hydrateAccordions(root: HTMLElement): void {
   const accordions = root.querySelectorAll<HTMLElement>('[data-accordion]')
 
   accordions.forEach(accordion => {
+    if (accordion.dataset.emHydrated) return
+    accordion.dataset.emHydrated = '1'
+
     const details = accordion.querySelectorAll<HTMLDetailsElement>(':scope > details')
 
     details.forEach(detail => {
