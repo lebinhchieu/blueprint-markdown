@@ -36,8 +36,8 @@ type LineType =
 // Must test CLOSE before OPEN because ':::' with nothing after is a close,
 // not an open with an empty name.
 const RE_CLOSE = /^\s*:::\s*$/
-const RE_OPEN  = /^\s*:::([A-Za-z][\w-]*)(\{[^}]*\})?\s*$/
-const RE_LEAF  = /^\s*::([A-Za-z][\w-]*)(\{[^}]*\})?\s*$/
+const RE_OPEN  = /^\s*:::([A-Za-z][\w-]*)(\{(?:"(?:\\.|[^"\\])*"|[^{}"])*\})?\s*$/
+const RE_LEAF  = /^\s*::([A-Za-z][\w-]*)(\{(?:"(?:\\.|[^"\\])*"|[^{}"])*\})?\s*$/
 
 function classifyLine(line: string): LineType {
   if (RE_CLOSE.test(line)) return { kind: 'CLOSE' }

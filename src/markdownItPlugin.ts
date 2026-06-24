@@ -54,8 +54,8 @@ function resolveTheme(): string {
 // ─── Block directive regexes (mirror parser.ts) ───────────────────────────────
 
 const RE_CLOSE = /^\s*:::\s*$/
-const RE_OPEN  = /^\s*:::([A-Za-z][\w-]*)(\{[^}]*\})?\s*$/
-const RE_LEAF  = /^\s*::([A-Za-z][\w-]*)(\{[^}]*\})?\s*$/
+const RE_OPEN  = /^\s*:::([A-Za-z][\w-]*)(\{(?:"(?:\\.|[^"\\])*"|[^{}"])*\})?\s*$/
+const RE_LEAF  = /^\s*::([A-Za-z][\w-]*)(\{(?:"(?:\\.|[^"\\])*"|[^{}"])*\})?\s*$/
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
