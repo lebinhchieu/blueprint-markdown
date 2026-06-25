@@ -39,24 +39,30 @@ non-`auto` string straight through. No `.ts` edits are needed when adding a them
 ### Step 1 — Choose a key and decide background tone
 
 Pick a lowercase kebab-case key (`sepia`, `midnight`, `nord`, `high-contrast`, …).
-Decide whether the background is **light** or **dark** — this drives Step 4.
+Decide whether the background is **light**, **dark**, or **fancy light** (light with
+decorative gradient background + card sheen — see aurora/jewel-garden/tropical-sorbet).
 
 ### Step 2 — Add the palette block (`media/em-theme.css`)
 
-Append a new block **after** all existing theme blocks (before the Typography overrides section):
+Append a new block **after** all existing theme blocks (before the Typography overrides section).
+Every theme must use the **dual selector** — the `body:has(…)` fallback fires before
+`preview.js` stamps `body[data-em-theme]`, preventing a flash of the light theme:
 
 ```css
-body[data-em-theme="<key>"] {
-  /* … every token from references/theme-variables.md … */
+body[data-em-theme="<key>"],
+body:has(.em-theme-config[data-em-theme="<key>"]) {
+  /* … every token from the contract below … */
 }
 ```
 
-- **Light background**: copy the `:root` block as a starting template and recolor.
+- **Light background**: copy the `:root` block from `media/tokens.css` as a starting template and recolor.
 - **Dark background**: copy the `body[data-em-theme="dark"]` block as a template.
+- **Fancy light** (decorative gradient background): add a `background:` gradient property
+  before the tokens, then also add a `.card` sheen block (Step 5b). See aurora/jewel-garden/tropical-sorbet in `em-theme.css` for examples.
 
-> You **must** define every token in the contract — see `references/theme-variables.md`.
-> Missing even one token silently falls back to the light `:root` value, which looks
-> wrong on a dark background.
+> You **must** define every token in the contract — tokens are listed in the `:root` block
+> of `media/tokens.css`. Missing even one token silently falls back to the light `:root`
+> value, which looks wrong on a dark background.
 
 ### Step 3 — Register in `package.json`
 
@@ -69,9 +75,9 @@ In `blueprintMarkdown.theme`, add the key to both arrays (they are positional �
 
 ### Step 4 — Syntax highlighting (`esbuild.mjs`) — dark backgrounds only
 
-- **Light background**: nothing to do. The unscoped atom-one-light CSS is the default.
+- **Light or fancy-light background**: nothing to do. The unscoped atom-one-light CSS is the default.
 - **Dark background, key starts with `neon-`**: already covered by the `^="neon-"` prefix
-  selector added for the neon themes — nothing to do.
+  selector — nothing to do.
 - **Dark background, any other key**: add one scoped block in `esbuild.mjs`,
   mirroring the existing `hljsDarkScoped` / `hljsNeonScoped` pattern:
 
@@ -90,21 +96,38 @@ In `blueprintMarkdown.theme`, add the key to both arrays (they are positional �
 
   > **Never hand-edit `media/hljs.css`** — it is overwritten on every `npm run build`.
 
-### Step 5 — Mark / highlight override (dark bg only, optional but recommended)
+### Step 5a — Mark / highlight override (dark bg only, optional but recommended)
 
-In `em-theme.css`, find the grouped `mark` override and add the new selector:
+In `em-theme.css`, find the grouped `mark` override and add both selectors for the new key:
 
 ```css
 body[data-em-theme="dark"] .md-output mark,
-body[data-em-theme="neon-synthwave"] .md-output mark,
-/* … */
-body[data-em-theme="<key>"] .md-output mark {
+body:has(.em-theme-config[data-em-theme="dark"]) .md-output mark,
+/* … existing neon entries … */
+body[data-em-theme="<key>"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="<key>"]) .md-output mark {
   background: #3a2008;
   color: #fde68a;
 }
 ```
 
 This keeps `==highlighted text==` legible on dark backgrounds.
+
+### Step 5b — Card sheen (fancy light bg only, optional)
+
+For "fancy light" themes that use a decorative gradient background, add a `.card` sheen
+block in the "Fancy light themes" section (after the main palette block):
+
+```css
+body[data-em-theme="<key>"] .card,
+body:has(.em-theme-config[data-em-theme="<key>"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}
+```
+
+If the fancy light themes section selector already covers all fancy-light themes (e.g. a
+shared selector exists), just add the new key there instead of a separate block.
 
 ### Step 6 — Build and verify
 
@@ -124,7 +147,8 @@ via the existing `onDidChangeConfiguration` listener — no reload needed.
 
 `media/em-theme.css` — new block:
 ```css
-body[data-em-theme="sepia"] {
+body[data-em-theme="sepia"],
+body:has(.em-theme-config[data-em-theme="sepia"]) {
   --c-primary:      #7a5230;   --c-primary-bg: #f5ece0;  --c-primary-text: #5a3818;
   --c-success:      #4a7a50;   --c-success-bg: #e0f0e4;  --c-success-text: #305a38;
   --c-warning:      #8a6020;   --c-warning-bg: #f8ecd8;  --c-warning-text: #6a4010;
@@ -155,7 +179,8 @@ body[data-em-theme="sepia"] {
 
 `media/em-theme.css` — new block:
 ```css
-body[data-em-theme="midnight"] {
+body[data-em-theme="midnight"],
+body:has(.em-theme-config[data-em-theme="midnight"]) {
   --c-primary:      #7aa8d8;   --c-primary-bg: #0e1a28;  --c-primary-text: #a8c8f0;
   --c-success:      #5aad78;   --c-success-bg: #0a1e14;  --c-success-text: #8acd9a;
   --c-warning:      #d4b44a;   --c-warning-bg: #1e1800;  --c-warning-text: #e8d078;
@@ -192,13 +217,19 @@ And in the `hljsCss` template:
 ${hljsMidnightScoped}
 ```
 
-`em-theme.css` mark override — add `midnight` to the grouped selector.
+`em-theme.css` mark override — add both midnight selectors to the grouped mark selector.
 
 ---
 
 ## Reference
 
-Read `references/theme-variables.md` when you need:
-- The complete list of tokens to define (with what each controls)
-- A blank copy-paste template block
-- Light and dark reference values side by side
+The complete token list to define is the `:root` block in `media/tokens.css` — every
+custom property declared there must be overridden in your new theme block. Tokens include:
+
+- Color system: `--c-primary` / `--c-primary-bg` / `--c-primary-text` (and `success`, `warning`, `danger`, `info`, `gray`, `low` variants)
+- Backgrounds: `--bg-base`, `--bg-surface`, `--bg-raised`, `--bg-overlay`
+- Text: `--text-base`, `--text-muted`, `--text-faint`, `--text-on-solid`
+- Borders: `--border-color`, `--border-color-muted`
+- Shadows: `--shadow-sm`, `--shadow-md`, `--shadow-lg`
+- Code blocks: `--code-bg`, `--code-border`, `--code-hl-bg`
+- Tooltip: `--tooltip-bg`, `--tooltip-text`
