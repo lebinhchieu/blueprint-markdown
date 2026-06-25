@@ -23,7 +23,7 @@ That works, but it has real costs:
 | **Token cost** | High — generates and returns thousands of extra tokens | Low — directives are a fraction of equivalent HTML |
 | **Generation speed** | Slow — model writes verbose markup | Fast — compact syntax, less to produce |
 | **Reading / verifying** | Hard — raw HTML obscures the actual content | Easy — directives read like plain text |
-| **Theming** | Static, embedded styles | 9 live themes; switch instantly |
+| **Theming** | Static, embedded styles | 10 live themes; switch instantly |
 
 Blueprint Markdown is two complementary pieces:
 
@@ -79,7 +79,7 @@ Five steps from zero to a beautiful themed preview:
 
 4. **Ask your AI to write with Blueprint Markdown** — e.g. *"Write the release notes using the blueprint-markdown skill."* The skill emits `:::` directives instead of HTML.
 
-5. **Preview & pick a theme** — open the `.md` file → `Ctrl+Shift+V`, then `Ctrl+,` → search `blueprintMarkdown` to choose from [9 themes](#3-beautiful-themes). Enjoy.
+5. **Preview & pick a theme** — open the `.md` file → `Ctrl+Shift+V`, then `Ctrl+,` → search `blueprintMarkdown` to choose from [10 themes](#3-beautiful-themes). Enjoy.
 
 ---
 
@@ -224,6 +224,7 @@ suits your mood — switch any time, preview refreshes instantly.
 | `aurora` | Aurora | Iridescent orchid pastels on pearl white |
 | `jewel-garden` | Jewel Garden | Rich amethyst & emerald on ivory |
 | `tropical-sorbet` | Tropical Sorbet | Bright coral & citrus on cream |
+| `tropical-sorbet-night` | Tropical Sorbet Night | Coral & citrus candy on warm cocoa dark |
 
 **How to change:**
 
@@ -234,9 +235,9 @@ suits your mood — switch any time, preview refreshes instantly.
   "blueprintMarkdown.theme": "aurora"
   ```
 
-<!-- SCREENSHOT: theme grid showing all 9 palettes side by side.
+<!-- SCREENSHOT: theme grid showing all 10 palettes side by side.
      Save as media/screenshots/theme-grid.png, then uncomment:
-![All 9 themes](media/screenshots/theme-grid.png)
+![All 10 themes](media/screenshots/theme-grid.png)
 -->
 
 ---
@@ -262,7 +263,7 @@ Compact directives generate fast.
 No HTML boilerplate.
 :::
 :::card{title="Themes" icon=palette}
-9 palettes, one setting.
+10 palettes, one setting.
 :::
 :::
 ```
