@@ -136,7 +136,7 @@ body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) {
   background:
     radial-gradient(100% 70% at 50% 0%, rgba(57, 255, 20, 0.12), transparent 55%),
     radial-gradient(80% 60% at 100% 100%, rgba(0, 229, 255, 0.15), transparent 50%),
-    linear-gradient(170deg, #050805 0%, #08120a 50%, #050505 100%)
+    linear-gradient(170deg, #050805 0%, #08120a 50%, #050505 100%);
   background-attachment: fixed;
 
   --c-primary:      #39ff14;

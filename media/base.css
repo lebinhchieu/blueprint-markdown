@@ -228,6 +228,11 @@ body {
 .md-output li { margin-bottom: 0.25em; }
 .md-output li > p { margin-bottom: 0.5em; }
 
+.md-output img  {
+  max-width: 100%;
+  max-height: 100%;
+}
+
 .md-output blockquote {
   border-left: 3px solid var(--c-primary);
   padding-left: var(--sp-md);
