@@ -285,15 +285,31 @@ const previewConfig = {
   sourcemap: isProd ? false : 'inline',
 }
 
+// Export-client bundle (Browser/IIFE, NO mermaid — loaded from CDN at runtime).
+// This is the tiny script inlined in every exported HTML artifact.
+const exportClientConfig = {
+  ...sharedConfig,
+  entryPoints: ['src/exportClient.ts'],
+  platform: 'browser',
+  format: 'iife',
+  outfile: 'dist/export-client.js',
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(isProd ? 'production' : 'development'),
+  },
+  sourcemap: false,   // inlined into exported HTML; source maps not useful there
+}
+
 if (isWatch) {
-  const extCtx     = await esbuild.context(extensionConfig)
-  const previewCtx = await esbuild.context(previewConfig)
-  await Promise.all([extCtx.watch(), previewCtx.watch()])
+  const extCtx          = await esbuild.context(extensionConfig)
+  const previewCtx      = await esbuild.context(previewConfig)
+  const exportClientCtx = await esbuild.context(exportClientConfig)
+  await Promise.all([extCtx.watch(), previewCtx.watch(), exportClientCtx.watch()])
   console.log('Watching for changes...')
 } else {
   await Promise.all([
     esbuild.build(extensionConfig),
     esbuild.build(previewConfig),
+    esbuild.build(exportClientConfig),
   ])
   console.log('Build complete.')
 }

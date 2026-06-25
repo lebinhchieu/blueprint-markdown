@@ -13,10 +13,15 @@
 import * as vscode from 'vscode'
 import type MarkdownIt from 'markdown-it'
 import { installEnhancedMarkdown } from './markdownItPlugin'
+import { exportToHtml } from './export/exportHtml'
 
 export function activate(context: vscode.ExtensionContext) {
   const refresh = () =>
     vscode.commands.executeCommand('markdown.preview.refresh')
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('blueprintMarkdown.exportHtml', () => exportToHtml(context)),
+  )
 
   // Re-render when the user changes the theme setting.
   context.subscriptions.push(

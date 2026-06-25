@@ -35,6 +35,19 @@ Blueprint Markdown is two complementary pieces:
 ## How It Works
 
 ![How It Works](media/readme/howitworks.png)
+<!-- ```
+flowchart TD
+    A["You ask Claude for rich docs, plans, or reports"]
+    B["Claude writes\ncompact ::: directives\n(not HTML)"]
+    C["VS Code extension renders a\nbeautiful themed preview"]
+    D["You read, verify, and enjoy the output"]
+    E["Export to portable .html\nand share or publish"]
+
+    A -- >|"blueprint-markdown skill auto-triggers"| B
+    B -- >|"open .md in VS Code → Ctrl+Shift+V"| C
+    C -- > D
+    C -- >|"Command Palette → Export to HTML"| E
+``` -->
 
 No extra commands. No HTML to wade through. The directives are human-readable
 even in the raw `.md` file.
@@ -181,7 +194,21 @@ Blueprint Markdown is working!
 
 ---
 
-## 3. Beautiful Themes
+## 3. Export to HTML
+
+**Command:** `Blueprint Markdown: Export to HTML` (Command Palette `Ctrl+Shift+P`)
+
+Converts the active `.md` file into a portable `.html` file that anyone can open in a browser — no extension required.
+
+- All CSS is inlined; fonts, icons, and Mermaid diagrams load from CDN.
+- The exported file uses the same theme you have active in the preview.
+- Mermaid CDN script is injected only when the document contains diagrams.
+
+> **Note:** Layout, components, and code highlighting work offline. Fonts, icons, and Mermaid diagrams require an internet connection.
+
+---
+
+## 4. Beautiful Themes
 
 Reviewing AI output shouldn't feel like reading a wall of text. Choose a theme that
 suits your mood — switch any time, preview refreshes instantly.
