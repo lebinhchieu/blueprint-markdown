@@ -266,18 +266,6 @@ Status: :chip[Stable]{success}  Shortcut: :kbd[Ctrl+Shift+V]  Priority: :rating{
 
 ---
 
-## Support / Donate
-
-If Blueprint Markdown makes your AI workflow faster and more enjoyable, consider
-supporting continued development ☕
-
-<!-- DONATION: Replace <your-paypal-id> with your PayPal.me username, then remove this comment. -->
-[![Donate via PayPal](https://img.shields.io/badge/Donate-PayPal-0070BA?logo=paypal)](https://paypal.me/<your-paypal-id>)
-
-Your support funds new themes, new components, and better Claude Code integration.
-
----
-
 ## Contributing
 
 Bug reports and feature requests → [GitHub Issues](https://github.com/lebinhchieu/blueprint-markdown/issues).
