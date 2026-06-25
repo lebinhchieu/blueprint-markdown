@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -48,7 +48,7 @@
       "properties": {
         "blueprintMarkdown.theme": {
           "type": "string",
-          "enum": ["light", "dark", "auto", "neon-synthwave", "neon-cyberpunk", "neon-vaporwave", "aurora", "jewel-garden", "tropical-sorbet"],
+          "enum": ["light", "dark", "auto", "neon-synthwave", "neon-cyberpunk", "neon-vaporwave", "aurora", "jewel-garden", "tropical-sorbet", "tropical-sorbet-night"],
           "enumDescriptions": [
             "Warm Artisan light palette (terracotta on parchment)",
             "Warm Artisan dark palette (bright terracotta on near-black)",
@@ -58,7 +58,8 @@
             "Neon vaporwave (purple + pink on violet-black)",
             "Aurora — iridescent orchid pastels on pearl white",
             "Jewel Garden — rich amethyst & emerald gems on ivory",
-            "Tropical Sorbet — bright coral & citrus candy on cream"
+            "Tropical Sorbet — bright coral & citrus candy on cream",
+            "Tropical Sorbet Night — coral & citrus candy on warm cocoa"
           ],
           "default": "light",
           "description": "Color theme for the Blueprint Markdown preview. 'auto' follows VS Code's active theme."

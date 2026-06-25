@@ -226,6 +226,9 @@ const hljsDarkScoped = scopeHljs(hljsDark, 'body[data-em-theme="dark"]')
 const hljsNeonScoped = scopeHljs(hljsDark, 'body[data-em-theme^="neon-"]')
   .replace(/background:#282c34/g, 'background:var(--code-bg)')
 
+const hljsTropicalSorbetNightScoped = scopeHljs(hljsDark, 'body[data-em-theme="tropical-sorbet-night"]')
+  .replace(/background:#282c34/g, 'background:var(--code-bg)')
+
 const hljsCss = `/* hljs.css — Syntax highlighting themes, scoped to the em-theme attribute.
  *
  * Light (atom-one-light) is the default: emitted unscoped so it applies even
@@ -245,6 +248,9 @@ ${hljsDarkScoped}
 
 /* Neon themes (all variants) */
 ${hljsNeonScoped}
+
+/* Tropical Sorbet Night theme */
+${hljsTropicalSorbetNightScoped}
 `
 
 fs.writeFileSync('media/hljs.css', hljsCss)
