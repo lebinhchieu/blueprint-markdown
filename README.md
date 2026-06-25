@@ -52,10 +52,10 @@ even in the raw `.md` file.
 
 ---
 
-## 1. The Skill — Claude Code Integration
+## 1. The Skill — AI Agent Integration
 
 The `blueprint-markdown` skill lives in `skills/blueprint-markdown/`. It teaches
-Claude Code to **author** the directive syntax automatically.
+your AI coding agent to **author** the directive syntax automatically.
 
 **What it does:**
 - Writes `:::cards`, `:::callout`, `:::steps`, `:::timeline` and other directives instead of HTML.
@@ -65,6 +65,17 @@ Claude Code to **author** the directive syntax automatically.
 - Loads the full attribute reference (`references/syntax.md`) on demand for precise output.
 
 ### Install the skill
+
+**Quick setup — paste this into your AI coding agent** (Claude Code, Cursor, Copilot, Codex, Gemini, etc.):
+
+```
+Set up the blueprint-markdown skill from
+https://github.com/lebinhchieu/blueprint-markdown/tree/master/skills/blueprint-markdown
+```
+
+The agent will fetch the skill and install it in the right place for itself. Reload the session afterward.
+
+**Manual install — if you already cloned this repo:**
 
 **Global — available in every project:**
 
