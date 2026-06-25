@@ -25,7 +25,11 @@ import type Token from 'markdown-it/lib/token.mjs'
 // Allows paths with slashes (src/a/b.tsx) and dotfiles (.eslintrc.js).
 const FILE_REF = /^([\w.\-/]+\.[A-Za-z][A-Za-z0-9]{0,7})(?::(\d+)(?:-\d+)?)?$/
 
-/** Returns the href string VS Code should open, or undefined if not a real file. */
+/**
+ * Tries to find filePath on disk by checking the doc's own folder, then each
+ * workspace folder.  Returns a forward-slash href relative to the doc folder
+ * (which VS Code's preview resolves reliably), or undefined when not found.
+ */
 function resolveHref(filePath: string, docUri: vscode.Uri | undefined): string | undefined {
   if (!docUri || docUri.scheme !== 'file') return undefined
 
@@ -33,13 +37,17 @@ function resolveHref(filePath: string, docUri: vscode.Uri | undefined): string |
     try { return fs.statSync(p).isFile() } catch { return false }
   }
 
-  // 1) Doc-relative — emit path as-is (VS Code resolves from the .md file's folder).
-  if (isFile(path.resolve(path.dirname(docUri.fsPath), filePath))) return filePath
+  const docDir = path.dirname(docUri.fsPath)
+  const bases = [docDir, ...(vscode.workspace.workspaceFolders ?? []).map(f => f.uri.fsPath)]
 
-  // 2) Workspace-root-relative — emit /path so VS Code resolves from the root.
-  const folder = vscode.workspace.getWorkspaceFolder(docUri)
-  if (folder && isFile(path.join(folder.uri.fsPath, filePath))) {
-    return '/' + filePath.replace(/^\/+/, '')
+  for (const base of bases) {
+    const abs = path.resolve(base, filePath)
+    if (isFile(abs)) {
+      const rel = path.relative(docDir, abs)
+      // Guard: cross-drive on Windows produces an absolute path VS Code can't open as a link.
+      if (!rel || path.isAbsolute(rel) || /^[a-zA-Z]:/.test(rel)) return undefined
+      return rel.split(path.sep).join('/')   // normalise to forward slashes
+    }
   }
 
   return undefined
@@ -60,10 +68,14 @@ export function installInlineCodeRenderer(md: MarkdownIt): void {
       const lineNum  = match[2]
       const href = resolveHref(filePath, env?.currentDocument)
       if (href) {
+        // Resolved — emit a clickable link VS Code will open.
         const escapedHref = md.utils.escapeHtml(href)
         const full = lineNum ? `${escapedHref}#L${lineNum}` : escapedHref
         return `<a class="file-ref" href="${full}" title="Click to open ${esc}"><code>${esc}</code></a>`
       }
+      // Unresolved — still a plausible file ref; make it copy-on-click.
+      // hydrateFileRefs() in hydrate.ts wires this; components.css shows the "Copied!" pill.
+      return `<code class="file-ref" data-copy="${esc}" title="Click to copy">${esc}</code>`
     }
     return `<code>${esc}</code>`
   }
