@@ -15,6 +15,7 @@ import * as esbuild from 'esbuild'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as https from 'https'
+import { createRequire } from 'module'
 
 const isWatch = process.argv.includes('--watch')
 const isProd  = process.argv.includes('--production')
@@ -248,6 +249,185 @@ ${hljsNeonScoped}
 
 fs.writeFileSync('media/hljs.css', hljsCss)
 console.log('Wrote: media/hljs.css')
+
+// ─── Step 3.5: Generate TextMate injection grammar ───────────────────────────
+// Bundle the directive registry to a temp CJS file so we can enumerate
+// known directive names (bucketed by form) at build time — zero drift.
+
+{
+  const syntaxesDir = 'syntaxes'
+  if (!fs.existsSync(syntaxesDir)) fs.mkdirSync(syntaxesDir, { recursive: true })
+  if (!fs.existsSync('dist'))      fs.mkdirSync('dist', { recursive: true })
+
+  // Transpile the TypeScript registry to a throwaway CJS module.
+  const tmpFile = path.resolve('dist', '.tmp-registry.cjs')
+  await esbuild.build({
+    entryPoints: ['src/core/directives/index.ts'],
+    bundle: true,
+    platform: 'node',
+    format: 'cjs',
+    outfile: tmpFile,
+    logLevel: 'silent',
+  })
+  const _require = createRequire(import.meta.url)
+  const { buildRegistry } = _require(tmpFile)
+  const registry = buildRegistry()
+  try { fs.unlinkSync(tmpFile) } catch (_) {}
+
+  // Bucket known names by form
+  const names = { container: [], leaf: [], inline: [] }
+  for (const [name, spec] of Object.entries(registry)) {
+    for (const form of spec.forms) {
+      if (names[form]) names[form].push(name)
+    }
+  }
+
+  const containerAlt = names.container.length ? names.container.join('|') : '__none__'
+  const leafAlt      = names.leaf.length      ? names.leaf.join('|')      : '__none__'
+  const inlineAlt    = names.inline.length    ? names.inline.join('|')    : '__none__'
+
+  // Attr block content: `(?:[^}"']|"[^"]*"|'[^']*')*`
+  // Matches any char except }, ", ' OR a double/single quoted string (allowing } inside quotes).
+  const attrInner = `(?:[^}"']|"[^"]*"|'[^']*')*`
+
+  // Sub-patterns applied inside a captured attribute content group.
+  const attrContentPatterns = [
+    { comment: '#id', match: '#[\\w-]+',   name: 'entity.other.attribute-name.id.blueprint' },
+    { comment: '.class', match: '\\.[\\w-]+', name: 'entity.other.attribute-name.class.blueprint' },
+    {
+      comment: 'key=value',
+      match: '([\\w-]+)(=)',
+      captures: {
+        '1': { name: 'entity.other.attribute-name.blueprint' },
+        '2': { name: 'keyword.operator.assignment.blueprint' },
+      },
+    },
+    { comment: 'double-quoted string', match: '"(?:[^"\\\\]|\\\\.)*"', name: 'string.quoted.double.blueprint' },
+    { comment: "single-quoted string", match: "'(?:[^'\\\\]|\\\\.)*'", name: 'string.quoted.single.blueprint' },
+    { comment: 'bare word (primary arg or flag)', match: '[\\w-]+', name: 'variable.other.directive-attr.blueprint' },
+  ]
+
+  // Captures for block directives (container open + leaf):
+  //   group 1 = marker (:::  or ::)
+  //   group 2 = name
+  //   group 3 = opening {
+  //   group 4 = attrs content
+  //   group 5 = closing }
+  function blockCaptures(nameScope) {
+    return {
+      '1': { name: 'punctuation.definition.directive.blueprint' },
+      '2': { name: nameScope },
+      '3': { name: 'punctuation.section.attributes.begin.blueprint' },
+      '4': { patterns: [{ include: '#attr-contents' }] },
+      '5': { name: 'punctuation.section.attributes.end.blueprint' },
+    }
+  }
+
+  // Inline {attrs} capture: colors { } as punctuation, rest as attr-contents.
+  const inlineAttrCapture = {
+    patterns: [
+      { match: '\\{', name: 'punctuation.section.attributes.begin.blueprint' },
+      { match: '\\}', name: 'punctuation.section.attributes.end.blueprint' },
+      { include: '#attr-contents' },
+    ],
+  }
+
+  const grammar = {
+    name: 'Blueprint Markdown Directives',
+    scopeName: 'text.html.markdown.blueprint',
+    // L: prefix → inject before the base grammar's tokens.
+    // Exclusions prevent the grammar from applying inside fenced code or raw blocks.
+    injectionSelector: 'L:text.html.markdown -markup.fenced_code -markup.raw',
+    patterns: [
+      { include: '#directive-close' },
+      { include: '#directive-open-known' },
+      { include: '#directive-open-unknown' },
+      { include: '#directive-leaf-known' },
+      { include: '#directive-leaf-unknown' },
+      { include: '#directive-inline-known' },
+      { include: '#directive-inline-unknown' },
+    ],
+    repository: {
+      // Sub-patterns for attribute block contents (applied via capture patterns).
+      'attr-contents': { patterns: attrContentPatterns },
+
+      // Inline [text] bracket coloring.
+      'inline-text': {
+        patterns: [
+          { match: '\\[', name: 'punctuation.definition.string.begin.blueprint' },
+          { match: '\\]', name: 'punctuation.definition.string.end.blueprint' },
+          { match: '[^\\[\\]]+', name: 'string.unquoted.directive-text.blueprint' },
+        ],
+      },
+
+      // ::: alone on a line → container close.
+      // Must be listed before container-open to win on bare `:::`.
+      'directive-close': {
+        comment: 'Container close marker: bare ::: on its own line',
+        match: '^\\s*(:::)\\s*$',
+        captures: { '1': { name: 'punctuation.definition.directive.blueprint' } },
+      },
+
+      // :::known-name{attrs}
+      'directive-open-known': {
+        comment: 'Container open with a known directive name',
+        match: `^\\s*(:::)(${containerAlt})(?:(\\{)(${attrInner})(\\}))?\\s*$`,
+        captures: blockCaptures('entity.name.tag.directive.blueprint'),
+      },
+
+      // :::unknown-name{attrs} — silently fails in the preview
+      'directive-open-unknown': {
+        comment: 'Container open with an unrecognized name — silently fails in preview',
+        match: `^\\s*(:::)([A-Za-z][\\w-]*)(?:(\\{)(${attrInner})(\\}))?\\s*$`,
+        captures: blockCaptures('invalid.illegal.unknown-directive.blueprint'),
+      },
+
+      // ::known-name{attrs}  (leaf form — only `progress` today)
+      'directive-leaf-known': {
+        comment: 'Leaf directive with a known name (e.g. ::progress)',
+        match: `^\\s*(::)(${leafAlt})(?:(\\{)(${attrInner})(\\}))?\\s*$`,
+        captures: blockCaptures('entity.name.tag.directive.blueprint'),
+      },
+
+      // ::unknown-name{attrs}
+      'directive-leaf-unknown': {
+        comment: 'Leaf directive with an unrecognized name',
+        match: `^\\s*(::)([A-Za-z][\\w-]*)(?:(\\{)(${attrInner})(\\}))?\\s*$`,
+        captures: blockCaptures('invalid.illegal.unknown-directive.blueprint'),
+      },
+
+      // :known-name[text]{attrs}
+      // The lookahead (?=\[|\{) mirrors the inline parser guard that prevents
+      // bare colons in URLs (http://) and times (12:30) from triggering.
+      'directive-inline-known': {
+        comment: 'Inline directive with a known name, e.g. :chip[Active]{green}',
+        match: `(:)(${inlineAlt})(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{${attrInner}\\})?`,
+        captures: {
+          '1': { name: 'punctuation.definition.directive.blueprint' },
+          '2': { name: 'entity.name.tag.directive.blueprint' },
+          '3': { patterns: [{ include: '#inline-text' }] },
+          '4': inlineAttrCapture,
+        },
+      },
+
+      // :unknown-name[text]{attrs}
+      'directive-inline-unknown': {
+        comment: 'Inline directive with an unrecognized name',
+        match: `(:)([A-Za-z][\\w-]*)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{${attrInner}\\})?`,
+        captures: {
+          '1': { name: 'punctuation.definition.directive.blueprint' },
+          '2': { name: 'invalid.illegal.unknown-directive.blueprint' },
+          '3': { patterns: [{ include: '#inline-text' }] },
+          '4': inlineAttrCapture,
+        },
+      },
+    },
+  }
+
+  const grammarPath = path.join(syntaxesDir, 'blueprint.injection.tmLanguage.json')
+  fs.writeFileSync(grammarPath, JSON.stringify(grammar, null, 2))
+  console.log(`Wrote: ${grammarPath}`)
+}
 
 // ─── Step 4: esbuild bundles ─────────────────────────────────────────────────
 

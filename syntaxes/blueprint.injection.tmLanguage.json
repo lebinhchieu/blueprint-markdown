@@ -1,0 +1,264 @@
+{
+  "name": "Blueprint Markdown Directives",
+  "scopeName": "text.html.markdown.blueprint",
+  "injectionSelector": "L:text.html.markdown -markup.fenced_code -markup.raw",
+  "patterns": [
+    {
+      "include": "#directive-close"
+    },
+    {
+      "include": "#directive-open-known"
+    },
+    {
+      "include": "#directive-open-unknown"
+    },
+    {
+      "include": "#directive-leaf-known"
+    },
+    {
+      "include": "#directive-leaf-unknown"
+    },
+    {
+      "include": "#directive-inline-known"
+    },
+    {
+      "include": "#directive-inline-unknown"
+    }
+  ],
+  "repository": {
+    "attr-contents": {
+      "patterns": [
+        {
+          "comment": "#id",
+          "match": "#[\\w-]+",
+          "name": "entity.other.attribute-name.id.blueprint"
+        },
+        {
+          "comment": ".class",
+          "match": "\\.[\\w-]+",
+          "name": "entity.other.attribute-name.class.blueprint"
+        },
+        {
+          "comment": "key=value",
+          "match": "([\\w-]+)(=)",
+          "captures": {
+            "1": {
+              "name": "entity.other.attribute-name.blueprint"
+            },
+            "2": {
+              "name": "keyword.operator.assignment.blueprint"
+            }
+          }
+        },
+        {
+          "comment": "double-quoted string",
+          "match": "\"(?:[^\"\\\\]|\\\\.)*\"",
+          "name": "string.quoted.double.blueprint"
+        },
+        {
+          "comment": "single-quoted string",
+          "match": "'(?:[^'\\\\]|\\\\.)*'",
+          "name": "string.quoted.single.blueprint"
+        },
+        {
+          "comment": "bare word (primary arg or flag)",
+          "match": "[\\w-]+",
+          "name": "variable.other.directive-attr.blueprint"
+        }
+      ]
+    },
+    "inline-text": {
+      "patterns": [
+        {
+          "match": "\\[",
+          "name": "punctuation.definition.string.begin.blueprint"
+        },
+        {
+          "match": "\\]",
+          "name": "punctuation.definition.string.end.blueprint"
+        },
+        {
+          "match": "[^\\[\\]]+",
+          "name": "string.unquoted.directive-text.blueprint"
+        }
+      ]
+    },
+    "directive-close": {
+      "comment": "Container close marker: bare ::: on its own line",
+      "match": "^\\s*(:::)\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        }
+      }
+    },
+    "directive-open-known": {
+      "comment": "Container open with a known directive name",
+      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "entity.name.tag.directive.blueprint"
+        },
+        "3": {
+          "name": "punctuation.section.attributes.begin.blueprint"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        },
+        "5": {
+          "name": "punctuation.section.attributes.end.blueprint"
+        }
+      }
+    },
+    "directive-open-unknown": {
+      "comment": "Container open with an unrecognized name — silently fails in preview",
+      "match": "^\\s*(:::)([A-Za-z][\\w-]*)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "invalid.illegal.unknown-directive.blueprint"
+        },
+        "3": {
+          "name": "punctuation.section.attributes.begin.blueprint"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        },
+        "5": {
+          "name": "punctuation.section.attributes.end.blueprint"
+        }
+      }
+    },
+    "directive-leaf-known": {
+      "comment": "Leaf directive with a known name (e.g. ::progress)",
+      "match": "^\\s*(::)(progress)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "entity.name.tag.directive.blueprint"
+        },
+        "3": {
+          "name": "punctuation.section.attributes.begin.blueprint"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        },
+        "5": {
+          "name": "punctuation.section.attributes.end.blueprint"
+        }
+      }
+    },
+    "directive-leaf-unknown": {
+      "comment": "Leaf directive with an unrecognized name",
+      "match": "^\\s*(::)([A-Za-z][\\w-]*)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "invalid.illegal.unknown-directive.blueprint"
+        },
+        "3": {
+          "name": "punctuation.section.attributes.begin.blueprint"
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        },
+        "5": {
+          "name": "punctuation.section.attributes.end.blueprint"
+        }
+      }
+    },
+    "directive-inline-known": {
+      "comment": "Inline directive with a known name, e.g. :chip[Active]{green}",
+      "match": "(:)(chip|icon|color|kbd|button|tooltip|rating)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "entity.name.tag.directive.blueprint"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#inline-text"
+            }
+          ]
+        },
+        "4": {
+          "patterns": [
+            {
+              "match": "\\{",
+              "name": "punctuation.section.attributes.begin.blueprint"
+            },
+            {
+              "match": "\\}",
+              "name": "punctuation.section.attributes.end.blueprint"
+            },
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        }
+      }
+    },
+    "directive-inline-unknown": {
+      "comment": "Inline directive with an unrecognized name",
+      "match": "(:)([A-Za-z][\\w-]*)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.directive.blueprint"
+        },
+        "2": {
+          "name": "invalid.illegal.unknown-directive.blueprint"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#inline-text"
+            }
+          ]
+        },
+        "4": {
+          "patterns": [
+            {
+              "match": "\\{",
+              "name": "punctuation.section.attributes.begin.blueprint"
+            },
+            {
+              "match": "\\}",
+              "name": "punctuation.section.attributes.end.blueprint"
+            },
+            {
+              "include": "#attr-contents"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

@@ -23,6 +23,13 @@
         "category": "Blueprint Markdown"
       }
     ],
+    "grammars": [
+      {
+        "scopeName": "text.html.markdown.blueprint",
+        "path": "./syntaxes/blueprint.injection.tmLanguage.json",
+        "injectTo": ["text.html.markdown"]
+      }
+    ],
     "markdown.markdownItPlugins": true,
     "markdown.previewStyles": [
       "./media/reset.css",
