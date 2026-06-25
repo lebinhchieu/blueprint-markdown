@@ -34,21 +34,39 @@ Blueprint Markdown is two complementary pieces:
 
 ## How It Works
 
-```
-You ask Claude for rich docs, plans, or reports
-           │
-           ▼  blueprint-markdown skill auto-triggers
-Claude writes compact ::: directives (not HTML)
-           │
-           ▼  open .md in VS Code → Ctrl+Shift+V
-VS Code extension renders a beautiful themed preview
-           │
-           ▼
-You read, verify, and enjoy the output
-```
+![How It Works](media/readme/howitworks.png)
 
 No extra commands. No HTML to wade through. The directives are human-readable
 even in the raw `.md` file.
+
+---
+
+## Quickstart
+
+Five steps from zero to a beautiful themed preview:
+
+1. **Install the skill** — paste this into your AI agent (Claude Code, Cursor, Copilot, etc.):
+
+   ```
+   Set up the blueprint-markdown skill from
+   https://github.com/lebinhchieu/blueprint-markdown/tree/master/skills/blueprint-markdown
+   ```
+
+   The agent fetches and installs it. Reload the session afterward. ([details](#1-the-skill--ai-agent-integration))
+
+2. **Install the extension** from the VS Code Marketplace:
+
+   ```bash
+   code --install-extension ChieuLe.blueprint-markdown-chieu
+   ```
+
+   ([details](#2-the-extension--preview-renderer))
+
+3. **Disable the conflicting built-in** — Extensions (`Ctrl+Shift+X`) → search `@builtin mermaid` → **Markdown Mermaid features** → **Disable** → Reload Window. ([why](#known-conflict--vscodemermaid-markdown-features))
+
+4. **Ask your AI to write with Blueprint Markdown** — e.g. *"Write the release notes using the blueprint-markdown skill."* The skill emits `:::` directives instead of HTML.
+
+5. **Preview & pick a theme** — open the `.md` file → `Ctrl+Shift+V`, then `Ctrl+,` → search `blueprintMarkdown` to choose from [9 themes](#3-beautiful-themes). Enjoy.
 
 ---
 
@@ -144,14 +162,16 @@ npm install && npm run build
 
 VS Code ships a built-in extension called **Markdown Mermaid features** (`vscode.mermaid-markdown-features`) that also renders Mermaid diagrams in the Markdown preview. When both extensions are active they collide, and Mermaid diagrams will not render correctly.
 
-**Fix:** Disable the built-in extension:
-Extensions (`Ctrl+Shift+X`) → search **`@builtin mermaid`** → **Markdown Mermaid features** → **Disable** → Reload Window.
+> [!WARNING]
+>**Fix:** Disable the built-in extension:
+>Extensions (`Ctrl+Shift+X`) → search **`@builtin mermaid`** → **Markdown Mermaid features** → **Disable** → Reload Window.
 
 ### Open the preview
 
 Open any `.md` file → **`Ctrl+Shift+V`** (Markdown: Open Preview to the Side).
 
 Quick test:
+
 
 ```markdown
 :::tip
@@ -262,25 +282,6 @@ Status: :chip[Stable]{success}  Shortcut: :kbd[Ctrl+Shift+V]  Priority: :rating{
 - ❌ Unclosed container — consumes rest of the document
 
 > Full reference: [`skills/blueprint-markdown/references/syntax.md`](skills/blueprint-markdown/references/syntax.md)
-
----
-
-## Screenshots
-
-<!-- SCREENSHOT: callouts and cards.
-     Save as media/screenshots/callouts-cards.png, then uncomment:
-![Callouts and cards](media/screenshots/callouts-cards.png)
--->
-
-<!-- SCREENSHOT: tabs and steps.
-     Save as media/screenshots/tabs-steps.png, then uncomment:
-![Tabs and steps](media/screenshots/tabs-steps.png)
--->
-
-<!-- SCREENSHOT: timeline component.
-     Save as media/screenshots/timeline.png, then uncomment:
-![Timeline](media/screenshots/timeline.png)
--->
 
 ---
 
