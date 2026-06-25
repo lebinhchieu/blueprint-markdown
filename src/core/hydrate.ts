@@ -5,91 +5,124 @@
  * Wires:
  *   - Tab switching ([data-tabs] containers)
  *   - Accordion coordinated collapse ([data-accordion] containers)
+ *   - File-ref copy buttons
  *
- * Mermaid is intentionally NOT here (heavy dep) — handled in viewer/mermaid.ts.
+ * Uses document-level event delegation (wired once, immune to morphdom) and
+ * module-level state stores so that VS Code's morphdom patching does not
+ * reset the active tab or open disclosure on every keystroke.
  */
+
+// ─── State stores (survive morphdom re-renders) ───────────────────────────────
+
+/** Maps [data-tabs] container index → active tab-index value. */
+const tabState = new Map<number, number>()
+
+/** Maps details.details element index → open state. */
+const detailsState = new Map<number, boolean>()
+
+/** Whether document-level delegated listeners have been attached. */
+let wired = false
+
+// ─── Public ───────────────────────────────────────────────────────────────────
 
 /** Wire all interactive components within a root element. */
 export function hydrate(root: HTMLElement): void {
-  hydrateTabs(root)
-  hydrateAccordions(root)
-  hydrateFileRefs(root)
+  wireOnce()
+  restoreState(root)
 }
 
-// ─── Tabs ─────────────────────────────────────────────────────────────────
+// ─── Wire-once: event delegation ──────────────────────────────────────────────
 
-function hydrateTabs(root: HTMLElement): void {
-  const tabContainers = root.querySelectorAll<HTMLElement>('[data-tabs]')
+function wireOnce(): void {
+  if (wired) return
+  wired = true
+  document.addEventListener('click', onDocClick)
+  // `toggle` doesn't bubble — use capture phase to intercept at document level.
+  document.addEventListener('toggle', onDocToggle, true)
+}
 
-  tabContainers.forEach(container => {
-    // Morphdom may keep elements in place across updates; skip already-wired containers
-    if (container.dataset.emHydrated) return
-    container.dataset.emHydrated = '1'
+// ─── Click handler ─────────────────────────────────────────────────────────────
 
-    const buttons = container.querySelectorAll<HTMLButtonElement>('.tab-btn')
-    const panels  = container.querySelectorAll<HTMLElement>('.tab-panel')
+function onDocClick(e: Event): void {
+  const target = e.target as Element | null
+  if (!target) return
 
-    buttons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = btn.dataset.tabIndex
+  // Tab button
+  const btn = target.closest<HTMLButtonElement>('.tab-btn')
+  if (btn) {
+    const container = btn.closest<HTMLElement>('[data-tabs]')
+    if (!container) return
 
-        // Deactivate all
-        buttons.forEach(b => b.removeAttribute('data-active'))
-        panels.forEach(p => p.removeAttribute('data-active'))
+    const activeIdx = parseInt(btn.dataset.tabIndex ?? '0', 10)
 
-        // Activate clicked
-        btn.setAttribute('data-active', '')
-        const targetPanel = container.querySelector<HTMLElement>(
-          `.tab-panel[data-tab-index="${idx}"]`,
-        )
-        targetPanel?.setAttribute('data-active', '')
+    container.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach(b => b.removeAttribute('data-active'))
+    container.querySelectorAll<HTMLElement>('.tab-panel').forEach(p => p.removeAttribute('data-active'))
+    btn.setAttribute('data-active', '')
+    container.querySelector<HTMLElement>(`.tab-panel[data-tab-index="${activeIdx}"]`)?.setAttribute('data-active', '')
+
+    // Snapshot by container index so state survives morphdom node replacement.
+    const containerIdx = indexOf(container, '[data-tabs]')
+    if (containerIdx !== -1) tabState.set(containerIdx, activeIdx)
+    return
+  }
+
+  // File-ref copy
+  const fileRef = target.closest<HTMLElement>('code.file-ref[data-copy]')
+  if (fileRef) {
+    const text = fileRef.dataset.copy ?? fileRef.textContent ?? ''
+    navigator.clipboard.writeText(text).then(() => {
+      fileRef.setAttribute('data-copied', '')
+      setTimeout(() => fileRef.removeAttribute('data-copied'), 1200)
+    }).catch(() => {
+      // clipboard blocked — no-op
+    })
+  }
+}
+
+// ─── Toggle handler (capture) ─────────────────────────────────────────────────
+
+function onDocToggle(e: Event): void {
+  const el = e.target as HTMLDetailsElement | null
+  if (!el || !el.matches('details.details')) return
+
+  // Snapshot by element index so state survives morphdom node replacement.
+  const idx = indexOf(el, 'details.details')
+  if (idx !== -1) detailsState.set(idx, el.open)
+
+  // Accordion: if this one opened, close its siblings.
+  if (el.open) {
+    const accordion = el.closest<HTMLElement>('[data-accordion]')
+    if (accordion) {
+      accordion.querySelectorAll<HTMLDetailsElement>(':scope > details').forEach(sibling => {
+        if (sibling !== el && sibling.open) sibling.open = false
       })
-    })
+    }
+  }
+}
+
+// ─── State restore ─────────────────────────────────────────────────────────────
+
+function restoreState(_root: HTMLElement): void {
+  // Tabs
+  document.querySelectorAll<HTMLElement>('[data-tabs]').forEach((container, i) => {
+    if (!tabState.has(i)) return
+    const activeIdx = tabState.get(i)!
+    container.querySelectorAll<HTMLButtonElement>('.tab-btn').forEach(b => b.removeAttribute('data-active'))
+    container.querySelectorAll<HTMLElement>('.tab-panel').forEach(p => p.removeAttribute('data-active'))
+    container.querySelector<HTMLButtonElement>(`.tab-btn[data-tab-index="${activeIdx}"]`)?.setAttribute('data-active', '')
+    container.querySelector<HTMLElement>(`.tab-panel[data-tab-index="${activeIdx}"]`)?.setAttribute('data-active', '')
+  })
+
+  // Details / accordion
+  document.querySelectorAll<HTMLDetailsElement>('details.details').forEach((el, i) => {
+    if (!detailsState.has(i)) return
+    el.open = detailsState.get(i)!
   })
 }
 
-// ─── File refs ────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function hydrateFileRefs(root: HTMLElement): void {
-  root.querySelectorAll<HTMLElement>('code.file-ref[data-copy]').forEach(el => {
-    if (el.dataset.emHydrated) return
-    el.dataset.emHydrated = '1'
-
-    el.addEventListener('click', async () => {
-      const text = el.dataset.copy ?? el.textContent ?? ''
-      try {
-        await navigator.clipboard.writeText(text)
-        el.setAttribute('data-copied', '')
-        setTimeout(() => el.removeAttribute('data-copied'), 1200)
-      } catch {
-        // clipboard blocked or unavailable — no-op
-      }
-    })
-  })
-}
-
-// ─── Accordion ────────────────────────────────────────────────────────────
-
-function hydrateAccordions(root: HTMLElement): void {
-  const accordions = root.querySelectorAll<HTMLElement>('[data-accordion]')
-
-  accordions.forEach(accordion => {
-    if (accordion.dataset.emHydrated) return
-    accordion.dataset.emHydrated = '1'
-
-    const details = accordion.querySelectorAll<HTMLDetailsElement>(':scope > details')
-
-    details.forEach(detail => {
-      detail.addEventListener('toggle', () => {
-        if (detail.open) {
-          // Close all siblings
-          details.forEach(sibling => {
-            if (sibling !== detail && sibling.open) {
-              sibling.open = false
-            }
-          })
-        }
-      })
-    })
-  })
+/** Returns the index of el among all document elements matching selector. */
+function indexOf(el: Element, selector: string): number {
+  return Array.from(document.querySelectorAll(selector)).indexOf(el)
 }

@@ -52,6 +52,23 @@ export function isDarkColor(value: string, fallback: boolean): boolean {
 
 // ─── Mermaid ──────────────────────────────────────────────────────────────────
 
+/**
+ * Cache of `${theme}\n${source}` → rendered SVG innerHTML.
+ * Theme is part of the key so a theme switch invalidates all entries.
+ * Note: two identical diagram sources in one document share one cache entry
+ * and receive the same SVG (same internal element ids) — rare in practice.
+ */
+const svgCache = new Map<string, string>()
+const SVG_CACHE_CAP = 60
+
+function svgCacheSet(key: string, value: string): void {
+  if (svgCache.size >= SVG_CACHE_CAP) {
+    const oldest = svgCache.keys().next().value
+    if (oldest !== undefined) svgCache.delete(oldest)
+  }
+  svgCache.set(key, value)
+}
+
 export async function renderMermaid(
   root: HTMLElement,
   theme: string,
@@ -59,6 +76,30 @@ export async function renderMermaid(
 ): Promise<void> {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
+
+  // Classify each block as a cache hit or miss.
+  const pending: Array<{ el: HTMLElement; key: string }> = []
+
+  blocks.forEach(el => {
+    // After morphdom, the block contains the raw source text (HTML-escaped by
+    // fence.ts). textContent gives the decoded string that mermaid can parse.
+    const source = (el.textContent ?? '').trim()
+    const key = `${theme}\n${source}`
+    const cached = svgCache.get(key)
+    if (cached !== undefined) {
+      // Restore the previously rendered SVG — no mermaid work needed.
+      el.innerHTML = cached
+      el.dataset.processed = 'true'
+    } else {
+      // Reset to source text so mermaid can parse it, then queue for rendering.
+      el.innerHTML = source
+      delete el.dataset['processed']
+      pending.push({ el, key })
+    }
+  })
+
+  // If nothing changed, skip initialize/font-load/run entirely.
+  if (pending.length === 0) return
 
   const css = getComputedStyle(root.ownerDocument.body)
   const v = (name: string) => css.getPropertyValue(name).trim()
@@ -118,13 +159,6 @@ export async function renderMermaid(
     },
   })
 
-  // Refresh data-source and clear the processed marker so re-runs work.
-  blocks.forEach(el => {
-    if (!el.dataset.source) el.dataset.source = el.textContent ?? ''
-    el.innerHTML = el.dataset.source
-    delete el.dataset['processed']
-  })
-
   // Wait for DM Sans before mermaid measures text widths.
   try {
     await Promise.all([
@@ -136,9 +170,12 @@ export async function renderMermaid(
     // Font API unavailable — render anyway
   }
 
-  await mermaid.run({ nodes: blocks }).catch(() => {
+  await mermaid.run({ nodes: pending.map(p => p.el) }).catch(() => {
     // Mermaid parse errors are non-fatal
   })
+
+  // Cache the rendered SVGs for future incremental updates.
+  pending.forEach(p => svgCacheSet(p.key, p.el.innerHTML))
 }
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
