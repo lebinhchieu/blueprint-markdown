@@ -140,6 +140,13 @@ npm install && npm run build
 # Press F5 to launch the Extension Development Host
 ```
 
+### Known conflict — `vscode.mermaid-markdown-features`
+
+VS Code ships a built-in extension called **Markdown Mermaid features** (`vscode.mermaid-markdown-features`) that also renders Mermaid diagrams in the Markdown preview. When both extensions are active they collide, and Mermaid diagrams will not render correctly.
+
+**Fix:** Disable the built-in extension:
+Extensions (`Ctrl+Shift+X`) → search **`@builtin mermaid`** → **Markdown Mermaid features** → **Disable** → Reload Window.
+
 ### Open the preview
 
 Open any `.md` file → **`Ctrl+Shift+V`** (Markdown: Open Preview to the Side).
