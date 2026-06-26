@@ -16,30 +16,6 @@
 
 ---
 
-## Grammar overview
-
-Three forms, one attribute syntax:
-
-```
-:::name{attrs}          ← container block (has a closing :::)
-::name{attrs}           ← leaf block (self-contained, one line)
-:name[text]{attrs}      ← inline (text is the visible content)
-```
-
-> **`::` is reserved for `progress` only.** Every other block directive is a container: open
-> with `:::`, close with `:::`. Using `::callout` or `::columns` silently falls back to plain
-> text. The closing fence is always `:::` regardless of nesting depth.
-> Column children are `:::col` (not `:::column`); `:::col` accepts only `span=`.
-
-
-Attribute syntax (same for all forms):
-- `key=value` or `key="multi word value"`
-- `{danger}` — a single bare value is the directive's "primary" attribute
-- `.class` and `#id` — CSS hooks
-- `{open}` / `{fill}` — boolean flags; presence means true
-
----
-
 ## Color tokens {#color-tokens}
 
 A shared semantic palette used by `chip`, `callout`, `timeline`, `progress`, `button`,
@@ -424,88 +400,14 @@ Standard GFM mark: `==text==` renders as `<mark>`.
 
 ---
 
-## Strict syntax rules {#strict-rules}
+## Strict syntax nuances {#strict-rules}
 
-The parser is a **custom recursion-based block parser** — not markdown-it-directive or
-remark-directive. These rules are strict: violations produce silent fallback (plain text or
-an unstyled block), never an error message.
+The SKILL.md traps table covers all common failures. Two additional nuances:
 
-### Colon count and spacing
-
-The name character must immediately follow the colons — no space allowed:
-
-```
-:::info          ✓  container open
-::: info         ✗  parsed as plain text
-::progress       ✓  leaf
-:: progress      ✗  parsed as plain text
-```
-
-A line that opens or closes a container must contain nothing else (beyond optional trailing
-whitespace). Body on the same line as the opener does not work.
-
-### One attribute block only
-
-Each directive line accepts exactly one `{…}` block. A second block is silently dropped:
-
-```
-:::callout{type=info title="My note"}    ✓
-:::callout{info} {title="My note"}       ✗  second block ignored
-```
-
-### Nesting — always repeated `:::`, never increasing colon counts
-
-This parser nests by recursion, not by colon depth. All levels use `:::`:
-
-```
-:::cards                  ✓
-:::card{title="A"}        ✓  (still :::)
-:::                       ✓
-:::                       ✓
-
-::::card{title="A"}       ✗  (four colons — unrecognised, becomes plain text)
-```
-
-### Multi-word values must be quoted
-
-An unquoted value ends at the first space. Words after the space become flags:
-
-```
-title="Two words"         ✓
-title=Two words           ✗  title="Two", "words" becomes a flag
-```
-
-### Bare-word order matters
-
-The **first** bare word becomes the `primary` value (used as color, type, value, etc.).
-Every subsequent bare word becomes a flag. Order is significant:
-
-```
-{danger open}   → primary=danger (color), open=flag  ✓
-{open danger}   → primary=open (wrong primary), danger=flag  ✗ color lost
-```
-
-### Correct form per directive type
-
-`progress` is the **only leaf** (`::` prefix). Writing it as a container (`:::progress`)
-matches the container regex and falls back as an unknown-form block. All others must use
-the form shown in the catalog:
-
-```
-::progress{value=70}      ✓  leaf
-:::progress{value=70}     ✗  unrecognised container form
-```
-
-### Every container needs a closing `:::`
-
-An unclosed container silently consumes everything to end-of-file into its body and renders
-with the `directive-unclosed` class (visible but unstyled).
-
-### `steps`/`tabs` and their children
-
-`:::steps` renders only `:::step` children with numbered styling; a plain `1.` list inside
-gets no step styling. `:::tabs` reads tab titles from `:::tab` children; non-tab children
-are silently dropped from the tab strip.
+- **Opener line must be alone.** Body text on the same line as `:::name{…}` is not parsed —
+  always start the body on the next line.
+- **Unclosed container** renders with class `directive-unclosed` (visible but unstyled) and
+  silently consumes everything to end-of-file into its body.
 
 ---
 

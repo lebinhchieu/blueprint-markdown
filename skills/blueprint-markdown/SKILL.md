@@ -1,23 +1,20 @@
 ---
 name: blueprint-markdown
 description: >
-  Author rich markdown with the blueprint-markdown directive syntax — cards, callouts,
-  columns, timelines, tabs, steps, accordions, chips (colored), icons (Google Material
-  Symbols), colored text, progress bars, line-highlighted code, and mermaid diagrams.
-  Use this skill whenever writing markdown for the blueprint-markdown viewer, or when the
-  user wants visually richer documentation, guides, release notes, status pages, or
-  onboarding docs. Also use it when the user says things like "write it nicely", "make it
-  pretty", "use cards", "add callouts", or references any of the component names above.
-  Falls back gracefully to standard markdown for plain targets (GitHub, Slack, bare .md)
-  where these directives would not render — the skill teaches you when NOT to use them too.
-  Always use this skill when authoring Claude Code Plan Mode plan files (the markdown
-  written to `~/.claude/plans/*.md`) — they are reviewed in the blueprint-markdown VS Code
-  extension and should be formatted with rich directives, never plain markdown.
+  Load BEFORE writing any blueprint-markdown directive — never author :::/::/:name[]
+  syntax from memory. The parser fails silently (a stray space or wrong colon count
+  renders as plain text, no error), so guessing means a broken doc and a redo.
+  Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
+  any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
+  timeline, progress, chip, icon, …), or "write it nicely / make it pretty / use cards /
+  add callouts".
 ---
 
 The blueprint-markdown viewer extends CommonMark with one grammar covering every rich
 component. That grammar has exactly three forms. Everything else in this skill is either
 the component catalog or the authoring judgment about when to use enhanced syntax vs plain.
+
+> **Author directives only with this skill open — never from recall.**
 
 ---
 
@@ -228,11 +225,7 @@ would, use the plain version.
 **Reuse GFM before reaching for a directive.** A two-column `:::columns` is right for a
 comparison layout; a simple list of items is right for a simple list.
 
-**Close every `:::`** block. An unclosed block consumes the rest of the document silently.
-
-**Color tokens** — `primary success warning danger info gray low` — shared across chip,
-callout, timeline, progress, button. Full palette, aliases (`green/amber/red/blue`), and hex
-syntax in `references/syntax.md`.
+**Color tokens** — `primary success warning danger info gray low`. Full palette, aliases, and hex syntax in `references/syntax.md`.
 
 ---
 
