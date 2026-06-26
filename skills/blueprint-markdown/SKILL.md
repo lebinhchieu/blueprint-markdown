@@ -229,6 +229,22 @@ comparison layout; a simple list of items is right for a simple list.
 
 ---
 
+## Validation
+
+After writing a document, run the standalone validator to catch silent failures:
+
+```bash
+node skills/blueprint-markdown/validate.mjs path/to/file.md
+```
+
+Checks: unclosed containers, unknown/typo'd names, wrong form (e.g. `:::progress`), and
+near-miss lines (`::: card` with a space, `::::name` with four colons).
+
+> **Coverage note:** block directives only (`:::container`, `::leaf`). Inline `:name[text]`
+> directives are not checked — review those manually.
+
+---
+
 ## Reference files
 
 Read these as needed — they are not loaded by default:

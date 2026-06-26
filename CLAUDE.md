@@ -57,6 +57,7 @@ src/core/
 1. Create `src/core/directives/myfeature.ts` exporting a `Record<string, DirectiveSpec>`
 2. Import and spread it inside `buildRegistry()` in `src/core/directives/index.ts`
 3. Re-run `npm run build` — the TextMate grammar regenerates automatically from the registry
+4. Add the new name(s) and form(s) to the `REGISTRY` map in `skills/blueprint-markdown/validate.mjs`
 
 ### Adding a new theme
 
