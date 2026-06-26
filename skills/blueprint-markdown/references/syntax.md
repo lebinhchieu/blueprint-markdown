@@ -5,7 +5,7 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
@@ -244,6 +244,31 @@ Edit `config.json`.
 | Attr | Values | Default |
 |------|--------|---------|
 | `title` | string | — |
+
+---
+
+### `:::revision` / `:::previous`
+
+```
+:::revision{note="Tightened the rate limit" date="2026-06-26"}
+The API accepts up to 500 requests per minute.
+
+:::previous
+The API accepts up to 1000 requests per minute.
+:::
+:::
+```
+
+**`:::revision` attributes**
+
+| Attr | Values | Default | Notes |
+|------|--------|---------|-------|
+| `note` | string | — | Description of the change; supports inline markdown |
+| `date` | string | — | Optional label shown muted below the note in the hover tooltip |
+
+**`:::previous`** is a plain `:::` container nested inside `:::revision`.
+
+For word-level change emphasis, use `==highlight==` inside the current or previous block.
 
 ---
 

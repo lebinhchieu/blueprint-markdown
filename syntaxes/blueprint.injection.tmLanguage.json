@@ -94,7 +94,7 @@
     },
     "directive-open-known": {
       "comment": "Container open with a known directive name",
-      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step|revision|previous)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"

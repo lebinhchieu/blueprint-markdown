@@ -310,6 +310,21 @@ details[open] > .details__summary::before {
 
 .details__body > :last-child { margin-bottom: 0; }
 
+/* Revision-inside badge — visible on the summary even when collapsed */
+.details__revision-badge {
+  margin-left: auto;
+  font-size: 1em;
+  color: var(--c-warning);
+  opacity: 0.55;
+  flex-shrink: 0;
+  user-select: none;
+  transition: opacity 0.15s;
+}
+
+.details__summary:hover .details__revision-badge {
+  opacity: 0.9;
+}
+
 /* Accordion: tighter grouping */
 .accordion {
   margin-bottom: var(--sp-md);
@@ -805,6 +820,143 @@ kbd {
   color: var(--c-warning);
   font-variation-settings: 'FILL' 1;
 }
+
+/* ─── Revision ───────────────────────────────────────────────────────────── */
+
+/* Invisible anchor — no border/padding/margin so current content is untouched */
+.revision {
+  position: relative;
+}
+
+/* ── Gutter change-bar ── */
+
+.revision__marker {
+  /* Span the full block height in the left gutter */
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -14px;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--c-warning);
+  /* Reset button chrome */
+  border: 0;
+  padding: 0;
+  appearance: none;
+  cursor: default;
+  transition: width 0.15s ease, opacity 0.15s ease;
+  /* Keep hint within the gutter viewport */
+  overflow: visible;
+}
+
+.revision[data-has-prev] .revision__marker {
+  cursor: pointer;
+}
+
+.revision__marker:hover,
+.revision[data-has-prev] .revision__marker:hover,
+.revision__marker:focus-visible,
+.revision__marker[aria-expanded="true"] {
+  width: 6px;
+  opacity: 1;
+  outline: none;
+}
+
+/* Scoped: inline callout — bar clears the icon (which sits left of the body) */
+.callout--inline .revision__marker {
+  left: -74px;
+}
+
+/* Scoped: timeline — bar clears the line/dot gutter */
+.timeline-event__content .revision__marker {
+  left: -8px;
+}
+
+/* ── Hover hint — matches :tooltip directive style ── */
+
+.revision__hint {
+  /* Hidden by default — pure CSS show on hover/focus */
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+  left: calc(100% + 6px);
+  top: 0;
+  min-width: 140px;
+  max-width: 280px;
+  padding: var(--sp-xs) var(--sp-sm);
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  font-size: var(--font-size-sm);
+  border-radius: var(--tooltip-radius);
+  box-shadow: var(--shadow-md);
+  white-space: normal;
+  z-index: 1000;
+  transition: opacity 0.15s, visibility 0.15s;
+}
+
+/* Arrow pointing left, toward the bar */
+.revision__hint::before {
+  content: '';
+  position: absolute;
+  top: var(--sp-sm);
+  right: 100%;
+  border: 5px solid transparent;
+  border-right-color: var(--tooltip-bg);
+}
+
+.revision__marker:hover .revision__hint,
+.revision__marker:focus-visible .revision__hint {
+  visibility: visible;
+  opacity: 1;
+}
+
+.revision__hint-note {
+  display: block;
+  font-weight: 500;
+}
+
+.revision__hint-note p { margin: 0; }
+
+.revision__hint-date {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
+/* ── Floating previous-version panel ── */
+
+@keyframes revision-panel-in {
+  from { opacity: 0; transform: translateY(-5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.revision__panel {
+  /* Fixed so it escapes any overflow:hidden ancestor (cards, tabs, etc.) */
+  position: fixed;
+  z-index: 1000;
+  /* left, width, top/bottom set by JS */
+  background: var(--bg-raised);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  overflow: auto;
+}
+
+.revision__panel[hidden] { display: none; }
+
+.revision__panel:not([hidden]) {
+  animation: revision-panel-in 0.18s ease;
+}
+
+.revision__panel-body {
+  padding: var(--sp-md);
+  border-left: var(--callout-border-width) solid var(--c-warning);
+}
+
+.revision__panel-body > :first-child { margin-top: 0; }
+.revision__panel-body > :last-child  { margin-bottom: 0; }
 
 /* ─── Fail-soft blocks ────────────────────────────────────────────────────── */
 

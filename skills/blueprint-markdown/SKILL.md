@@ -182,6 +182,17 @@ Drag the file onto `viewer.html`.
 :::
 ```
 
+**Revision** — flag a changed passage without altering how the current content looks
+```
+:::revision{note="Tightened the rate limit" date="2026-06-26"}
+The API accepts up to 500 requests per minute.
+
+:::previous
+The API accepts up to 1000 requests per minute.
+:::
+:::
+```
+
 ### Leaf blocks (::)
 
 ```

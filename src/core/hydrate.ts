@@ -6,6 +6,7 @@
  *   - Tab switching ([data-tabs] containers)
  *   - Accordion coordinated collapse ([data-accordion] containers)
  *   - File-ref copy buttons
+ *   - Revision gutter-marker click → floating previous-version popover
  *
  * Uses document-level event delegation (wired once, immune to morphdom) and
  * module-level state stores so that VS Code's morphdom patching does not
@@ -39,6 +40,11 @@ function wireOnce(): void {
   document.addEventListener('click', onDocClick)
   // `toggle` doesn't bubble — use capture phase to intercept at document level.
   document.addEventListener('toggle', onDocToggle, true)
+  // Escape or scroll closes any open revision panel.
+  document.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key === 'Escape') closeAllRevisionPanels()
+  })
+  document.addEventListener('scroll', () => closeAllRevisionPanels(), true)
 }
 
 // ─── Click handler ─────────────────────────────────────────────────────────────
@@ -76,6 +82,28 @@ function onDocClick(e: Event): void {
     }).catch(() => {
       // clipboard blocked — no-op
     })
+    return
+  }
+
+  // Revision gutter marker
+  const marker = target.closest<HTMLButtonElement>('.revision__marker')
+  if (marker) {
+    const container = marker.closest<HTMLElement>('.revision[data-has-prev]')
+    const panel = container?.querySelector<HTMLElement>('.revision__panel')
+    if (!container || !panel) return
+
+    if (!panel.hidden) {
+      closeAllRevisionPanels()
+    } else {
+      closeAllRevisionPanels()
+      openRevisionPanel(container, panel, marker)
+    }
+    return
+  }
+
+  // Click outside any revision panel → close all
+  if (!target.closest('.revision__panel')) {
+    closeAllRevisionPanels()
   }
 }
 
@@ -117,6 +145,68 @@ function restoreState(_root: HTMLElement): void {
   document.querySelectorAll<HTMLDetailsElement>('details.details').forEach((el, i) => {
     if (!detailsState.has(i)) return
     el.open = detailsState.get(i)!
+  })
+}
+
+// ─── Revision panel helpers ───────────────────────────────────────────────────
+
+/** Open a revision popover using fixed positioning (escapes any overflow:hidden ancestor). */
+function openRevisionPanel(
+  container: HTMLElement,
+  panel: HTMLElement,
+  marker: HTMLButtonElement,
+): void {
+  // Unhide first so we can measure the panel's natural height.
+  panel.hidden = false
+
+  const rect = container.getBoundingClientRect()
+  const panelH = panel.offsetHeight
+  const spaceBelow = window.innerHeight - rect.bottom
+  const spaceAbove = rect.top
+  const GAP = 8
+
+  // Measure the actual insets (panel border + body border + body padding) so the
+  // previous-version text aligns exactly with the original content's left/right
+  // edges, regardless of token values. Both divs are content-box by default.
+  const body = panel.querySelector<HTMLElement>('.revision__panel-body')
+  const ps = getComputedStyle(panel)
+  const bs = body ? getComputedStyle(body) : null
+  const padL    = bs ? parseFloat(bs.paddingLeft)      : 0
+  const padR    = bs ? parseFloat(bs.paddingRight)     : 0
+  const bdBody  = bs ? parseFloat(bs.borderLeftWidth)  : 0
+  const bdPanel = parseFloat(ps.borderLeftWidth)
+
+  // Shift the panel left so its body text starts at rect.left.
+  panel.style.left = `${rect.left - (bdPanel + bdBody + padL)}px`
+  // Make the body text width === rect.width (content-box: exclude body borders + padding).
+  panel.style.width = `${rect.width + bdBody + padL + padR}px`
+
+  if (spaceBelow >= panelH + GAP || spaceBelow >= spaceAbove) {
+    panel.style.top = `${rect.bottom + GAP}px`
+    panel.style.bottom = ''
+    panel.style.maxHeight = `${Math.max(120, spaceBelow - GAP * 2)}px`
+  } else {
+    // Anchor the panel's bottom edge just above the container.
+    panel.style.bottom = `${window.innerHeight - rect.top + GAP}px`
+    panel.style.top = ''
+    panel.style.maxHeight = `${Math.max(120, spaceAbove - GAP * 2)}px`
+  }
+
+  marker.setAttribute('aria-expanded', 'true')
+}
+
+/** Close all open revision panels and reset their inline styles. */
+function closeAllRevisionPanels(): void {
+  document.querySelectorAll<HTMLElement>('.revision__panel:not([hidden])').forEach(panel => {
+    panel.hidden = true
+    panel.style.left = ''
+    panel.style.width = ''
+    panel.style.top = ''
+    panel.style.bottom = ''
+    panel.style.maxHeight = ''
+  })
+  document.querySelectorAll<HTMLButtonElement>('.revision__marker[aria-expanded="true"]').forEach(m => {
+    m.setAttribute('aria-expanded', 'false')
   })
 }
 

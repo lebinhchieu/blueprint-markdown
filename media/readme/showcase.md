@@ -31,7 +31,12 @@ A **tip** for a smarter or faster approach. Keep it actionable.
 :::
 
 :::info
+:::revision{note="Expanded description to include definitions" date="2026-06"}
 An **info** block for background knowledge — version history, prerequisites, definitions.
+:::previous
+An **info** block for background context.
+:::
+:::
 :::
 
 :::warning{title="Check before you proceed"}
@@ -55,7 +60,13 @@ A **success** callout to confirm a completed step or a green path.
 9 carefully crafted palettes — from warm editorial to neon synthwave. Switch in one setting.
 :::
 :::card{title="Offline-first" icon=wifi_off}
+:::revision
 Fonts, icons, and Mermaid are bundled. Works without any internet connection.
+:::previous
+Hello world
+Hello world
+:::
+:::
 :::
 :::card{title="Zero config" icon=settings_suggest}
 Install the extension, open a `.md` file, press `Ctrl+Shift+V`. That's it.
@@ -112,10 +123,15 @@ code --install-extension ChieuLe.blueprint-markdown-chieu
 ```
 :::
 :::step{title="Install the Claude Code skill"}
+:::revision{note="Updated path after repo reorganisation" date="2026-05"}
 From the repo root, link the skill globally so it's available in every project:
 ```bash
 ln -s "$PWD/skills/blueprint-markdown" ~/.claude/skills/blueprint-markdown
 ```
+:::previous
+Copy the `skills/` folder into `~/.claude/skills/` manually.
+:::
+:::
 :::
 :::step{title="Open a Markdown file"}
 Open any `.md` file in VS Code, then press **`Ctrl+Shift+V`** to open the preview side-by-side.
@@ -142,7 +158,12 @@ The preview refreshes instantly.
 **New palettes.** Added Neon Synthwave, Neon Cyberpunk, Neon Vaporwave, and `auto` theme mode.
 :::
 :::event{date="Oct 2024" icon=auto_awesome color=success}
+:::revision{note="Theme count corrected after tropical-sorbet-night was added"}
 **Jewel themes.** Aurora, Jewel Garden, and Tropical Sorbet palettes. Now 9 themes total.
+:::previous
+**Jewel themes.** Aurora, Jewel Garden, and Tropical Sorbet palettes. Now 8 themes total.
+:::
+:::
 :::
 :::event{date="2025" icon=smart_toy color=warning}
 **Claude Code skill.** Companion skill teaches Claude to author directives instead of HTML artifacts.
@@ -176,8 +197,13 @@ The preview refreshes instantly.
 
 :::accordion
 :::details{title="Does this work offline?"}
+:::revision{note="Added full asset list" date="2026-04"}
 Yes. DM Sans, Playfair Display, JetBrains Mono, Material Symbols Outlined, and Mermaid are
 all bundled during `npm run build`. No requests leave the machine at preview time.
+:::previous
+Yes. All assets are bundled. No internet connection required.
+:::
+:::
 :::
 :::details{title="Will directives break if opened on GitHub?"}
 GitHub renders them as plain text — the source is still readable, just without visual styling.
@@ -190,6 +216,28 @@ file directly, or use the `add-preview-theme` Claude Code skill to generate a ne
 :::details{title="Does it conflict with other Markdown extensions?"}
 It only patches VS Code's built-in Markdown preview pipeline. It does not affect other
 preview extensions, renderers, or exporters.
+:::
+:::
+
+---
+
+## Revision — Tracked Changes
+
+:::revision{note="Updated token savings estimate after v0.1.6 benchmark" date="2026-06-26"}
+Blueprint Markdown reduces Claude output by **60–90%** compared to equivalent HTML artifacts —
+fewer tokens, faster responses, and cleaner stored context.
+:::previous
+Blueprint Markdown reduces Claude output by roughly **50%** compared to equivalent HTML artifacts.
+:::
+:::
+
+The rate limit was also revised:
+
+:::revision{note="Raised limit after infrastructure upgrade"}
+The preview renders up to **2 000 directives** per document without any performance degradation.
+
+:::previous
+The preview renders up to ==500 directives== per document without any performance degradation.
 :::
 :::
 

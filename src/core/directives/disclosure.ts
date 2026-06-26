@@ -11,7 +11,19 @@
  * :::
  */
 
-import type { DirectiveSpec } from '../types'
+import type { DirectiveSpec, ASTNode } from '../types'
+
+/** Returns true if any descendant directive node is named `revision`. */
+function hasRevisionDescendant(children: ASTNode[] | undefined): boolean {
+  if (!children) return false
+  for (const child of children) {
+    if (child.type === 'directive') {
+      if (child.name === 'revision') return true
+      if (hasRevisionDescendant(child.children)) return true
+    }
+  }
+  return false
+}
 
 export const disclosureDirectives: Record<string, DirectiveSpec> = {
   details: {
@@ -28,9 +40,14 @@ export const disclosureDirectives: Record<string, DirectiveSpec> = {
       const openAttr = isOpen ? ' open' : ''
       const body     = ctx.renderChildren(node)
 
+      // Signal that a revision is nested inside — visible even when collapsed.
+      const revBadge = hasRevisionDescendant(node.children)
+        ? `<span class="details__revision-badge material-symbols-outlined" title="Contains a revision" aria-label="Contains a revision">history</span>`
+        : ''
+
       return (
         `<details class="details"${openAttr}>` +
-        `<summary class="details__summary">${ctx.renderInline(title)}</summary>` +
+        `<summary class="details__summary">${ctx.renderInline(title)}${revBadge}</summary>` +
         `<div class="details__body">${body}</div></details>`
       )
     },

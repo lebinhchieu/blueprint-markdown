@@ -54,6 +54,9 @@ const REGISTRY = {
   step:      ['container'],
   // progress.ts
   progress:  ['leaf'],
+  // revision.ts
+  revision:  ['container'],
+  previous:  ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],
