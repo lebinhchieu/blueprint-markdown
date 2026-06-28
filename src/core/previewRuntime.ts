@@ -9,6 +9,7 @@
  */
 
 import { hydrate } from './hydrate'
+import { setupToc } from './toc'
 
 export type MermaidApi = {
   initialize: (config: Record<string, unknown>) => void
@@ -190,5 +191,6 @@ export function runShared(mermaid: MermaidApi | undefined): void {
   root.classList.add('md-output')
   const theme = applyTheme(root)
   hydrate(root)
+  setupToc(root)
   if (mermaid) void renderMermaid(root, theme, mermaid)
 }

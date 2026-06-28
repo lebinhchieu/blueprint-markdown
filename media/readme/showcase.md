@@ -30,14 +30,16 @@ A **note** for extra context. Use it for asides that don't block the reader.
 A **tip** for a smarter or faster approach. Keep it actionable.
 :::
 
-:::info
 :::revision{note="Expanded description to include definitions" date="2026-06"}
+:::info
 An **info** block for background knowledge — version history, prerequisites, definitions.
+:::
 :::previous
 An **info** block for background context.
 :::
 :::
-:::
+
+### Callouts
 
 :::warning{title="Check before you proceed"}
 A **warning** for steps that might have side effects or require care.
@@ -47,6 +49,7 @@ A **warning** for steps that might have side effects or require care.
 A **danger** callout for destructive operations — deletes, resets, breaking changes.
 :::
 
+### Callouts
 :::success{title="You're good to go"}
 A **success** callout to confirm a completed step or a green path.
 :::

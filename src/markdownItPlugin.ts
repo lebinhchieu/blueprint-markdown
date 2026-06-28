@@ -220,5 +220,97 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
     return false   // non-terminating; let other core rules run
   })
 
+  // ── Table of Contents rail ──
+  //
+  // A core rule that:
+  //   1. Assigns slug ids to every h1/h2/h3 heading_open token so they become
+  //      scroll targets (works with JS disabled too, via real #id anchors).
+  //   2. Prepends a <nav class="em-toc"> with one dot-item per heading so the
+  //      reading rail is present in the rendered HTML for both the live preview
+  //      and exported HTML artifacts.
+  //
+  // Skips docs with fewer than 2 headings — no rail needed for trivial pages.
+  md.core.ruler.push('em_toc', (state: StateCore) => {
+    if (state.inlineMode) return false
+
+    const HEADING_TAGS = new Set(['h1', 'h2', 'h3'])
+
+    // ── Pass 1: collect headings, assign ids ──
+    type HeadingEntry = { level: number; id: string; text: string }
+    const entries: HeadingEntry[] = []
+    const slugCount = new Map<string, number>()
+
+    for (let i = 0; i < state.tokens.length; i++) {
+      const tok = state.tokens[i]
+      if (tok.type !== 'heading_open' || !HEADING_TAGS.has(tok.tag)) continue
+
+      // The inline token immediately follows the heading_open token.
+      const inlineTok = state.tokens[i + 1]
+      const rawText = inlineTok?.type === 'inline' ? inlineTok.content : ''
+
+      // Strip inline markdown (bold, italic, code, etc.) for a clean text label.
+      const text = rawText.replace(/[*_`[\]()~#]/g, '').trim()
+      const base = slugify(text) || `section-${entries.length + 1}`
+
+      // Deduplicate: first occurrence keeps base slug, duplicates get -2, -3 …
+      const count = (slugCount.get(base) ?? 0) + 1
+      slugCount.set(base, count)
+      const id = count === 1 ? base : `${base}-${count}`
+
+      tok.attrSet('id', id)
+      // data-em-toc-id: a stable 0-based index owned by this extension.
+      // The runtime uses it for navigation instead of the slug, avoiding
+      // any mismatch with VS Code's own GitHub slugifier.
+      tok.attrSet('data-em-toc-id', String(entries.length))
+      entries.push({ level: parseInt(tok.tag[1], 10), id, text })
+    }
+
+    if (entries.length < 2) return false
+
+    // ── Pass 2: build <nav class="em-toc"> HTML ──
+    // .em-toc__dot-col is a fixed-width (18px) centring column so all dots —
+    // regardless of size — share the same horizontal centre line.
+    const items = entries.map((e, idx) =>
+      `<li class="em-toc__item em-toc__item--h${e.level}">` +
+      `<a href="#${e.id}" data-toc-target="${idx}">` +
+      `<span class="em-toc__label">${escapeHtml(e.text)}</span>` +
+      `<span class="em-toc__dot-col"><span class="em-toc__dot"></span></span>` +
+      `</a></li>`,
+    ).join('\n')
+
+    const nav =
+      `<nav class="em-toc" aria-label="Table of contents">` +
+      `<ol class="em-toc__list">\n${items}\n</ol>` +
+      `</nav>\n`
+
+    const navToken = new state.Token('html_block', '', 0)
+    navToken.content = nav
+    // Prepend after the theme marker (index 0) so the nav is before content.
+    state.tokens.splice(1, 0, navToken)
+
+    return false
+  })
+
   return md
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Convert heading text to a URL-safe slug. */
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, '')   // remove non-word chars (except hyphens)
+    .replace(/\s+/g, '-')       // spaces → hyphens
+    .replace(/-+/g, '-')        // collapse consecutive hyphens
+    .replace(/^-|-$/g, '')      // trim leading/trailing hyphens
+}
+
+/** Escape HTML special characters for safe attribute/text insertion. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
 }

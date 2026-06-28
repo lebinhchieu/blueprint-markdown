@@ -998,3 +998,203 @@ kbd {
   padding: 0 0.3em;
   font-size: 0.875em;
 }
+
+/* ─── Table of Contents reading rail ──────────────────────────────────────── */
+/*
+ * Layout:
+ *   .em-toc          — position:fixed right strip, 22px wide collapsed.
+ *                      overflow:hidden clips labels; expands to 260px on hover.
+ *   .em-toc__list    — flex column; items compress via flex-shrink to fit 100vh.
+ *   .em-toc__item    — flex row: [label] [dot-col]; right-aligns the dot column.
+ *   .em-toc__dot-col — fixed 18px column, centres every dot → single shared x.
+ *   .em-toc__dot     — sized by heading level (h1 10px / h2 7px / h3 5px).
+ *   .em-toc__label   — in-flow, flex:1, right-aligned text; hidden via opacity.
+ *
+ * Progress line: .em-toc__list::before runs through dot centres.
+ * JS writes --toc-progress (0–1) to the list; gradient colours the filled part.
+ */
+
+/* ── Outer container ─────────────────────────────────────────────────────── */
+
+.em-toc {
+  position: fixed;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1000;
+  /* Collapsed: only the 22px dot column is visible */
+  width: 22px;
+  max-height: calc(100vh - 2rem);
+  /* overflow:hidden clips labels when collapsed — avoids the wide invisible
+     hit-area that blocked content underneath (fixes issues #1 and #2) */
+  overflow: hidden;
+  border-radius: 11px;
+  /* Always-present transparent border so hover doesn't shift layout */
+  border: 1px solid transparent;
+  background: transparent;
+  transition: width 0.22s ease, background 0.2s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, border-radius 0.18s ease;
+}
+
+@media (max-width: 720px) { .em-toc { display: none; } }
+
+/* Expanded state: reveal labels + panel background */
+.em-toc:hover {
+  width: 260px;
+  background: var(--bg-raised);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-color);
+  border-radius: var(--radius-lg, 0.75rem);
+  overflow-y: auto;
+}
+.em-toc:hover::-webkit-scrollbar { display: none; }
+
+/* ── List ───────────────────────────────────────────────────────────────── */
+
+.em-toc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  /* Full panel width so labels lay out correctly even when the container clips */
+  min-width: 260px;
+  scrollbar-width: none;
+}
+
+/* Progress line — single vertical stroke through all dot centres.
+   JS writes --toc-progress (0–1) so the upper part becomes accent-coloured. */
+.em-toc__list::before {
+  content: '';
+  position: absolute;
+  /* right: 9px = half of the 18px dot-col, landing on the dot centre x */
+  right: 9px;
+  top: 1.25rem;
+  bottom: 1.25rem;
+  width: 1.5px;
+  background: linear-gradient(
+    var(--c-primary) calc(var(--toc-progress, 0) * 100%),
+    var(--border-color) calc(var(--toc-progress, 0) * 100%)
+  );
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* ── Items — compress to fit (Fix C) ────────────────────────────────────── */
+
+.em-toc__item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* flex-shrink:1 lets items compress when many exist — all dots stay visible */
+  flex: 0 1 1.75rem;
+  min-height: 0;
+  transition: min-height 0.18s ease;
+}
+
+/* On hover, restore readable row height (list may scroll for long docs) */
+.em-toc:hover .em-toc__item {
+  min-height: 1.75rem;
+}
+
+.em-toc__item > a {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 100%;
+  text-decoration: none;
+  color: inherit;
+  padding: 2px 2px 2px 0.75rem;
+  box-sizing: border-box;
+}
+
+/* ── Labels ─────────────────────────────────────────────────────────────── */
+
+.em-toc__label {
+  flex: 1;
+  text-align: right;
+  padding-right: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text-muted);
+  opacity: 0;
+  transition: opacity 0.18s ease, color 0.18s ease;
+}
+
+.em-toc:hover .em-toc__label { opacity: 1; }
+
+.em-toc__item.is-active .em-toc__label {
+  color: var(--c-primary);
+  font-weight: 600;
+}
+
+.em-toc__item > a:hover .em-toc__label { color: var(--text-base); }
+
+/* Staggered reveal */
+.em-toc:hover .em-toc__item:nth-child(1)   .em-toc__label { transition-delay: 0ms; }
+.em-toc:hover .em-toc__item:nth-child(2)   .em-toc__label { transition-delay: 18ms; }
+.em-toc:hover .em-toc__item:nth-child(3)   .em-toc__label { transition-delay: 34ms; }
+.em-toc:hover .em-toc__item:nth-child(4)   .em-toc__label { transition-delay: 48ms; }
+.em-toc:hover .em-toc__item:nth-child(5)   .em-toc__label { transition-delay: 60ms; }
+.em-toc:hover .em-toc__item:nth-child(6)   .em-toc__label { transition-delay: 70ms; }
+.em-toc:hover .em-toc__item:nth-child(n+7) .em-toc__label { transition-delay: 78ms; }
+
+/* ── Dot column — fixed 18px for consistent line alignment (Fix #4) ─────── */
+
+.em-toc__dot-col {
+  flex-shrink: 0;
+  width: 18px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* Sits above the connecting line */
+  z-index: 1;
+}
+
+/* ── Dot sizes per heading level ────────────────────────────────────────── */
+
+.em-toc__item--h1 { --_dot-size: 10px; }
+.em-toc__item--h2 { --_dot-size:  7px; }
+.em-toc__item--h3 { --_dot-size:  5px; }
+
+.em-toc__dot {
+  display: block;
+  flex-shrink: 0;
+  width: var(--_dot-size, 7px);
+  height: var(--_dot-size, 7px);
+  border-radius: 50%;
+  /* Use text-faint so dots have visible contrast on all theme backgrounds */
+  background: var(--text-faint);
+  border: 1.5px solid var(--text-faint);
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease,
+              box-shadow 0.18s ease, opacity 0.18s ease;
+}
+
+/* Passed dot */
+.em-toc__item.is-passed .em-toc__dot {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  opacity: 0.55;
+}
+
+/* Active dot */
+.em-toc__item.is-active .em-toc__dot {
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  transform: scale(1.4);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 22%, transparent);
+  opacity: 1;
+}
+
+/* Hover feedback on dot */
+.em-toc__item > a:hover .em-toc__dot {
+  transform: scale(1.25);
+  border-color: var(--c-primary);
+}
