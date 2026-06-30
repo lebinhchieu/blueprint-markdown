@@ -1,0 +1,74 @@
+/* ─── Neon Synthwave theme (cyan + magenta on blue-black) ───────────────── */
+
+body[data-em-theme="neon-synthwave"],
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) {
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(255, 46, 136, 0.16), transparent 55%),
+    radial-gradient(120% 80% at 50% 110%, rgba(0, 229, 255, 0.12), transparent 55%),
+    linear-gradient(165deg, #0a0a16 0%, #140a20 45%, #0a0e1c 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #00e5ff;
+  --c-primary-bg:   #07232b;
+  --c-primary-text: #6df3ff;
+
+  --c-success:      #39ff8b;
+  --c-success-bg:   #072214;
+  --c-success-text: #8effc0;
+
+  --c-warning:      #ffd23f;
+  --c-warning-bg:   #2a2207;
+  --c-warning-text: #ffe588;
+
+  --c-danger:       #ff2e88;
+  --c-danger-bg:    #2b0a1a;
+  --c-danger-text:  #ff84b8;
+
+  --c-info:         #4d9fff;
+  --c-info-bg:      #0a1a2e;
+  --c-info-text:    #93c4ff;
+
+  --c-gray:         #8a8fb0;
+  --c-gray-bg:      #1a1b2a;
+  --c-gray-text:    #c2c6e0;
+
+  --c-low:          #c77dff;
+  --c-low-bg:       #1c1030;
+  --c-low-text:     #e0b8ff;
+
+  --bg-base:    #0a0a14;
+  --bg-surface: #12121f;
+  --bg-raised:  #16162a;
+  --bg-overlay: #1e1e34;
+
+  --text-base:     #e8ecff;
+  --text-muted:    #8a8fb0;
+  --text-faint:    #4a4e6a;
+  --text-on-solid: #06060c;
+
+  --border-color:       #2a2a44;
+  --border-color-muted: #1c1c30;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.50), 0 0 8px  rgba(0,229,255,.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.55), 0 0 18px rgba(0,229,255,.10);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,.65), 0 0 36px rgba(255,46,136,.12);
+
+  --code-bg:     #0d0d18;
+  --code-border: #2a2a44;
+  --code-hl-bg:  rgba(0, 229, 255, 0.10);
+
+  --tooltip-bg:   #e8ecff;
+  --tooltip-text: #0a0a14;
+}
+
+body[data-em-theme="neon-synthwave"] .card,
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="neon-synthwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}

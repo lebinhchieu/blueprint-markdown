@@ -256,6 +256,18 @@ ${hljsTropicalSorbetNightScoped}
 fs.writeFileSync('media/hljs.css', hljsCss)
 console.log('Wrote: media/hljs.css')
 
+// ─── Step 3.1: Regenerate media/em-theme.css from media/themes/*.css ─────────
+
+{
+  const THEME_ORDER = [
+    'dark', 'neon-synthwave', 'neon-cyberpunk', 'neon-vaporwave',
+    'aurora', 'jewel-garden', 'tropical-sorbet', 'tropical-sorbet-night',
+  ]
+  const parts = THEME_ORDER.map(name => fs.readFileSync(`media/themes/${name}.css`, 'utf8'))
+  fs.writeFileSync('media/em-theme.css', '/* AUTO-GENERATED — edit files in media/themes/ instead */\n\n' + parts.join('\n'))
+  console.log('Wrote: media/em-theme.css')
+}
+
 // ─── Step 3.5: Generate TextMate injection grammar ───────────────────────────
 // Bundle the directive registry to a temp CJS file so we can enumerate
 // known directive names (bucketed by form) at build time — zero drift.
@@ -435,15 +447,47 @@ console.log('Wrote: media/hljs.css')
   console.log(`Wrote: ${grammarPath}`)
 }
 
-// ─── Step 3.75: Assemble minified export-styles.css ─────────────────────────
+// ─── Step 3.75: Assemble minified export-styles CSS (combined + per-theme) ───
 
 {
-  const EXPORT_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css', 'em-theme.css', 'hljs.css']
-  const rawCss = EXPORT_CSS.map(f => fs.readFileSync(`media/${f}`, 'utf8')).join('\n')
+  const BASE_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css']
+  const baseCss = BASE_CSS.map(f => fs.readFileSync(`media/${f}`, 'utf8')).join('\n')
   const fontsCss = fs.readFileSync('media/fonts.css', 'utf8')
     .replace(/@font-face\s*\{[^}]*\}\s*/g, '')
-  const { code: minCss } = await esbuild.transform(rawCss + '\n' + fontsCss, { loader: 'css', minify: true })
-  fs.writeFileSync('dist/export-styles.css', minCss)
+
+  // hljs sections keyed by usage group
+  const hljs = {
+    light: hljsLight,
+    dark: hljsDarkScoped,
+    neon: hljsNeonScoped,
+    tsn: hljsTropicalSorbetNightScoped,
+  }
+
+  const THEMES = [
+    { name: 'light',                 themeFile: null,                        hljs: [hljs.light] },
+    { name: 'dark',                  themeFile: 'dark.css',                  hljs: [hljs.light, hljs.dark] },
+    { name: 'neon-synthwave',        themeFile: 'neon-synthwave.css',        hljs: [hljs.light, hljs.neon] },
+    { name: 'neon-cyberpunk',        themeFile: 'neon-cyberpunk.css',        hljs: [hljs.light, hljs.neon] },
+    { name: 'neon-vaporwave',        themeFile: 'neon-vaporwave.css',        hljs: [hljs.light, hljs.neon] },
+    { name: 'aurora',                themeFile: 'aurora.css',                hljs: [hljs.light] },
+    { name: 'jewel-garden',          themeFile: 'jewel-garden.css',          hljs: [hljs.light] },
+    { name: 'tropical-sorbet',       themeFile: 'tropical-sorbet.css',       hljs: [hljs.light] },
+    { name: 'tropical-sorbet-night', themeFile: 'tropical-sorbet-night.css', hljs: [hljs.light, hljs.tsn] },
+  ]
+
+  for (const t of THEMES) {
+    const themeCss = t.themeFile ? fs.readFileSync(`media/themes/${t.themeFile}`, 'utf8') : ''
+    const raw = [baseCss, themeCss, ...t.hljs, fontsCss].join('\n')
+    const { code } = await esbuild.transform(raw, { loader: 'css', minify: true })
+    fs.writeFileSync(`dist/export-styles-${t.name}.css`, code)
+    console.log(`Wrote: dist/export-styles-${t.name}.css`)
+  }
+
+  // Combined file (all themes) kept for the VS Code preview static stylesheet list
+  const allThemesCss = fs.readFileSync('media/em-theme.css', 'utf8')
+  const fullRaw = [baseCss, allThemesCss, hljs.light, hljs.dark, hljs.neon, hljs.tsn, fontsCss].join('\n')
+  const { code: fullMin } = await esbuild.transform(fullRaw, { loader: 'css', minify: true })
+  fs.writeFileSync('dist/export-styles.css', fullMin)
   console.log('Wrote: dist/export-styles.css')
 }
 

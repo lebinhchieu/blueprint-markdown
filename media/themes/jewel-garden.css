@@ -1,0 +1,50 @@
+/* ─── Jewel Garden theme (rich gems — amethyst + emerald on ivory) ─────────── */
+
+body[data-em-theme="jewel-garden"],
+body:has(.em-theme-config[data-em-theme="jewel-garden"]) {
+  background:
+    radial-gradient(110% 80% at 12%  0%,  rgba(124, 58, 237, .10), transparent 55%),
+    radial-gradient(110% 80% at 88%  5%,  rgba(  5,150, 105, .09), transparent 55%),
+    radial-gradient(120% 90% at 75% 100%, rgba( 29, 78, 216, .08), transparent 55%),
+    radial-gradient(100% 80% at  8% 100%, rgba(220, 38,  38, .06), transparent 55%),
+    linear-gradient(165deg, #fdfbf3 0%, #f8f4ea 50%, #fdfaf0 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #7c3aed;   --c-primary-bg:   #efe6ff;   --c-primary-text: #5b21b6;
+  --c-success:      #059669;   --c-success-bg:   #d3f3e6;   --c-success-text: #036c4b;
+  --c-warning:      #d97706;   --c-warning-bg:   #fbeccb;   --c-warning-text: #9a5208;
+  --c-danger:       #dc2626;   --c-danger-bg:    #fbe0de;   --c-danger-text:  #991b1b;
+  --c-info:         #1d4ed8;   --c-info-bg:      #dde6fb;   --c-info-text:    #1638a8;
+  --c-gray:         #7a7363;   --c-gray-bg:      #ebe6d9;   --c-gray-text:    #443f33;
+  --c-low:          #ca8a04;   --c-low-bg:       #f7eec2;   --c-low-text:     #845a04;
+
+  --bg-base:    #fdfbf4;
+  --bg-surface: #f4f0e3;
+  --bg-raised:  #fffefb;
+  --bg-overlay: #ece6d6;
+
+  --text-base:     #2b2417;
+  --text-muted:    #6f6450;
+  --text-faint:    #b4a98f;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #e1d9c5;
+  --border-color-muted: #efe9da;
+
+  --shadow-sm: 0 1px 2px  rgba( 60, 45, 20, .07);
+  --shadow-md: 0 4px 14px rgba( 60, 45, 20, .11);
+  --shadow-lg: 0 10px 30px rgba(60, 45, 20, .17);
+
+  --code-bg:     #f4f0e3;
+  --code-border: #e1d9c5;
+  --code-hl-bg:  rgba(124, 58, 237, .08);
+
+  --tooltip-bg:   #2b2417;
+  --tooltip-text: #fdfbf4;
+}
+
+body[data-em-theme="jewel-garden"] .card,
+body:has(.em-theme-config[data-em-theme="jewel-garden"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}

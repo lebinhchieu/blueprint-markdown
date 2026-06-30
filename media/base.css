@@ -309,3 +309,37 @@ body {
   accent-color: var(--c-primary);
   margin: 0;
 }
+
+/* ─── Typography overrides ────────────────────────────────────────────────── */
+
+.md-output a {
+  color: var(--c-primary);
+}
+
+.md-output blockquote {
+  border-left-color: var(--c-primary);
+  color: var(--text-muted);
+}
+
+.md-output :not(pre) > code {
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  color: var(--text-base);
+}
+
+.md-output a.file-ref {
+  text-decoration: none;
+  color: inherit;
+}
+
+.md-output a.file-ref > code {
+  color: var(--c-primary);
+  background: var(--code-bg);
+  border-color: var(--code-border);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.md-output a.file-ref:hover > code {
+  background: var(--code-hl-bg);
+}

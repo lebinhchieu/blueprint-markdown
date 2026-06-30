@@ -6,7 +6,7 @@
  * portable .html file that anyone can open in a browser without the extension.
  *
  * What goes into the output file:
- *   - dist/export-styles.css (all media CSS, minified, @font-face stripped) inlined.
+ *   - dist/export-styles-{theme}.css (active-theme CSS only, minified, @font-face stripped) inlined.
  *   - Fonts (DM Sans, Playfair Display, JetBrains Mono, Material Symbols) loaded
  *     from Google Fonts CDN.
  *   - dist/export-client.js (hydrate + mermaid-init only, ~7 KB) inlined.
@@ -93,14 +93,14 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
   // ── 4. Build inlined CSS ──────────────────────────────────────────────────────
   const extPath = context.extensionPath
 
-  // export-styles.css is pre-built and minified by esbuild.mjs (Step 3.75).
-  // It includes all media CSS files with @font-face blocks stripped.
+  // export-styles-{theme}.css is pre-built and minified by esbuild.mjs (Step 3.75).
+  // Contains base CSS + active theme overrides + matching hljs variant only.
   let inlinedCss = ''
   try {
-    inlinedCss = readExtFile(extPath, 'dist', 'export-styles.css')
+    inlinedCss = readExtFile(extPath, 'dist', `export-styles-${theme}.css`)
   } catch {
     vscode.window.showErrorMessage(
-      'Blueprint Markdown: dist/export-styles.css not found — run "npm run build" first.',
+      `Blueprint Markdown: dist/export-styles-${theme}.css not found — run "npm run build" first.`,
     )
     return
   }

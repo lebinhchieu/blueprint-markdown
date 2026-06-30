@@ -1,0 +1,46 @@
+/* ─── Tropical Sorbet Night theme (sorbet candy on warm cocoa) ──────────────── */
+
+body[data-em-theme="tropical-sorbet-night"],
+body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) {
+  background:
+    radial-gradient(120% 90% at  8%   0%, rgba(255,111,181,.14), transparent 55%),
+    radial-gradient(120% 90% at 92%   6%, rgba( 70,215,196,.12), transparent 55%),
+    radial-gradient(120% 90% at 80% 100%, rgba(199,146,234,.12), transparent 55%),
+    radial-gradient(110% 90% at  5% 100%, rgba(255,165, 82,.10), transparent 55%),
+    linear-gradient(160deg, #2B1E1B 0%, #241917 55%, #2e211d 100%);
+  background-attachment: fixed;
+
+  --c-primary:  #FF7A6B;  --c-primary-bg: #3a201c;  --c-primary-text: #ffa195;
+  --c-success:  #A9DC6B;  --c-success-bg: #20290f;  --c-success-text: #c4e996;
+  --c-warning:  #FFA552;  --c-warning-bg: #341f0d;  --c-warning-text: #ffc185;
+  --c-danger:   #FF6B7E;  --c-danger-bg:  #371319;  --c-danger-text:  #ff97a4;
+  --c-info:     #46D7C4;  --c-info-bg:    #07241f;  --c-info-text:    #82ead9;
+  --c-gray:     #B6A08E;  --c-gray-bg:    #322420;  --c-gray-text:    #d8c4b4;
+  --c-low:      #FFD45E;  --c-low-bg:     #322607;  --c-low-text:     #ffe492;
+
+  --bg-base: #2B1E1B; --bg-surface: #34251f; --bg-raised: #3d2c25; --bg-overlay: #4a352f;
+
+  --text-base: #F5E6D8; --text-muted: #c2a892; --text-faint: #806656; --text-on-solid: #2B1E1B;
+
+  --border-color: #4d3930; --border-color-muted: #3a2a24;
+
+  --shadow-sm:  0 1px 2px  rgba(0,0,0,.45);
+  --shadow-md:  0 4px 14px rgba(0,0,0,.55);
+  --shadow-lg:  0 10px 30px rgba(0,0,0,.65);
+
+  --code-bg: #241917; --code-border: #4d3930; --code-hl-bg: rgba(255,122,107,.12);
+
+  --tooltip-bg: #F5E6D8; --tooltip-text: #2B1E1B;
+}
+
+body[data-em-theme="tropical-sorbet-night"] .card,
+body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="tropical-sorbet-night"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}

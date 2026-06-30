@@ -1,0 +1,74 @@
+/* ─── Neon Vaporwave theme (purple + pink on violet-black) ───────────────── */
+
+body[data-em-theme="neon-vaporwave"],
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) {
+  background:
+    radial-gradient(110% 80% at 15% 0%, rgba(199, 125, 255, 0.18), transparent 55%),
+    radial-gradient(110% 80% at 85% 100%, rgba(255, 93, 143, 0.14), transparent 55%),
+    linear-gradient(160deg, #150f22 0%, #1d1133 50%, #140f20 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #c77dff;
+  --c-primary-bg:   #1c1030;
+  --c-primary-text: #e0b8ff;
+
+  --c-success:      #80ffdb;
+  --c-success-bg:   #082a22;
+  --c-success-text: #b3ffec;
+
+  --c-warning:      #ffd6a5;
+  --c-warning-bg:   #2a1d0e;
+  --c-warning-text: #ffe6c7;
+
+  --c-danger:       #ff5d8f;
+  --c-danger-bg:    #2b0e1a;
+  --c-danger-text:  #ff9bbb;
+
+  --c-info:         #7aa2ff;
+  --c-info-bg:      #101a2e;
+  --c-info-text:    #b0c6ff;
+
+  --c-gray:         #9a8fb0;
+  --c-gray-bg:      #1e1a2a;
+  --c-gray-text:    #cfc6e0;
+
+  --c-low:          #fdffb6;
+  --c-low-bg:       #24220c;
+  --c-low-text:     #feffd1;
+
+  --bg-base:    #14101f;
+  --bg-surface: #1c1730;
+  --bg-raised:  #221c38;
+  --bg-overlay: #2c2548;
+
+  --text-base:     #ece6ff;
+  --text-muted:    #9a8fb0;
+  --text-faint:    #5a5278;
+  --text-on-solid: #0a0814;
+
+  --border-color:       #322a4e;
+  --border-color-muted: #221c38;
+
+  --shadow-sm: 0 1px 2px rgba(0,0,0,.45), 0 0 8px  rgba(199,125,255,.10);
+  --shadow-md: 0 4px 16px rgba(0,0,0,.50), 0 0 18px rgba(199,125,255,.12);
+  --shadow-lg: 0 10px 32px rgba(0,0,0,.60), 0 0 36px rgba(255,93,143,.14);
+
+  --code-bg:     #16121f;
+  --code-border: #322a4e;
+  --code-hl-bg:  rgba(199, 125, 255, 0.12);
+
+  --tooltip-bg:   #ece6ff;
+  --tooltip-text: #14101f;
+}
+
+body[data-em-theme="neon-vaporwave"] .card,
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="neon-vaporwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}

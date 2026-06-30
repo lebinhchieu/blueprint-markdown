@@ -1,13 +1,4 @@
-/**
- * em-theme.css — Theme overrides for Enhanced Markdown Preview.
- *
- * The theme is driven by `blueprintMarkdown.theme` (light | dark | auto | neon-*).
- * preview.js reads the injected <div class="em-theme-config" data-em-theme="…">
- * and stamps body[data-em-theme="…"] so the matching block below activates.
- *
- * Light (default) tokens live in tokens.css :root — no redefinition here.
- * This file only adds overrides for dark and neon themes.
- */
+/* AUTO-GENERATED — edit files in media/themes/ instead */
 
 /* ─── Dark theme ─────────────────────────────────────────────────────────── */
 
@@ -64,6 +55,12 @@ body:has(.em-theme-config[data-em-theme="dark"]) {
 
   --tooltip-bg:   #f0e8d8;
   --tooltip-text: #1c1914;
+}
+
+body[data-em-theme="dark"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="dark"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
 }
 
 /* ─── Neon Synthwave theme (cyan + magenta on blue-black) ───────────────── */
@@ -129,6 +126,18 @@ body:has(.em-theme-config[data-em-theme="neon-synthwave"]) {
   --tooltip-text: #0a0a14;
 }
 
+body[data-em-theme="neon-synthwave"] .card,
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="neon-synthwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}
+
 /* ─── Neon Cyberpunk theme (electric green on black) ─────────────────────── */
 
 body[data-em-theme="neon-cyberpunk"],
@@ -190,6 +199,18 @@ body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) {
 
   --tooltip-bg:   #d6ffd6;
   --tooltip-text: #050505;
+}
+
+body[data-em-theme="neon-cyberpunk"] .card,
+body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="neon-cyberpunk"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
 }
 
 /* ─── Neon Vaporwave theme (purple + pink on violet-black) ───────────────── */
@@ -255,6 +276,18 @@ body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) {
   --tooltip-text: #14101f;
 }
 
+body[data-em-theme="neon-vaporwave"] .card,
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .card {
+  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="neon-vaporwave"] .md-output mark,
+body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .md-output mark {
+  background: #3a2008;
+  color: #fde68a;
+}
+
 /* ─── Aurora theme (iridescent orchid pastels on pearl white) ────────────── */
 
 body[data-em-theme="aurora"],
@@ -298,6 +331,12 @@ body:has(.em-theme-config[data-em-theme="aurora"]) {
 
   --tooltip-bg:   #2a2342;
   --tooltip-text: #f7f5ff;
+}
+
+body[data-em-theme="aurora"] .card,
+body:has(.em-theme-config[data-em-theme="aurora"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
 }
 
 /* ─── Jewel Garden theme (rich gems — amethyst + emerald on ivory) ─────────── */
@@ -345,6 +384,12 @@ body:has(.em-theme-config[data-em-theme="jewel-garden"]) {
   --tooltip-text: #fdfbf4;
 }
 
+body[data-em-theme="jewel-garden"] .card,
+body:has(.em-theme-config[data-em-theme="jewel-garden"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}
+
 /* ─── Tropical Sorbet theme (bright coral + citrus candy on cream) ──────────── */
 
 body[data-em-theme="tropical-sorbet"],
@@ -390,6 +435,12 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) {
   --tooltip-text: #fffdf6;
 }
 
+body[data-em-theme="tropical-sorbet"] .card,
+body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}
+
 /* ─── Tropical Sorbet Night theme (sorbet candy on warm cocoa) ──────────────── */
 
 body[data-em-theme="tropical-sorbet-night"],
@@ -425,84 +476,14 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) {
   --tooltip-bg: #F5E6D8; --tooltip-text: #2B1E1B;
 }
 
-/* ─── Fancy light themes — soft card gradient sheen ─────────────────────────── */
-
-body[data-em-theme="aurora"] .card,
-body:has(.em-theme-config[data-em-theme="aurora"]) .card,
-body[data-em-theme="jewel-garden"] .card,
-body:has(.em-theme-config[data-em-theme="jewel-garden"]) .card,
-body[data-em-theme="tropical-sorbet"] .card,
-body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) .card {
-  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
-  border-color: var(--border-color);
-}
-
-/* ─── Neon themes — shared fancy overrides ───────────────────────────────── */
-
-/* Cards: faint gradient sheen from overlay → raised; solid tokens keep Mermaid safe */
-body[data-em-theme^="neon-"] .card,
-body:has(.em-theme-config[data-em-theme^="neon-"]) .card {
-  background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
-  border-color: var(--border-color);
-}
-
 body[data-em-theme="tropical-sorbet-night"] .card,
 body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) .card {
   background: linear-gradient(155deg, var(--bg-overlay) 0%, var(--bg-raised) 70%);
   border-color: var(--border-color);
 }
 
-/* ─── Typography overrides ────────────────────────────────────────────────── */
-
-/* Make VS Code preview links use our primary colour */
-.md-output a {
-  color: var(--c-primary);
-}
-
-/* Blockquote accent */
-.md-output blockquote {
-  border-left-color: var(--c-primary);
-  color: var(--text-muted);
-}
-
-/* Inline code inside directive bodies */
-.md-output :not(pre) > code {
-  background: var(--code-bg);
-  border: 1px solid var(--code-border);
-  color: var(--text-base);
-}
-
-/* Mark / highlight — dark theme override
-   (base.css uses [data-theme="dark"]; we map to our data-em-theme attribute) */
-body[data-em-theme="dark"] .md-output mark,
-body:has(.em-theme-config[data-em-theme="dark"]) .md-output mark,
-body[data-em-theme="neon-synthwave"] .md-output mark,
-body:has(.em-theme-config[data-em-theme="neon-synthwave"]) .md-output mark,
-body[data-em-theme="neon-cyberpunk"] .md-output mark,
-body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) .md-output mark,
-body[data-em-theme="neon-vaporwave"] .md-output mark,
-body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) .md-output mark,
 body[data-em-theme="tropical-sorbet-night"] .md-output mark,
 body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) .md-output mark {
   background: #3a2008;
   color: #fde68a;
-}
-
-
-/* File-ref links — same look as the old code.file-ref, but an <a> */
-.md-output a.file-ref {
-  text-decoration: none;
-  color: inherit;
-}
-
-.md-output a.file-ref > code {
-  color: var(--c-primary);
-  background: var(--code-bg);
-  border-color: var(--code-border);
-  cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
-}
-
-.md-output a.file-ref:hover > code {
-  background: var(--code-hl-bg);
 }

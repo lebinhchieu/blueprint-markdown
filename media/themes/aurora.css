@@ -1,0 +1,50 @@
+/* ─── Aurora theme (iridescent orchid pastels on pearl white) ────────────── */
+
+body[data-em-theme="aurora"],
+body:has(.em-theme-config[data-em-theme="aurora"]) {
+  background:
+    radial-gradient(120% 80% at 15%  0%,  rgba(139, 92, 246, .10), transparent 55%),
+    radial-gradient(110% 80% at 90%  8%,  rgba( 59,158, 255, .09), transparent 55%),
+    radial-gradient(120% 90% at 75% 100%, rgba( 16,185, 129, .08), transparent 55%),
+    radial-gradient(100% 80% at  8% 100%, rgba(244, 63,  94, .07), transparent 55%),
+    linear-gradient(165deg, #f9f7ff 0%, #f3f0fc 50%, #fbf6ff 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #8b5cf6;   --c-primary-bg:   #efe9ff;   --c-primary-text: #5b21b6;
+  --c-success:      #10b981;   --c-success-bg:   #d6f7ec;   --c-success-text: #047857;
+  --c-warning:      #f59e0b;   --c-warning-bg:   #fdf0d5;   --c-warning-text: #b45309;
+  --c-danger:       #f43f5e;   --c-danger-bg:    #fde4ea;   --c-danger-text:  #be123c;
+  --c-info:         #3b9eff;   --c-info-bg:      #dcefff;   --c-info-text:    #1d6fd6;
+  --c-gray:         #8b85a8;   --c-gray-bg:      #ebe8f3;   --c-gray-text:    #4a4564;
+  --c-low:          #eab308;   --c-low-bg:       #faf3cf;   --c-low-text:     #a16207;
+
+  --bg-base:    #f7f5ff;
+  --bg-surface: #eee9fb;
+  --bg-raised:  #fdfcff;
+  --bg-overlay: #e8e1f8;
+
+  --text-base:     #2a2342;
+  --text-muted:    #6f6593;
+  --text-faint:    #b3aacf;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #e3ddf2;
+  --border-color-muted: #efeafb;
+
+  --shadow-sm: 0 1px 2px  rgba( 80, 60, 140, .07);
+  --shadow-md: 0 4px 14px rgba( 80, 60, 140, .10);
+  --shadow-lg: 0 10px 30px rgba(80, 60, 140, .16);
+
+  --code-bg:    #f1eefb;
+  --code-border: #e3ddf2;
+  --code-hl-bg: rgba(139, 92, 246, .08);
+
+  --tooltip-bg:   #2a2342;
+  --tooltip-text: #f7f5ff;
+}
+
+body[data-em-theme="aurora"] .card,
+body:has(.em-theme-config[data-em-theme="aurora"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}

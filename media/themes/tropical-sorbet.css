@@ -1,0 +1,50 @@
+/* ─── Tropical Sorbet theme (bright coral + citrus candy on cream) ──────────── */
+
+body[data-em-theme="tropical-sorbet"],
+body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) {
+  background:
+    radial-gradient(110% 80% at 10%  0%,  rgba(251, 90, 140, .12), transparent 55%),
+    radial-gradient(110% 80% at 90%  8%,  rgba(  6,182, 212, .10), transparent 55%),
+    radial-gradient(120% 90% at 75% 100%, rgba(245,197,  24, .10), transparent 55%),
+    radial-gradient(100% 80% at  5% 100%, rgba( 34,197,  94, .08), transparent 55%),
+    linear-gradient(160deg, #fffdf6 0%, #fef6ee 50%, #fffaf4 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #fb5a8c;   --c-primary-bg:   #ffe1ec;   --c-primary-text: #c11e54;
+  --c-success:      #22c55e;   --c-success-bg:   #d8f7e2;   --c-success-text: #15803d;
+  --c-warning:      #fb923c;   --c-warning-bg:   #ffe9d4;   --c-warning-text: #c2410c;
+  --c-danger:       #ef4444;   --c-danger-bg:    #fde0e0;   --c-danger-text:  #b91c1c;
+  --c-info:         #06b6d4;   --c-info-bg:      #d2f2f7;   --c-info-text:    #0e7490;
+  --c-gray:         #8a7d72;   --c-gray-bg:      #f0e7df;   --c-gray-text:    #4c4138;
+  --c-low:          #eab308;   --c-low-bg:       #fbf1c8;   --c-low-text:     #a16207;
+
+  --bg-base:    #fffdf6;
+  --bg-surface: #fdf1e6;
+  --bg-raised:  #fef9f5;
+  --bg-overlay: #fde3d6;
+
+  --text-base:     #33261f;
+  --text-muted:    #8a6f5f;
+  --text-faint:    #c9b3a4;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #f3e3d6;
+  --border-color-muted: #faece1;
+
+  --shadow-sm: 0 1px 2px  rgba(150, 70,  50, .07);
+  --shadow-md: 0 4px 14px rgba(150, 70,  50, .11);
+  --shadow-lg: 0 10px 30px rgba(150, 70, 50, .16);
+
+  --code-bg:     #fdf1e6;
+  --code-border: #f3e3d6;
+  --code-hl-bg:  rgba(251, 90, 140, .08);
+
+  --tooltip-bg:   #33261f;
+  --tooltip-text: #fffdf6;
+}
+
+body[data-em-theme="tropical-sorbet"] .card,
+body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}
