@@ -435,6 +435,18 @@ console.log('Wrote: media/hljs.css')
   console.log(`Wrote: ${grammarPath}`)
 }
 
+// ─── Step 3.75: Assemble minified export-styles.css ─────────────────────────
+
+{
+  const EXPORT_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css', 'em-theme.css', 'hljs.css']
+  const rawCss = EXPORT_CSS.map(f => fs.readFileSync(`media/${f}`, 'utf8')).join('\n')
+  const fontsCss = fs.readFileSync('media/fonts.css', 'utf8')
+    .replace(/@font-face\s*\{[^}]*\}\s*/g, '')
+  const { code: minCss } = await esbuild.transform(rawCss + '\n' + fontsCss, { loader: 'css', minify: true })
+  fs.writeFileSync('dist/export-styles.css', minCss)
+  console.log('Wrote: dist/export-styles.css')
+}
+
 // ─── Step 4: esbuild bundles ─────────────────────────────────────────────────
 
 const sharedConfig = {

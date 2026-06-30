@@ -6,9 +6,9 @@
  * portable .html file that anyone can open in a browser without the extension.
  *
  * What goes into the output file:
- *   - All media/*.css files inlined in a <style> tag.
- *   - fonts.css with its @font-face blocks stripped; fonts (DM Sans, Playfair
- *     Display, JetBrains Mono, Material Symbols) loaded from Google Fonts CDN.
+ *   - dist/export-styles.css (all media CSS, minified, @font-face stripped) inlined.
+ *   - Fonts (DM Sans, Playfair Display, JetBrains Mono, Material Symbols) loaded
+ *     from Google Fonts CDN.
  *   - dist/export-client.js (hydrate + mermaid-init only, ~7 KB) inlined.
  *   - A mermaid CDN <script> injected *only* when the doc contains a diagram.
  *   - Syntax highlighting is server-rendered (hljs); no client JS needed for it.
@@ -27,17 +27,6 @@ import * as path from 'path'
 import MarkdownIt from 'markdown-it'
 import { installEnhancedMarkdown } from '../markdownItPlugin'
 
-// CSS files to inline, in manifest order.
-// fonts.css is handled separately (strip @font-face, replace with CDN).
-const CSS_FILES = [
-  'reset.css',
-  'tokens.css',
-  'base.css',
-  'components.css',
-  'em-theme.css',
-  'hljs.css',
-]
-
 // Google Fonts URL covering all four families used by the extension.
 const GOOGLE_FONTS_URL =
   'https://fonts.googleapis.com/css2?' +
@@ -46,13 +35,6 @@ const GOOGLE_FONTS_URL =
   '&family=JetBrains+Mono:wght@400;500' +
   '&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200' +
   '&display=swap'
-
-/** Strip all @font-face { … } blocks from a CSS string. */
-function stripFontFace(css: string): string {
-  // Matches @font-face { ... } including nested braces (there are none in practice,
-  // but be safe). The regex removes the block plus any surrounding whitespace.
-  return css.replace(/@font-face\s*\{[^}]*\}\s*/g, '')
-}
 
 /** Escape </script occurrences so the JS can be safely inlined. */
 function escapeScriptClose(js: string): string {
@@ -66,14 +48,30 @@ function readExtFile(extensionPath: string, ...parts: string[]): string {
 
 export async function exportToHtml(context: vscode.ExtensionContext): Promise<void> {
   // ── 1. Resolve active markdown document ──────────────────────────────────────
-  const editor = vscode.window.activeTextEditor
-  if (!editor || editor.document.languageId !== 'markdown') {
-    vscode.window.showErrorMessage(
-      'Blueprint Markdown: No Markdown file is active. Open and focus a .md file first.',
+  // Fast path: a markdown text editor has focus.
+  // Fallback: the preview panel is focused but the source editor is still visible.
+  let document: vscode.TextDocument | undefined
+  const activeEditor = vscode.window.activeTextEditor
+  if (activeEditor?.document.languageId === 'markdown') {
+    document = activeEditor.document
+  } else {
+    const visible = vscode.window.visibleTextEditors.filter(
+      e => e.document.languageId === 'markdown',
     )
-    return
+    if (visible.length === 1) {
+      document = visible[0].document
+    } else if (visible.length > 1) {
+      vscode.window.showErrorMessage(
+        'Blueprint Markdown: Multiple Markdown files are open. Focus the one you want to export.',
+      )
+      return
+    } else {
+      vscode.window.showErrorMessage(
+        'Blueprint Markdown: No Markdown file is open. Open a .md file first.',
+      )
+      return
+    }
   }
-  const document = editor.document
 
   // ── 2. Render the markdown body ───────────────────────────────────────────────
   // Create a fresh markdown-it instance and install the same plugin as the preview.
@@ -82,34 +80,30 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
   const md = installEnhancedMarkdown(
     new MarkdownIt({ html: true, linkify: true }),
   )
-  const body = md.render(document.getText())
+  const rendered = md.render(document.getText())
 
   // ── 3. Extract theme from the injected marker ─────────────────────────────────
-  const themeMatch = body.match(/data-em-theme="([^"]+)"/)
+  const themeMatch = rendered.match(/data-em-theme="([^"]+)"/)
   const theme = themeMatch ? themeMatch[1] : 'light'
+
+  // Strip the hidden em-theme-config marker div — it's only needed by the live
+  // preview runtime. The export stamps the theme directly on <body data-em-theme>.
+  const body = rendered.replace(/<div class="em-theme-config"[^>]*hidden[^>]*><\/div>\n?/, '')
 
   // ── 4. Build inlined CSS ──────────────────────────────────────────────────────
   const extPath = context.extensionPath
 
-  const mainCss = CSS_FILES.map(file => {
-    try {
-      return readExtFile(extPath, 'media', file)
-    } catch {
-      // Non-fatal: skip a missing file (e.g. hljs.css not yet built)
-      return `/* ${file} not found */`
-    }
-  }).join('\n')
-
-  // fonts.css: keep the .material-symbols-outlined helper class but drop @font-face
-  // (those reference ./fonts/*.woff2 which won't exist beside the exported HTML).
-  let fontsCss = ''
+  // export-styles.css is pre-built and minified by esbuild.mjs (Step 3.75).
+  // It includes all media CSS files with @font-face blocks stripped.
+  let inlinedCss = ''
   try {
-    fontsCss = stripFontFace(readExtFile(extPath, 'media', 'fonts.css'))
+    inlinedCss = readExtFile(extPath, 'dist', 'export-styles.css')
   } catch {
-    // fonts.css not found — CDN link still loads the fonts
+    vscode.window.showErrorMessage(
+      'Blueprint Markdown: dist/export-styles.css not found — run "npm run build" first.',
+    )
+    return
   }
-
-  const inlinedCss = mainCss + '\n' + fontsCss
 
   // ── 5. Read browser script ────────────────────────────────────────────────────
   // export-client.js is tiny (~7 KB): hydration + mermaid theme-init only.
