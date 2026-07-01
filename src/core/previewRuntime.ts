@@ -33,6 +33,17 @@ export function applyTheme(root: HTMLElement): string {
   return theme
 }
 
+/**
+ * Read blueprintMarkdown.mindmapHeight off the same marker and expose it as
+ * a CSS custom property so `.em-mindmap`'s height picks it up (components.css
+ * falls back to 480px when the marker or attribute is absent).
+ */
+export function applyMindmapHeight(root: HTMLElement): void {
+  const marker = root.ownerDocument.querySelector<HTMLElement>('.em-theme-config')
+  const height = marker?.getAttribute('data-em-mindmap-height')
+  if (height) root.style.setProperty('--em-mindmap-height', `${height}px`)
+}
+
 /** Returns true when the hex/rgb colour resolves to a dark background.
  *  Handles #rgb, #rrggbb, rgb(r,g,b), rgba(r,g,b,a).
  *  Falls back to `fallback` when the value can't be parsed. */
@@ -264,6 +275,7 @@ export function runShared(
   const root = document.body
   root.classList.add('md-output')
   const theme = applyTheme(root)
+  applyMindmapHeight(root)
   hydrate(root)
   setupToc(root)
   if (mermaid) void renderMermaid(root, theme, mermaid)

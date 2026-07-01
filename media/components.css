@@ -1203,7 +1203,7 @@ kbd {
 
 .md-output .em-mindmap {
   position: relative;
-  height: 480px;
+  height: var(--em-mindmap-height, 480px);
   overflow: hidden;
   background: var(--bg-raised);
   border: 1px solid var(--border-color);
@@ -1231,8 +1231,49 @@ kbd {
 }
 
 .em-mindmap__drawer.is-open {
-  transform: translateX(0);
+  transform: translate(0, 0);
   box-shadow: var(--shadow-lg);
+}
+
+/* Applied for one forced-reflow tick while swapping sides on a hidden drawer,
+   so the anchor/transform swap is instant instead of being picked up by the
+   transition above (which would otherwise flash the panel across the canvas). */
+.em-mindmap__drawer--notransition {
+  transition: none;
+}
+
+/* Opens on the left instead when the active node would sit under a right-side drawer. */
+.em-mindmap__drawer--left {
+  left: 0;
+  right: auto;
+  border-left: none;
+  border-right: 1px solid var(--border-color);
+  transform: translateX(-100%);
+}
+
+/* Used instead of left/right when the side-panel width would be disproportionately
+   tall for a short canvas — a bottom/top sheet capped at 35% of the canvas height. */
+.em-mindmap__drawer--bottom,
+.em-mindmap__drawer--top {
+  left: 0;
+  right: 0;
+  width: auto;
+  height: min(340px, 35%);
+  border-left: none;
+}
+
+.em-mindmap__drawer--bottom {
+  top: auto;
+  bottom: 0;
+  border-top: 1px solid var(--border-color);
+  transform: translateY(100%);
+}
+
+.em-mindmap__drawer--top {
+  bottom: auto;
+  top: 0;
+  border-bottom: 1px solid var(--border-color);
+  transform: translateY(-100%);
 }
 
 .em-mindmap__drawer-header {

@@ -15,6 +15,7 @@
  *     contains a :::mindmap.
  *   - Syntax highlighting is server-rendered (hljs); no client JS needed for it.
  *   - <body data-em-theme="…"> stamped at export time so CSS applies before JS runs.
+ *   - <body style="--em-mindmap-height: …px"> carries the configured mindmap canvas height.
  *
  * Known limitations:
  *   - Needs network for fonts, icons (Google Fonts CDN) and mermaid diagrams /
@@ -84,12 +85,15 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
   )
   const rendered = md.render(document.getText())
 
-  // ── 3. Extract theme from the injected marker ─────────────────────────────────
+  // ── 3. Extract theme + mindmap height from the injected marker ─────────────────
   const themeMatch = rendered.match(/data-em-theme="([^"]+)"/)
   const theme = themeMatch ? themeMatch[1] : 'light'
+  const mindmapHeightMatch = rendered.match(/data-em-mindmap-height="([^"]+)"/)
+  const mindmapHeight = mindmapHeightMatch ? mindmapHeightMatch[1] : '480'
 
   // Strip the hidden em-theme-config marker div — it's only needed by the live
-  // preview runtime. The export stamps the theme directly on <body data-em-theme>.
+  // preview runtime. The export stamps the theme directly on <body data-em-theme>
+  // and the mindmap height as a CSS custom property.
   const body = rendered.replace(/<div class="em-theme-config"[^>]*hidden[^>]*><\/div>\n?/, '')
 
   // ── 4. Build inlined CSS ──────────────────────────────────────────────────────
@@ -150,7 +154,7 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
 ${inlinedCss}
 </style>
 </head>
-<body class="md-output" data-em-theme="${escapeAttr(theme)}">
+<body class="md-output" data-em-theme="${escapeAttr(theme)}" style="--em-mindmap-height: ${escapeAttr(mindmapHeight)}px">
 ${body}
 ${mermaidScript}${mindmapScript}<script>
 ${exportClientJs}

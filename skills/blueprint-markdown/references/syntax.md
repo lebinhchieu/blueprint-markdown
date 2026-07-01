@@ -276,29 +276,30 @@ For word-level change emphasis, use `==highlight==` inside the current or previo
 
 ```
 :::mindmap
-# Database latency > 2s
+# Database latency > 2s {type=context}
 Dashboards spin on every load. p95 is 2.4s.
 
-## Add Redis cache {#redis}
+## Add Redis cache {#redis type=action}
 Cache hot queries; TTL 60s.
 ```js
 client.setex(key, 60, val)
 ```
 
-### Warm cache on deploy
+### Warm cache on deploy {type=verify}
 - [ ] Prefetch top 100 queries
 - [ ] Alert if hit-rate < 80%
 
-## Add CDN
+## Add CDN {type=action}
 Offload static assets. Shares invalidation logic with [[redis]].
 :::
 ```
 | Attr | Values | Default | Notes |
 |------|--------|---------|-------|
 | `#id` | identifier | slugified heading text | Needed only when the heading is a `[[link]]` target |
-| `type` | `context` \| `solution` \| `detail` | inferred from depth (see below) | Overrides the default when depth doesn't match intent |
+| `type` | any string, e.g. `risk`, `owner-frontend` | none | Groups nodes by color — see below |
 
 **Heading level** — tree depth.
+**Coloring** — nodes with the same `type` always get the same color, assigned from a 6-color theme palette in the order distinct `type` values first appear (repeats if there are more than 6 types). Nodes with no `type` are colored by heading level instead (`#` = 1st palette color, `##` = 2nd, …).
 **Cross-links** — `[[id]]` anywhere in a node's body
 ---
 

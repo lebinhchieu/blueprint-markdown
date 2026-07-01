@@ -200,18 +200,20 @@ everything below a heading up to the next one is that node's detail-drawer conte
 body is **plain markdown headings, not nested directives** — don't put `:::card` etc. inside.
 ```
 :::mindmap
-# Database latency > 2s
+# Database latency > 2s {type=context}
 Dashboards spin on every load.
 
-## Add Redis cache {#redis}
+## Add Redis cache {#redis type=action}
 Cache hot queries; TTL 60s.
 
-## Add CDN
+## Add CDN {type=action}
 Shares invalidation logic with [[redis]].
 :::
 ```
 `{#id}` sets a stable id (else slugified from the heading text); `[[id]]` anywhere in a
-body draws a dashed cross-link to that node. Full depth→type/color mapping.
+body draws a dashed cross-link to that node.
+Full depth→color mapping.
+`{type}` to group nodes by color (otherwise depth→color)
 
 ### Leaf blocks (::)
 

@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -87,6 +87,12 @@
           ],
           "default": "light",
           "description": "Color theme for the Blueprint Markdown preview. 'auto' follows VS Code's active theme."
+        },
+        "blueprintMarkdown.mindmapHeight": {
+          "type": "number",
+          "default": 480,
+          "minimum": 200,
+          "description": "Height in pixels of the :::mindmap canvas in the preview and exported HTML."
         }
       }
     }

@@ -11,13 +11,16 @@
 
 import { parseAttrs } from '../attrs'
 
-export type MindmapNodeType = 'context' | 'solution' | 'detail' | string
+export type MindmapNodeType = string
 
 export interface MindmapNode {
   id: string
-  type: MindmapNodeType
+  /** User-supplied `{type=...}` value, or `'root'` for the synthetic multi-root node. Absent when not specified — coloring then falls back to `level`. */
+  type?: MindmapNodeType
   label: string
   body: string
+  /** Markdown heading depth (1 = `#`). `0` for the synthetic multi-root node. */
+  level: number
 }
 
 export interface MindmapEdge {
@@ -34,12 +37,6 @@ export interface MindmapGraph {
 const HEADING_RE = /^(#{1,6})\s+(.*)$/
 const TRAILING_ATTRS_RE = /\s*\{([^}]*)\}\s*$/
 const CROSS_LINK_RE = /\[\[([\w-]+)\]\]/g
-
-function typeForDepth(depth: number): MindmapNodeType {
-  if (depth === 1) return 'context'
-  if (depth === 2) return 'solution'
-  return 'detail'
-}
 
 function slugify(text: string): string {
   const slug = text
@@ -151,9 +148,10 @@ export function parseMindmap(source: string): MindmapGraph {
     usedIds.add(id)
     const node: MindmapNode = {
       id,
-      type: heading.type ?? typeForDepth(heading.depth),
+      type: heading.type,
       label: heading.label,
       body: '',
+      level: heading.depth,
     }
     nodes.push(node)
     currentNode = node
@@ -173,7 +171,7 @@ export function parseMindmap(source: string): MindmapGraph {
 
   const edges: MindmapEdge[] = [...treeEdges]
   if (topLevelIds.length > 1) {
-    const root: MindmapNode = { id: '__root__', type: 'root', label: '', body: '' }
+    const root: MindmapNode = { id: '__root__', type: 'root', label: '', body: '', level: 0 }
     nodes.unshift(root)
     for (const id of topLevelIds) edges.unshift({ source: '__root__', target: id, kind: 'tree' })
   }

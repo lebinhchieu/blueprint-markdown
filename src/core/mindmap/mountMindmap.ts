@@ -1,8 +1,11 @@
 /**
  * mountMindmap.ts — mounts a Cytoscape + dagre graph into an `.em-mindmap`
- * placeholder and wires interaction: click → detail-drawer, hover (after a
- * short dwell) → path isolation, double-click → reset to fit view,
- * right-click → collapse/expand subtree, layout switch (dagre ↔ concentric).
+ * placeholder and wires interaction: click → detail-drawer (opens on the
+ * left instead of the right if the node would otherwise sit underneath it),
+ * hover (after a short dwell) → path isolation, double-click → reset to fit
+ * view, right-click → collapse/expand subtree, layout switch
+ * (dagre ↔ concentric). Scroll-to-zoom is disabled until the mindmap is
+ * clicked into, so scrolling the page over it doesn't hijack the scroll.
  *
  * Mirrors the mermaid mount pattern in previewRuntime.ts: the directive
  * renders an empty, sized container server-side; this runs client-side
@@ -26,7 +29,6 @@ import type {
   EventObjectNode,
   LayoutOptions,
   NodeSingular,
-  Position,
 } from 'cytoscape'
 import type { MindmapGraph, MindmapNode } from './parseMindmap'
 
@@ -56,24 +58,28 @@ export interface MindmapHandle {
   destroy(): void
 }
 
-const TYPE_COLOR_VARS: Record<string, [cssVar: string, fallback: string]> = {
-  context:  ['--c-danger',  '#b83030'],
-  solution: ['--c-info',    '#2a5f7a'],
-  detail:   ['--c-success', '#3a7a4e'],
-  root:     ['--c-gray',    '#7a6954'],
-}
+// Node fill palette, cycled by index — see colorForNode(). `--c-gray` is
+// reserved for the synthetic multi-root node so it reads as structural,
+// not a group.
+const NODE_COLOR_PALETTE: Array<[cssVar: string, fallback: string]> = [
+  ['--c-danger',  '#b83030'],
+  ['--c-info',    '#2a5f7a'],
+  ['--c-success', '#3a7a4e'],
+  ['--c-warning', '#b07220'],
+  ['--c-low',     '#caa000'],
+  ['--c-primary', '#c05a28'],
+]
+const ROOT_COLOR_VAR: [cssVar: string, fallback: string] = ['--c-gray', '#7a6954']
 
 function resolveThemeColors(el: HTMLElement) {
   const css = getComputedStyle(el)
   const read = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback
-  const typeColors: Record<string, string> = {}
-  for (const [type, [cssVar, fallback]] of Object.entries(TYPE_COLOR_VARS)) {
-    typeColors[type] = read(cssVar, fallback)
-  }
   return {
-    typeColors,
+    palette: NODE_COLOR_PALETTE.map(([cssVar, fallback]) => read(cssVar, fallback)),
+    rootColor: read(ROOT_COLOR_VAR[0], ROOT_COLOR_VAR[1]),
     textOnSolid: read('--text-on-solid', '#ffffff'),
     edgeColor: read('--border-color', '#ddd4c4'),
+    arrowColor: read('--text-muted', '#7a6954'),
     linkColor: read('--c-low', '#caa000'),
     primaryColor: read('--c-primary', '#c05a28'),
     // Cytoscape's font-family parser rejects quotes and multi-fallback CSS
@@ -93,7 +99,7 @@ function buildDrawer(container: HTMLElement): {
   panel: HTMLElement
   title: HTMLElement
   body: HTMLElement
-  close(): void
+  closeBtn: HTMLButtonElement
 } {
   const panel = document.createElement('div')
   panel.className = 'em-mindmap__drawer'
@@ -119,12 +125,7 @@ function buildDrawer(container: HTMLElement): {
   panel.appendChild(body)
   container.appendChild(panel)
 
-  function close(): void {
-    panel.classList.remove('is-open')
-  }
-  closeBtn.addEventListener('click', close)
-
-  return { panel, title, body, close }
+  return { panel, title, body, closeBtn }
 }
 
 const TREE_EDGE_SELECTOR = 'edge[kind = "tree"]'
@@ -214,14 +215,35 @@ export function mountMindmap(
 
   const drawer = buildDrawer(container)
   const nodeById = new Map<string, MindmapNode>(graph.nodes.map(n => [n.id, n]))
-  const { typeColors, textOnSolid, edgeColor, linkColor, primaryColor, fontFamily } = resolveThemeColors(container)
+  const { palette, rootColor, textOnSolid, edgeColor, arrowColor, linkColor, primaryColor, fontFamily } =
+    resolveThemeColors(container)
+
+  // Groups nodes by color: same `type` always gets the same color, assigned
+  // by the order distinct types first appear. Untyped nodes fall back to
+  // their heading level instead (`#` = index 0), so a plain, type-less
+  // mindmap still gets depth-varied colors.
+  const typeOrder: string[] = []
+  function colorForNode(n: MindmapNode): string {
+    if (n.type === 'root') return rootColor
+    let index: number
+    if (n.type) {
+      index = typeOrder.indexOf(n.type)
+      if (index === -1) {
+        index = typeOrder.length
+        typeOrder.push(n.type)
+      }
+    } else {
+      index = n.level - 1
+    }
+    return palette[index % palette.length]
+  }
 
   const elements: ElementDefinition[] = [
     ...graph.nodes.map(n => ({
       data: {
         id: n.id,
         label: n.type === 'root' ? '' : truncateLabel(n.label),
-        color: typeColors[n.type] ?? typeColors.detail,
+        color: colorForNode(n),
       },
       classes: n.type === 'root' ? 'em-mindmap-root' : undefined,
     })),
@@ -291,7 +313,7 @@ export function mountMindmap(
           'target-arrow-shape': 'triangle',
           'arrow-scale': 0.8,
           'line-color': edgeColor,
-          'target-arrow-color': edgeColor,
+          'target-arrow-color': arrowColor,
           'transition-property': 'opacity',
           'transition-duration': 100,
         },
@@ -322,6 +344,18 @@ export function mountMindmap(
   let currentLayout: MindmapLayoutName = 'dagre'
   const collapsed = new Set<string>()
 
+  // ─── Scroll-to-zoom only once the mindmap is clicked into ─────────────────
+  // Otherwise scrolling the page over the mindmap hijacks the scroll as zoom.
+  cy.userZoomingEnabled(false)
+  function activate(): void {
+    cy.userZoomingEnabled(true)
+  }
+  function deactivateIfOutside(evt: MouseEvent): void {
+    if (!container.contains(evt.target as Node)) cy.userZoomingEnabled(false)
+  }
+  container.addEventListener('mousedown', activate)
+  document.addEventListener('mousedown', deactivateIfOutside)
+
   // ─── Hover: upstream/downstream path isolation ───────────────────────────
   // Only triggers once the pointer dwells on a node for a beat, so a fast
   // mouse pass-over doesn't flash the fade on every node along the way.
@@ -330,7 +364,6 @@ export function mountMindmap(
 
   cy.on('mouseover', 'node', (evt: EventObjectNode) => {
     const node = evt.target
-    if (node.hasClass('em-mindmap-root')) return
     window.clearTimeout(hoverTimer)
     hoverTimer = window.setTimeout(() => {
       const related = node.union(node.successors()).union(node.predecessors())
@@ -342,27 +375,117 @@ export function mountMindmap(
     cy.elements().removeClass('em-mindmap-faded')
   })
 
-  // ─── Click: open detail drawer + focus-lock ───────────────────────────────
-  let savedViewport: { pan: Position; zoom: number } | null = null
+  // ─── Click: open detail drawer ────────────────────────────────────────────
+  // Drawer defaults to the right edge; if the clicked node would end up
+  // underneath it, the drawer opens on the left instead. If the drawer's
+  // width would be disproportionately tall for a short canvas, it opens as a
+  // bottom (or top, by the same hidden-node rule) sheet instead, capped at
+  // 35% of the canvas height. No viewport panning/zooming happens on open or
+  // close. Side changes never happen while the panel is visible — swapping
+  // `left`/`right`/`top`/`bottom` isn't itself animatable, so doing that
+  // while a `transform` transition is live reads as an instant jump. Instead
+  // an already-open drawer slides fully closed first, then reopens on the
+  // new side once hidden.
+  type DrawerSide = 'right' | 'left' | 'bottom' | 'top'
+  const SIDE_CLASS: Record<Exclude<DrawerSide, 'right'>, string> = {
+    left: 'em-mindmap__drawer--left',
+    bottom: 'em-mindmap__drawer--bottom',
+    top: 'em-mindmap__drawer--top',
+  }
 
-  function focusNode(node: NodeSingular): void {
-    if (!savedViewport) savedViewport = { pan: { ...cy.pan() }, zoom: cy.zoom() }
-    const drawerWidth = drawer.panel.getBoundingClientRect().width || 340
-    const zoom = cy.zoom()
-    const pos = node.position()
-    const visibleCenterX = (canvas.clientWidth - drawerWidth) / 2
-    cy.animate(
-      { pan: { x: visibleCenterX - pos.x * zoom, y: canvas.clientHeight / 2 - pos.y * zoom } },
-      { duration: 150, easing: 'ease-in-out' },
-    )
+  let isDrawerOpen = false
+  let currentSide: DrawerSide = 'right'
+  let pendingCloseTimer: number | undefined
+
+  function computeSide(node: NodeSingular): DrawerSide {
+    const canvasW = canvas.clientWidth
+    const canvasH = canvas.clientHeight
+    const sideWidth = Math.min(340, canvasW * 0.9)
+    const box = node.renderedBoundingBox()
+
+    if (sideWidth > canvasW * 0.35) {
+      const sheetHeight = Math.min(340, canvasH * 0.35)
+      return box.y2 > canvasH - sheetHeight ? 'top' : 'bottom'
+    }
+    return box.x2 > canvasW - sideWidth ? 'left' : 'right'
+  }
+
+  function applySide(side: DrawerSide): void {
+    Object.values(SIDE_CLASS).forEach(cls => drawer.panel.classList.remove(cls))
+    if (side !== 'right') drawer.panel.classList.add(SIDE_CLASS[side])
+    currentSide = side
+  }
+
+  // `left`/`right`/`top`/`bottom`/border aren't in `transition-property`, so
+  // changing them is instant — but `transform`'s *base* (closed-state) value
+  // changes at the same time, and since the `transform` transition is still
+  // armed, the browser animates from the OLD side's last transform value to
+  // the NEW one anyway. Combined with the anchor having already snapped to
+  // the new side, that plays as a brief flash through the middle of the
+  // canvas. Disabling the transition for one forced-reflow tick makes the
+  // side swap fully instant (harmless — the panel is hidden either way),
+  // so the *next* transition (closing further, or opening) always starts
+  // from the correct, already-settled hidden position on the new side.
+  function setSideIfChanged(side: DrawerSide): void {
+    if (side === currentSide) return
+    drawer.panel.classList.add('em-mindmap__drawer--notransition')
+    applySide(side)
+    void drawer.panel.offsetWidth // flush: commit the instant snap before re-enabling transitions
+    drawer.panel.classList.remove('em-mindmap__drawer--notransition')
+  }
+
+  function renderDrawerContent(node: MindmapNode): void {
+    drawer.title.textContent = node.label
+    drawer.body.innerHTML = node.body ? options.renderBody(node.body) : ''
+  }
+
+  function slideOpen(side: DrawerSide): void {
+    setSideIfChanged(side)
+    drawer.panel.classList.add('is-open')
+    isDrawerOpen = true
+  }
+
+  function slideClosed(onDone?: () => void): void {
+    if (!isDrawerOpen) {
+      onDone?.()
+      return
+    }
+    isDrawerOpen = false
+    drawer.panel.classList.remove('is-open')
+
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      drawer.panel.removeEventListener('transitionend', onTransitionEnd)
+      window.clearTimeout(pendingCloseTimer)
+      onDone?.()
+    }
+    const onTransitionEnd = (evt: TransitionEvent) => {
+      if (evt.target === drawer.panel && evt.propertyName === 'transform') finish()
+    }
+    drawer.panel.addEventListener('transitionend', onTransitionEnd)
+    pendingCloseTimer = window.setTimeout(finish, 200)
+  }
+
+  function closeDrawer(): void {
+    slideClosed(() => setSideIfChanged('right'))
   }
 
   function openDrawer(node: MindmapNode): void {
-    drawer.title.textContent = node.label
-    drawer.body.innerHTML = node.body ? options.renderBody(node.body) : ''
-    drawer.panel.classList.add('is-open')
-    focusNode(cy.$id(node.id))
+    const side = computeSide(cy.$id(node.id))
+    if (isDrawerOpen && side !== currentSide) {
+      slideClosed(() => {
+        renderDrawerContent(node)
+        slideOpen(side)
+      })
+    } else {
+      renderDrawerContent(node)
+      slideOpen(side)
+    }
   }
+
+  drawer.closeBtn.addEventListener('click', closeDrawer)
 
   cy.on('tap', 'node', (evt: EventObjectNode) => {
     const id = evt.target.id()
@@ -370,18 +493,11 @@ export function mountMindmap(
     if (node && node.type !== 'root') openDrawer(node)
   })
   cy.on('tap', (evt: EventObjectCore) => {
-    if (evt.target === cy) {
-      drawer.close()
-      if (savedViewport) {
-        cy.animate({ pan: savedViewport.pan, zoom: savedViewport.zoom }, { duration: 150 })
-        savedViewport = null
-      }
-    }
+    if (evt.target === cy) closeDrawer()
   })
 
   // ─── Double-click: reset to fit view ──────────────────────────────────────
   function fitView(): void {
-    savedViewport = null
     cy.animate({ fit: { eles: cy.elements(), padding: 40 } }, { duration: 150 })
   }
   cy.on('dbltap', () => fitView())
@@ -433,6 +549,8 @@ export function mountMindmap(
     },
     destroy() {
       window.clearTimeout(hoverTimer)
+      window.clearTimeout(pendingCloseTimer)
+      document.removeEventListener('mousedown', deactivateIfOutside)
       cy.destroy()
       container.innerHTML = ''
     },
