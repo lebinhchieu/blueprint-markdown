@@ -7,7 +7,7 @@ description: >
   Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
   any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
   timeline, progress, chip, icon, …), or "write it nicely / make it pretty / use cards /
-  add callouts".
+  add callouts". Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
 ---
 
 The blueprint-markdown viewer extends CommonMark with one grammar covering every rich

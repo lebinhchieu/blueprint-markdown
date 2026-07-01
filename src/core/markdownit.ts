@@ -12,32 +12,18 @@
  * The inline directive rule is added by installInlineRule from inline.ts.
  */
 
-import MarkdownIt from 'markdown-it'
-import markdownItMark from 'markdown-it-mark'
-import markdownItTaskLists from 'markdown-it-task-lists'
-import { installFenceRenderer } from './fence'
+import type MarkdownIt from 'markdown-it'
+import { createBrowserMarkdownIt } from './markdownitBrowser'
 import { installInlineCodeRenderer } from './inline-code'
 
 /** Shared markdown-it instance used by the renderer. */
 let _md: MarkdownIt | null = null
 
 export function createMarkdownIt(options?: Record<string, unknown>): MarkdownIt {
-  const md = new MarkdownIt({
-    html: false,       // no raw HTML passthrough (security)
-    linkify: true,
-    typographer: false,
-    breaks: false,
-    ...options,
-  })
+  const md = createBrowserMarkdownIt(options)
 
-  // Plugins
-  md.use(markdownItMark)
-  md.use(markdownItTaskLists, { label: true })
-
-  // Custom fence renderer
-  installFenceRenderer(md)
-
-  // Custom inline code renderer (detects file refs like `foo.ts:73`)
+  // Custom inline code renderer (detects file refs like `foo.ts:73`) — needs
+  // Node's fs/path and the vscode API, so only safe in the extension host.
   installInlineCodeRenderer(md)
 
   return md

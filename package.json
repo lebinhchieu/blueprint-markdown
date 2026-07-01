@@ -10,9 +10,20 @@
     "type": "git",
     "url": "https://github.com/lebinhchieu/blueprint-markdown"
   },
-  "engines": { "vscode": "^1.90.0" },
-  "categories": ["Other"],
-  "keywords": ["markdown", "preview", "directives", "callout", "cards", "blueprint"],
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "markdown",
+    "preview",
+    "directives",
+    "callout",
+    "cards",
+    "blueprint"
+  ],
   "main": "./dist/extension.js",
   "activationEvents": [],
   "contributes": {
@@ -27,7 +38,9 @@
       {
         "scopeName": "text.html.markdown.blueprint",
         "path": "./syntaxes/blueprint.injection.tmLanguage.json",
-        "injectTo": ["text.html.markdown"]
+        "injectTo": [
+          "text.html.markdown"
+        ]
       }
     ],
     "markdown.markdownItPlugins": true,
@@ -48,7 +61,18 @@
       "properties": {
         "blueprintMarkdown.theme": {
           "type": "string",
-          "enum": ["light", "dark", "auto", "neon-synthwave", "neon-cyberpunk", "neon-vaporwave", "aurora", "jewel-garden", "tropical-sorbet", "tropical-sorbet-night"],
+          "enum": [
+            "light",
+            "dark",
+            "auto",
+            "neon-synthwave",
+            "neon-cyberpunk",
+            "neon-vaporwave",
+            "aurora",
+            "jewel-garden",
+            "tropical-sorbet",
+            "tropical-sorbet-night"
+          ],
           "enumDescriptions": [
             "Warm Artisan light palette (terracotta on parchment)",
             "Warm Artisan dark palette (bright terracotta on near-black)",
@@ -72,9 +96,13 @@
     "watch": "node esbuild.mjs --watch",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-yarn",
-    "publish:ovsx": "ovsx publish"
+    "publish:ovsx": "ovsx publish",
+    "mindmap:build": "node mindmap-viewer/build.mjs",
+    "mindmap:watch": "node mindmap-viewer/build.mjs --watch"
   },
   "dependencies": {
+    "cytoscape": "^3.34.0",
+    "cytoscape-dagre": "^4.0.0",
     "highlight.js": "^11.10.0",
     "markdown-it": "^14.1.0",
     "markdown-it-mark": "^4.0.0",
