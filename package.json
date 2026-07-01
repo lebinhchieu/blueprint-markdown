@@ -96,9 +96,7 @@
     "watch": "node esbuild.mjs --watch",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-yarn",
-    "publish:ovsx": "ovsx publish",
-    "mindmap:build": "node mindmap-viewer/build.mjs",
-    "mindmap:watch": "node mindmap-viewer/build.mjs --watch"
+    "publish:ovsx": "ovsx publish"
   },
   "dependencies": {
     "cytoscape": "^3.34.0",
