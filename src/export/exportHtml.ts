@@ -9,14 +9,16 @@
  *   - dist/export-styles-{theme}.css (active-theme CSS only, minified, @font-face stripped) inlined.
  *   - Fonts (DM Sans, Playfair Display, JetBrains Mono, Material Symbols) loaded
  *     from Google Fonts CDN.
- *   - dist/export-client.js (hydrate + mermaid-init only, ~7 KB) inlined.
+ *   - dist/export-client.js (hydrate + mermaid/mindmap init only, ~7 KB) inlined.
  *   - A mermaid CDN <script> injected *only* when the doc contains a diagram.
+ *   - cytoscape + cytoscape-dagre CDN <script>s injected *only* when the doc
+ *     contains a :::mindmap.
  *   - Syntax highlighting is server-rendered (hljs); no client JS needed for it.
  *   - <body data-em-theme="…"> stamped at export time so CSS applies before JS runs.
  *
  * Known limitations:
- *   - Needs network for fonts, icons (Google Fonts CDN) and mermaid diagrams
- *     (jsDelivr CDN). Layout, components, and code highlighting work offline.
+ *   - Needs network for fonts, icons (Google Fonts CDN) and mermaid diagrams /
+ *     mindmaps (jsDelivr CDN). Layout, components, and code highlighting work offline.
  *   - The markdown-it config {html:true, linkify:true} approximates VS Code's
  *     built-in preview but does not mirror every workspace setting.
  */
@@ -128,6 +130,13 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
     ? `<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>\n`
     : ''
 
+  // Same idea for cytoscape + cytoscape-dagre, only when a :::mindmap exists.
+  const hasMindmap = /class="em-mindmap"/.test(body)
+  const mindmapScript = hasMindmap
+    ? `<script src="https://cdn.jsdelivr.net/npm/cytoscape@3/dist/cytoscape.min.js"></script>\n` +
+      `<script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@4/dist/cytoscape-dagre.min.js"></script>\n`
+    : ''
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,7 +152,7 @@ ${inlinedCss}
 </head>
 <body class="md-output" data-em-theme="${escapeAttr(theme)}">
 ${body}
-${mermaidScript}<script>
+${mermaidScript}${mindmapScript}<script>
 ${exportClientJs}
 </script>
 </body>

@@ -11,20 +11,30 @@
  * Cytoscape style values can't reference CSS custom properties directly, so
  * colors are resolved once via getComputedStyle and baked into node/edge
  * data (same approach renderMermaid uses for its theme variables).
+ *
+ * `cytoscape`/`cytoscape-dagre` are accepted as parameters (never imported as
+ * values here) so this module can be bundled without pulling the libraries
+ * in — mirrors how previewRuntime.ts takes a MermaidApi parameter.
+ * - preview.ts        passes its statically-bundled cytoscape + cytoscape-dagre.
+ * - exportClient.ts   passes window.cytoscape / window.cytoscapeDagre (CDN), or undefined.
  */
 
-import cytoscape, {
-  type Core,
-  type ElementDefinition,
-  type EventObjectCore,
-  type EventObjectNode,
-  type NodeSingular,
+import type {
+  Core,
+  ElementDefinition,
+  EventObjectCore,
+  EventObjectNode,
+  LayoutOptions,
+  NodeSingular,
+  Position,
 } from 'cytoscape'
-import cytoscapeDagre from 'cytoscape-dagre'
 import type { MindmapGraph, MindmapNode } from './parseMindmap'
 
+export type CytoscapeLib = typeof import('cytoscape')
+export type CytoscapeDagreLib = typeof import('cytoscape-dagre')
+
 let dagreRegistered = false
-function ensureDagreRegistered(): void {
+function ensureDagreRegistered(cytoscape: CytoscapeLib, cytoscapeDagre: CytoscapeDagreLib): void {
   if (dagreRegistered) return
   cytoscape.use(cytoscapeDagre)
   dagreRegistered = true
@@ -164,9 +174,9 @@ const DAGRE_LAYOUT = {
   rankDir: 'LR',
   nodeSep: 24,
   rankSep: 70,
-} as cytoscape.LayoutOptions
+} as LayoutOptions
 
-function layoutOptions(name: MindmapLayoutName, cy: Core): cytoscape.LayoutOptions {
+function layoutOptions(name: MindmapLayoutName, cy: Core): LayoutOptions {
   if (name === 'concentric') {
     const depths = computeTreeDepths(cy)
     return {
@@ -178,7 +188,7 @@ function layoutOptions(name: MindmapLayoutName, cy: Core): cytoscape.LayoutOptio
       avoidOverlap: true,
       concentric: (node: NodeSingular) => -(depths.get(node.id()) ?? 0),
       levelWidth: () => 1,
-    } as cytoscape.LayoutOptions
+    } as LayoutOptions
   }
   return DAGRE_LAYOUT
 }
@@ -188,11 +198,13 @@ function layoutOptions(name: MindmapLayoutName, cy: Core): cytoscape.LayoutOptio
  * Replaces any existing content — safe to call again on remount.
  */
 export function mountMindmap(
+  cytoscape: CytoscapeLib,
+  cytoscapeDagre: CytoscapeDagreLib,
   container: HTMLElement,
   graph: MindmapGraph,
   options: MountMindmapOptions,
 ): MindmapHandle {
-  ensureDagreRegistered()
+  ensureDagreRegistered(cytoscape, cytoscapeDagre)
   container.innerHTML = ''
 
   const canvas = document.createElement('div')
@@ -326,7 +338,7 @@ export function mountMindmap(
   })
 
   // ─── Click: open detail drawer + focus-lock ───────────────────────────────
-  let savedViewport: { pan: cytoscape.Position; zoom: number } | null = null
+  let savedViewport: { pan: Position; zoom: number } | null = null
 
   function focusNode(node: NodeSingular): void {
     if (!savedViewport) savedViewport = { pan: { ...cy.pan() }, zoom: cy.zoom() }

@@ -6,13 +6,17 @@
  * blueprint-markdown extension's :::mindmap directive.
  */
 
+import cytoscape from 'cytoscape'
+import cytoscapeDagre from 'cytoscape-dagre'
 import { parseBlocks, type TextNode } from '../src/core/parser'
 import { parseMindmap } from '../src/core/mindmap/parseMindmap'
 import { mountMindmap, type MindmapHandle, type MindmapLayoutName } from '../src/core/mindmap/mountMindmap'
-import { createBrowserMarkdownIt } from '../src/core/markdownitBrowser'
+import { createMinimalMarkdownIt } from '../src/core/markdownitBrowser'
 import SAMPLE_MD from './sample.md'
 
-const md = createBrowserMarkdownIt()
+// Matches what previewRuntime.ts actually uses for the drawer in the real
+// extension (no hljs — see markdownitBrowser.ts for why).
+const md = createMinimalMarkdownIt()
 let currentHandle: MindmapHandle | null = null
 
 function extractMindmapSource(markdown: string): string | null {
@@ -48,7 +52,7 @@ function render(markdown: string): void {
   }
 
   status.textContent = `${graph.nodes.length} nodes, ${graph.edges.length} edges`
-  currentHandle = mountMindmap(root, graph, {
+  currentHandle = mountMindmap(cytoscape, cytoscapeDagre, root, graph, {
     renderBody: (bodyMd: string) => md.render(bodyMd),
   })
 }

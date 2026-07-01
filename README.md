@@ -200,11 +200,11 @@ Blueprint Markdown is working!
 
 Converts the active `.md` file into a portable `.html` file that anyone can open in a browser — no extension required.
 
-- All CSS is inlined; fonts, icons, and Mermaid diagrams load from CDN.
+- All CSS is inlined; fonts, icons, Mermaid diagrams, and mindmaps load from CDN.
 - The exported file uses the same theme you have active in the preview.
-- Mermaid CDN script is injected only when the document contains diagrams.
+- Mermaid / mindmap CDN scripts are injected only when the document actually uses them.
 
-> **Note:** Layout, components, and code highlighting work offline. Fonts, icons, and Mermaid diagrams require an internet connection.
+> **Note:** Layout, components, and code highlighting work offline. Fonts, icons, Mermaid diagrams, and mindmaps require an internet connection.
 
 ---
 
@@ -294,6 +294,7 @@ Status: :chip[Stable]{success}  Shortcut: :kbd[Ctrl+Shift+V]  Priority: :rating{
 | Navigation | `:::tabs` `:::tab` |
 | Steps | `:::steps` `:::step` |
 | Progress | `::progress` |
+| Mindmap | `:::mindmap` — headings become an interactive node graph |
 | Inline | `:chip` `:icon` `:color` `:kbd` `:button` `:tooltip` `:rating` |
 
 ### Color tokens

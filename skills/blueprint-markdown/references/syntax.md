@@ -5,7 +5,7 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, mindmap
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
@@ -270,6 +270,36 @@ The API accepts up to 1000 requests per minute.
 
 For word-level change emphasis, use `==highlight==` inside the current or previous block.
 
+---
+
+### `:::mindmap`
+
+```
+:::mindmap
+# Database latency > 2s
+Dashboards spin on every load. p95 is 2.4s.
+
+## Add Redis cache {#redis}
+Cache hot queries; TTL 60s.
+```js
+client.setex(key, 60, val)
+```
+
+### Warm cache on deploy
+- [ ] Prefetch top 100 queries
+- [ ] Alert if hit-rate < 80%
+
+## Add CDN
+Offload static assets. Shares invalidation logic with [[redis]].
+:::
+```
+| Attr | Values | Default | Notes |
+|------|--------|---------|-------|
+| `#id` | identifier | slugified heading text | Needed only when the heading is a `[[link]]` target |
+| `type` | `context` \| `solution` \| `detail` | inferred from depth (see below) | Overrides the default when depth doesn't match intent |
+
+**Heading level** — tree depth.
+**Cross-links** — `[[id]]` anywhere in a node's body
 ---
 
 ## Leaf blocks (::) {#leaf-blocks}

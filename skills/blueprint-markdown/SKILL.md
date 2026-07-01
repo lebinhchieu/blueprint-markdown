@@ -6,8 +6,9 @@ description: >
   renders as plain text, no error), so guessing means a broken doc and a redo.
   Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
   any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
-  timeline, progress, chip, icon, …), or "write it nicely / make it pretty / use cards /
-  add callouts". Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
+  timeline, progress, chip, icon, mindmap, …), "write it nicely / make it pretty / use cards /
+  add callouts", or "turn this into a mind map / node graph".
+  Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
 ---
 
 The blueprint-markdown viewer extends CommonMark with one grammar covering every rich
@@ -86,6 +87,7 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | `::` is `progress` only | `::progress{…}` | `:::progress{…}` |
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
+| `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
 
 Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
 of the document.
@@ -192,6 +194,24 @@ The API accepts up to 1000 requests per minute.
 :::
 :::
 ```
+
+**Mindmap** — turns headings into an interactive node graph. Heading level = tree depth;
+everything below a heading up to the next one is that node's detail-drawer content. The
+body is **plain markdown headings, not nested directives** — don't put `:::card` etc. inside.
+```
+:::mindmap
+# Database latency > 2s
+Dashboards spin on every load.
+
+## Add Redis cache {#redis}
+Cache hot queries; TTL 60s.
+
+## Add CDN
+Shares invalidation logic with [[redis]].
+:::
+```
+`{#id}` sets a stable id (else slugified from the heading text); `[[id]]` anywhere in a
+body draws a dashed cross-link to that node. Full depth→type/color mapping.
 
 ### Leaf blocks (::)
 

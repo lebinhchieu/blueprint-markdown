@@ -28,3 +28,28 @@ export function createBrowserMarkdownIt(options?: Record<string, unknown>): Mark
 
   return md
 }
+
+/**
+ * Even lighter markdown-it: same plugins, but skips installFenceRenderer —
+ * which pulls in all of highlight.js (~1 MB) for syntax coloring. Code
+ * fences fall back to markdown-it's own default (plain <pre><code>, no
+ * highlighting). Use this for small, on-demand client-side snippets where
+ * that cost isn't worth paying, e.g. the mindmap detail drawer — rendered
+ * on demand when a node is clicked (see src/core/mindmap/mountMindmap.ts).
+ * Bundled into both dist/preview.js and dist/export-client.js, so keeping it
+ * hljs-free matters for both.
+ */
+export function createMinimalMarkdownIt(options?: Record<string, unknown>): MarkdownIt {
+  const md = new MarkdownIt({
+    html: false,
+    linkify: true,
+    typographer: false,
+    breaks: false,
+    ...options,
+  })
+
+  md.use(markdownItMark)
+  md.use(markdownItTaskLists, { label: true })
+
+  return md
+}

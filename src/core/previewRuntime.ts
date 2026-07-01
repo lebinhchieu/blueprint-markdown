@@ -2,14 +2,17 @@
  * previewRuntime.ts — Shared browser runtime for the VS Code preview and the
  * exported HTML artifact.
  *
- * Mermaid is accepted as a parameter (never imported here) so this module
- * can be bundled without pulling in the multi-MB mermaid library.
- * - preview.ts  passes its statically-bundled mermaid instance.
- * - exportClient.ts passes window.mermaid (loaded from CDN), or undefined.
+ * Mermaid and cytoscape are accepted as parameters (never imported here) so
+ * this module can be bundled without pulling in the heavy libraries.
+ * - preview.ts      passes its statically-bundled instances.
+ * - exportClient.ts passes window.mermaid / window.cytoscape (loaded from CDN), or undefined.
  */
 
 import { hydrate } from './hydrate'
 import { setupToc } from './toc'
+import { createMinimalMarkdownIt } from './markdownitBrowser'
+import { mountMindmap, type CytoscapeLib, type CytoscapeDagreLib, type MindmapHandle } from './mindmap/mountMindmap'
+import type { MindmapGraph } from './mindmap/parseMindmap'
 
 export type MermaidApi = {
   initialize: (config: Record<string, unknown>) => void
@@ -179,6 +182,69 @@ export async function renderMermaid(
   pending.forEach(p => svgCacheSet(p.key, p.el.innerHTML))
 }
 
+// ─── Mindmap ──────────────────────────────────────────────────────────────────
+
+/**
+ * Live instances keyed by their placeholder element, so an unchanged mindmap
+ * survives a morphdom pass. VS Code's preview re-derives the whole DOM from
+ * source on every edit — the directive always renders an *empty* `.em-mindmap`
+ * div, so morphdom wipes the canvas/drawer children we injected on the last
+ * pass. If `data-graph` is unchanged we just re-append the still-live nodes
+ * (same cytoscape instance — pan/zoom/collapse/drawer state all survive)
+ * instead of rebuilding from scratch.
+ */
+interface MindmapInstance {
+  key: string
+  handle: MindmapHandle
+  canvas: HTMLElement
+  drawer: HTMLElement
+}
+
+const mindmapInstances = new WeakMap<HTMLElement, MindmapInstance>()
+let mindmapMd: ReturnType<typeof createMinimalMarkdownIt> | null = null
+
+export function mountMindmaps(
+  root: HTMLElement,
+  cytoscape: CytoscapeLib | undefined,
+  cytoscapeDagre: CytoscapeDagreLib | undefined,
+): void {
+  if (!cytoscape || !cytoscapeDagre) return
+  const placeholders = root.querySelectorAll<HTMLElement>('.em-mindmap')
+  if (placeholders.length === 0) return
+  if (!mindmapMd) mindmapMd = createMinimalMarkdownIt()
+
+  placeholders.forEach(el => {
+    const raw = el.dataset.graph
+    if (!raw) return
+
+    const existing = mindmapInstances.get(el)
+    if (existing && existing.key === raw) {
+      if (!el.contains(existing.canvas)) {
+        el.appendChild(existing.canvas)
+        el.appendChild(existing.drawer)
+      }
+      return
+    }
+    existing?.handle.destroy()
+
+    let graph: MindmapGraph
+    try {
+      graph = JSON.parse(raw)
+    } catch {
+      return // malformed data-graph — fail soft, leave the placeholder empty
+    }
+
+    const handle = mountMindmap(cytoscape, cytoscapeDagre, el, graph, {
+      renderBody: bodyMd => mindmapMd!.render(bodyMd),
+    })
+    const canvas = el.querySelector<HTMLElement>('.em-mindmap__canvas')
+    const drawer = el.querySelector<HTMLElement>('.em-mindmap__drawer')
+    if (canvas && drawer) {
+      mindmapInstances.set(el, { key: raw, handle, canvas, drawer })
+    }
+  })
+}
+
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 /**
@@ -186,11 +252,16 @@ export async function renderMermaid(
  * HTML artifact.  Does NOT remove VS Code built-in styles — that's the
  * responsibility of the calling entry point (preview.ts only).
  */
-export function runShared(mermaid: MermaidApi | undefined): void {
+export function runShared(
+  mermaid: MermaidApi | undefined,
+  cytoscape?: CytoscapeLib,
+  cytoscapeDagre?: CytoscapeDagreLib,
+): void {
   const root = document.body
   root.classList.add('md-output')
   const theme = applyTheme(root)
   hydrate(root)
   setupToc(root)
   if (mermaid) void renderMermaid(root, theme, mermaid)
+  mountMindmaps(root, cytoscape, cytoscapeDagre)
 }

@@ -28,15 +28,18 @@ src/core/
   parser.ts                 ← source text → ASTNode[] (generic, no registry import)
   renderer.ts               ← ASTNode[] → HTML string (delegates to registry)
   directives/index.ts       ← assembles directive registry from individual files
-  directives/*.ts           ← one file per component (card, callout, tabs, steps…)
+  directives/*.ts           ← one file per component (card, callout, tabs, steps, mindmap…)
   attrs.ts                  ← parses {key=value .class #id flag} attr strings
   colors.ts                 ← resolves color tokens (primary/success/…) to CSS values
   inline.ts                 ← installs :name[text]{attrs} inline rule
   fence.ts                  ← custom code fence renderer (hljs, line-highlight, title)
   inline-code.ts            ← inline-code renderer (file refs as links)
   hydrate.ts                ← browser-side tab/accordion hydration
-  previewRuntime.ts         ← shared browser runtime (theme, mermaid SVG cache)
-  markdownit.ts             ← factory for the private markdown-it instance
+  previewRuntime.ts         ← shared browser runtime (theme, mermaid SVG cache, mindmap mount)
+  markdownit.ts             ← factory for the extension-host markdown-it instance
+  markdownitBrowser.ts      ← browser-safe markdown-it factories (no vscode/fs deps)
+  mindmap/parseMindmap.ts   ← heading-tree markdown → {nodes, edges} graph (pure, no DOM)
+  mindmap/mountMindmap.ts   ← Cytoscape+dagre mount, client-side only
 ```
 
 ### Two markdown-it instances
@@ -73,6 +76,29 @@ src/core/
 | Inline | `:name[text]{attrs}` | handled by the inline markdown-it rule |
 
 Fenced code blocks (```` ``` … ``` ````) are opaque to the parser — lines inside them are never classified as directives.
+
+### Client-rendered directives (mermaid, mindmap)
+
+Two directives don't render their final output server-side — they emit an empty, sized
+placeholder and a browser-side runtime fills it in after DOM insert (`renderMermaid` /
+`mountMindmaps` in `previewRuntime.ts`). Both follow the same shape:
+
+1. **Heavy library injected as a parameter, never imported by `previewRuntime.ts` itself** —
+   `preview.ts` passes its statically-bundled instance; `exportClient.ts` passes
+   `window.<lib>` (loaded from a CDN `<script>` that `exportHtml.ts` injects only when the
+   doc actually uses that directive) or `undefined`. This keeps `dist/export-client.js`
+   small — see `mountMindmap.ts`'s `CytoscapeLib`/`CytoscapeDagreLib` types for the pattern.
+2. **Survive VS Code's morphdom.** The built-in preview re-derives the whole DOM from
+   source on every edit; since the server-rendered placeholder is always empty, morphdom
+   wipes any children the runtime injected on the previous pass. Mermaid re-renders from a
+   `theme+source → SVG` cache (cheap, but a visible flicker). Mindmap instead keeps the live
+   Cytoscape instance in a `WeakMap<HTMLElement, …>` keyed by the placeholder element and,
+   when `data-graph` is unchanged, just re-appends the still-live canvas/drawer nodes —
+   preserving pan/zoom/collapse/drawer state instead of rebuilding.
+3. Client-side markdown rendering (mindmap's detail drawer) uses
+   `createMinimalMarkdownIt()` from `markdownitBrowser.ts`, **not** `installFenceRenderer` —
+   that pulls in all of highlight.js (~1 MB), which is fine for the extension host but not
+   for a bundle that ships to a webview or an exported HTML file.
 
 ### Theme injection
 

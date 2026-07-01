@@ -57,6 +57,8 @@ const REGISTRY = {
   // revision.ts
   revision:  ['container'],
   previous:  ['container'],
+  // mindmap.ts — body is plain heading markdown, not nested directives
+  mindmap:   ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],
