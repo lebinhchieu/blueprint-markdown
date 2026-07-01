@@ -189,9 +189,11 @@ export async function renderMermaid(
  * survives a morphdom pass. VS Code's preview re-derives the whole DOM from
  * source on every edit — the directive always renders an *empty* `.em-mindmap`
  * div, so morphdom wipes the canvas/drawer children we injected on the last
- * pass. If `data-graph` is unchanged we just re-append the still-live nodes
- * (same cytoscape instance — pan/zoom/collapse/drawer state all survive)
- * instead of rebuilding from scratch.
+ * pass. If `data-graph` and the active theme are unchanged we just re-append
+ * the still-live nodes (same cytoscape instance — pan/zoom/collapse/drawer
+ * state all survive) instead of rebuilding from scratch. A theme switch
+ * changes the key (colors are baked into node/edge data at mount time) so it
+ * forces a remount that picks up the new theme's colors.
  */
 interface MindmapInstance {
   key: string
@@ -205,6 +207,7 @@ let mindmapMd: ReturnType<typeof createMinimalMarkdownIt> | null = null
 
 export function mountMindmaps(
   root: HTMLElement,
+  theme: string,
   cytoscape: CytoscapeLib | undefined,
   cytoscapeDagre: CytoscapeDagreLib | undefined,
 ): void {
@@ -214,8 +217,9 @@ export function mountMindmaps(
   if (!mindmapMd) mindmapMd = createMinimalMarkdownIt()
 
   placeholders.forEach(el => {
-    const raw = el.dataset.graph
-    if (!raw) return
+    const graphData = el.dataset.graph
+    if (!graphData) return
+    const raw = `${theme}\n${graphData}`
 
     const existing = mindmapInstances.get(el)
     if (existing && existing.key === raw) {
@@ -229,7 +233,7 @@ export function mountMindmaps(
 
     let graph: MindmapGraph
     try {
-      graph = JSON.parse(raw)
+      graph = JSON.parse(graphData)
     } catch {
       return // malformed data-graph — fail soft, leave the placeholder empty
     }
@@ -263,5 +267,5 @@ export function runShared(
   hydrate(root)
   setupToc(root)
   if (mermaid) void renderMermaid(root, theme, mermaid)
-  mountMindmaps(root, cytoscape, cytoscapeDagre)
+  mountMindmaps(root, theme, cytoscape, cytoscapeDagre)
 }

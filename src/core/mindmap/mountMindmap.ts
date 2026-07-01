@@ -1,8 +1,8 @@
 /**
  * mountMindmap.ts — mounts a Cytoscape + dagre graph into an `.em-mindmap`
- * placeholder and wires interaction: click → detail-drawer, hover → path
- * isolation, right-click → collapse/expand subtree, layout switch
- * (dagre ↔ concentric).
+ * placeholder and wires interaction: click → detail-drawer, hover (after a
+ * short dwell) → path isolation, double-click → reset to fit view,
+ * right-click → collapse/expand subtree, layout switch (dagre ↔ concentric).
  *
  * Mirrors the mermaid mount pattern in previewRuntime.ts: the directive
  * renders an empty, sized container server-side; this runs client-side
@@ -74,6 +74,7 @@ function resolveThemeColors(el: HTMLElement) {
     typeColors,
     textOnSolid: read('--text-on-solid', '#ffffff'),
     edgeColor: read('--border-color', '#ddd4c4'),
+    linkColor: read('--c-low', '#caa000'),
     primaryColor: read('--c-primary', '#c05a28'),
     // Cytoscape's font-family parser rejects quotes and multi-fallback CSS
     // stacks (unlike a browser's own CSS engine) — keep this comma-separated
@@ -170,7 +171,7 @@ function computeTreeDepths(cy: Core): Map<string, number> {
 const DAGRE_LAYOUT = {
   name: 'dagre',
   animate: true,
-  animationDuration: 300,
+  animationDuration: 150,
   rankDir: 'LR',
   nodeSep: 24,
   rankSep: 70,
@@ -182,7 +183,7 @@ function layoutOptions(name: MindmapLayoutName, cy: Core): LayoutOptions {
     return {
       name: 'concentric',
       animate: true,
-      animationDuration: 300,
+      animationDuration: 150,
       spacingFactor: 0.6,
       minNodeSpacing: 16,
       avoidOverlap: true,
@@ -213,7 +214,7 @@ export function mountMindmap(
 
   const drawer = buildDrawer(container)
   const nodeById = new Map<string, MindmapNode>(graph.nodes.map(n => [n.id, n]))
-  const { typeColors, textOnSolid, edgeColor, primaryColor, fontFamily } = resolveThemeColors(container)
+  const { typeColors, textOnSolid, edgeColor, linkColor, primaryColor, fontFamily } = resolveThemeColors(container)
 
   const elements: ElementDefinition[] = [
     ...graph.nodes.map(n => ({
@@ -251,7 +252,7 @@ export function mountMindmap(
           'background-color': 'data(color)',
           'border-width': 0,
           'transition-property': 'opacity',
-          'transition-duration': 150,
+          'transition-duration': 100,
         },
       },
       {
@@ -292,14 +293,19 @@ export function mountMindmap(
           'line-color': edgeColor,
           'target-arrow-color': edgeColor,
           'transition-property': 'opacity',
-          'transition-duration': 150,
+          'transition-duration': 100,
         },
       },
       {
+        // Cross-links (`[[id]]` references) get their own color, distinct
+        // from tree edges, so the two relationship kinds read apart at a
+        // glance without relying on animation.
         selector: 'edge[kind = "link"]',
         style: {
           'line-style': 'dashed',
           'line-dash-pattern': [6, 4],
+          'line-color': linkColor,
+          'target-arrow-color': linkColor,
         },
       },
       {
@@ -316,24 +322,23 @@ export function mountMindmap(
   let currentLayout: MindmapLayoutName = 'dagre'
   const collapsed = new Set<string>()
 
-  // ─── Animated cross-links: marching-ants dash offset ─────────────────────
-  const linkEdges = cy.edges('[kind = "link"]')
-  let dashOffset = 0
-  const dashTimer = linkEdges.length
-    ? window.setInterval(() => {
-        dashOffset = (dashOffset - 1) % 20
-        linkEdges.style('line-dash-offset', dashOffset)
-      }, 40)
-    : undefined
-
   // ─── Hover: upstream/downstream path isolation ───────────────────────────
+  // Only triggers once the pointer dwells on a node for a beat, so a fast
+  // mouse pass-over doesn't flash the fade on every node along the way.
+  const HOVER_DWELL_MS = 250
+  let hoverTimer: number | undefined
+
   cy.on('mouseover', 'node', (evt: EventObjectNode) => {
     const node = evt.target
     if (node.hasClass('em-mindmap-root')) return
-    const related = node.union(node.successors()).union(node.predecessors())
-    cy.elements().difference(related).addClass('em-mindmap-faded')
+    window.clearTimeout(hoverTimer)
+    hoverTimer = window.setTimeout(() => {
+      const related = node.union(node.successors()).union(node.predecessors())
+      cy.elements().difference(related).addClass('em-mindmap-faded')
+    }, HOVER_DWELL_MS)
   })
   cy.on('mouseout', 'node', () => {
+    window.clearTimeout(hoverTimer)
     cy.elements().removeClass('em-mindmap-faded')
   })
 
@@ -348,7 +353,7 @@ export function mountMindmap(
     const visibleCenterX = (canvas.clientWidth - drawerWidth) / 2
     cy.animate(
       { pan: { x: visibleCenterX - pos.x * zoom, y: canvas.clientHeight / 2 - pos.y * zoom } },
-      { duration: 250, easing: 'ease-in-out' },
+      { duration: 150, easing: 'ease-in-out' },
     )
   }
 
@@ -368,11 +373,18 @@ export function mountMindmap(
     if (evt.target === cy) {
       drawer.close()
       if (savedViewport) {
-        cy.animate({ pan: savedViewport.pan, zoom: savedViewport.zoom }, { duration: 250 })
+        cy.animate({ pan: savedViewport.pan, zoom: savedViewport.zoom }, { duration: 150 })
         savedViewport = null
       }
     }
   })
+
+  // ─── Double-click: reset to fit view ──────────────────────────────────────
+  function fitView(): void {
+    savedViewport = null
+    cy.animate({ fit: { eles: cy.elements(), padding: 40 } }, { duration: 150 })
+  }
+  cy.on('dbltap', () => fitView())
 
   // ─── Right-click: collapse / expand subtree ───────────────────────────────
   function hasCollapsedAncestor(node: NodeSingular): boolean {
@@ -417,10 +429,10 @@ export function mountMindmap(
       cy.layout(layoutOptions(name, cy)).run()
     },
     fit() {
-      cy.animate({ fit: { eles: cy.elements(), padding: 40 } }, { duration: 250 })
+      fitView()
     },
     destroy() {
-      if (dashTimer !== undefined) window.clearInterval(dashTimer)
+      window.clearTimeout(hoverTimer)
       cy.destroy()
       container.innerHTML = ''
     },
