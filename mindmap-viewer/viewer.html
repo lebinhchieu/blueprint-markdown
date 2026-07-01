@@ -41,7 +41,24 @@
     cursor: pointer;
   }
   .viewer-header button:hover { background: var(--bg-surface); }
+  .viewer-header select {
+    font-family: var(--font-sans);
+    font-size: var(--font-size-sm);
+    padding: var(--sp-xs) var(--sp-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-overlay);
+    color: var(--text-base);
+  }
   #status { font-size: var(--font-size-sm); color: var(--text-muted); }
+  .viewer-hint {
+    padding: var(--sp-xs) var(--sp-lg);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
+  }
 
   main {
     flex: 1;
@@ -74,10 +91,16 @@
     <h1>Mindmap Viewer</h1>
     <span id="status"></span>
     <div class="spacer"></div>
+    <select id="layout-select">
+      <option value="dagre">Layout: Tree</option>
+      <option value="concentric">Layout: Concentric</option>
+    </select>
+    <button type="button" id="fit-view">Fit</button>
     <button type="button" id="load-sample">Load sample</button>
     <button type="button" onclick="document.getElementById('file-input').click()">Load file…</button>
     <input type="file" id="file-input" accept=".md,.markdown,text/markdown" hidden />
   </div>
+  <div class="viewer-hint">Click a node for details · right-click to collapse/expand · hover to trace a path</div>
   <main id="drop-zone">
     <div id="mindmap-root" class="em-mindmap"></div>
   </main>

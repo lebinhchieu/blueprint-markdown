@@ -1,6 +1,8 @@
 /**
  * mountMindmap.ts — mounts a Cytoscape + dagre graph into an `.em-mindmap`
- * placeholder and wires the click → detail-drawer interaction.
+ * placeholder and wires interaction: click → detail-drawer, hover → path
+ * isolation, right-click → collapse/expand subtree, layout switch
+ * (dagre ↔ concentric).
  *
  * Mirrors the mermaid mount pattern in previewRuntime.ts: the directive
  * renders an empty, sized container server-side; this runs client-side
@@ -11,7 +13,13 @@
  * data (same approach renderMermaid uses for its theme variables).
  */
 
-import cytoscape, { type Core, type ElementDefinition } from 'cytoscape'
+import cytoscape, {
+  type Core,
+  type ElementDefinition,
+  type EventObjectCore,
+  type EventObjectNode,
+  type NodeSingular,
+} from 'cytoscape'
 import cytoscapeDagre from 'cytoscape-dagre'
 import type { MindmapGraph, MindmapNode } from './parseMindmap'
 
@@ -22,6 +30,8 @@ function ensureDagreRegistered(): void {
   dagreRegistered = true
 }
 
+export type MindmapLayoutName = 'dagre' | 'concentric'
+
 export interface MountMindmapOptions {
   /** Render a node's raw markdown body to HTML (drawer content). */
   renderBody: (markdown: string) => string
@@ -29,6 +39,10 @@ export interface MountMindmapOptions {
 
 export interface MindmapHandle {
   cy: Core
+  /** Switch between the default layered layout and a concentric one. */
+  setLayout(name: MindmapLayoutName): void
+  /** Re-fit the whole graph in the viewport. */
+  fit(): void
   destroy(): void
 }
 
@@ -50,6 +64,7 @@ function resolveThemeColors(el: HTMLElement) {
     typeColors,
     textOnSolid: read('--text-on-solid', '#ffffff'),
     edgeColor: read('--border-color', '#ddd4c4'),
+    primaryColor: read('--c-primary', '#c05a28'),
     // Cytoscape's font-family parser rejects quotes and multi-fallback CSS
     // stacks (unlike a browser's own CSS engine) — keep this comma-separated
     // and unquoted.
@@ -101,6 +116,73 @@ function buildDrawer(container: HTMLElement): {
   return { panel, title, body, close }
 }
 
+const TREE_EDGE_SELECTOR = 'edge[kind = "tree"]'
+
+/**
+ * Immediate tree-parent of a node, if any.
+ *
+ * Cytoscape's own `predecessors(selector)`/`successors(selector)` traverse
+ * *all* edges regardless of the selector and only filter the accumulated
+ * result at the very end — so restricting to `edge[kind="tree"]` strips out
+ * every node element too (a node never matches an edge selector), leaving
+ * `.nodes()` always empty. One-hop `incomers`/`outgoers` have the same
+ * filter-at-the-end behavior, but `.sources()`/`.targets()` on the
+ * surviving (correctly tree-only) edges still recovers the right nodes —
+ * so tree-only multi-hop walks are built manually from that one-hop step.
+ */
+function treeParent(node: NodeSingular): NodeSingular | undefined {
+  const parents = node.incomers(TREE_EDGE_SELECTOR).sources()
+  return parents.empty() ? undefined : parents[0]
+}
+
+/** Depth of each node from its root, following tree edges only (BFS). */
+function computeTreeDepths(cy: Core): Map<string, number> {
+  const depths = new Map<string, number>()
+  const roots = cy.nodes().filter(n => n.hasClass('em-mindmap-root') || treeParent(n) === undefined)
+  const queue: NodeSingular[] = []
+  roots.forEach(r => {
+    depths.set(r.id(), 0)
+    queue.push(r)
+  })
+  while (queue.length) {
+    const node = queue.shift()!
+    const depth = depths.get(node.id())!
+    node.outgoers(TREE_EDGE_SELECTOR).targets().forEach(child => {
+      if (!depths.has(child.id())) {
+        depths.set(child.id(), depth + 1)
+        queue.push(child)
+      }
+    })
+  }
+  return depths
+}
+
+const DAGRE_LAYOUT = {
+  name: 'dagre',
+  animate: true,
+  animationDuration: 300,
+  rankDir: 'LR',
+  nodeSep: 24,
+  rankSep: 70,
+} as cytoscape.LayoutOptions
+
+function layoutOptions(name: MindmapLayoutName, cy: Core): cytoscape.LayoutOptions {
+  if (name === 'concentric') {
+    const depths = computeTreeDepths(cy)
+    return {
+      name: 'concentric',
+      animate: true,
+      animationDuration: 300,
+      spacingFactor: 0.6,
+      minNodeSpacing: 16,
+      avoidOverlap: true,
+      concentric: (node: NodeSingular) => -(depths.get(node.id()) ?? 0),
+      levelWidth: () => 1,
+    } as cytoscape.LayoutOptions
+  }
+  return DAGRE_LAYOUT
+}
+
 /**
  * Mount a mindmap graph into `container` (an `.em-mindmap` placeholder).
  * Replaces any existing content — safe to call again on remount.
@@ -119,7 +201,7 @@ export function mountMindmap(
 
   const drawer = buildDrawer(container)
   const nodeById = new Map<string, MindmapNode>(graph.nodes.map(n => [n.id, n]))
-  const { typeColors, textOnSolid, edgeColor, fontFamily } = resolveThemeColors(container)
+  const { typeColors, textOnSolid, edgeColor, primaryColor, fontFamily } = resolveThemeColors(container)
 
   const elements: ElementDefinition[] = [
     ...graph.nodes.map(n => ({
@@ -156,11 +238,37 @@ export function mountMindmap(
           height: 'label',
           'background-color': 'data(color)',
           'border-width': 0,
+          'transition-property': 'opacity',
+          'transition-duration': 150,
         },
       },
       {
+        // Only present when parseMindmap had to merge 2+ real roots under one
+        // virtual root (see §9 "Multiple roots" in mindmap-design.md) — shown
+        // as a small dot so the shared origin reads clearly on screen.
         selector: '.em-mindmap-root',
-        style: { width: 1, height: 1, opacity: 0, events: 'no' },
+        style: {
+          shape: 'ellipse',
+          width: 14,
+          height: 14,
+          padding: '0px',
+          'background-color': 'data(color)',
+          'border-width': 0,
+          events: 'no',
+        },
+      },
+      {
+        selector: '.em-mindmap-collapsed',
+        style: {
+          'border-width': 3,
+          'border-style': 'dashed',
+          'border-color': primaryColor,
+          'border-opacity': 0.8,
+        },
+      },
+      {
+        selector: '.em-mindmap-faded',
+        style: { opacity: 0.15 },
       },
       {
         selector: 'edge',
@@ -171,36 +279,136 @@ export function mountMindmap(
           'arrow-scale': 0.8,
           'line-color': edgeColor,
           'target-arrow-color': edgeColor,
+          'transition-property': 'opacity',
+          'transition-duration': 150,
         },
       },
       {
         selector: 'edge[kind = "link"]',
-        style: { 'line-style': 'dashed' },
+        style: {
+          'line-style': 'dashed',
+          'line-dash-pattern': [6, 4],
+        },
+      },
+      {
+        selector: 'edge.em-mindmap-faded',
+        style: { opacity: 0.08 },
       },
     ],
-    layout: { name: 'dagre', rankDir: 'LR', nodeSep: 24, rankSep: 70 } as cytoscape.LayoutOptions,
+    layout: DAGRE_LAYOUT,
     minZoom: 0.2,
     maxZoom: 2.5,
+    wheelSensitivity: 5
   })
+
+  let currentLayout: MindmapLayoutName = 'dagre'
+  const collapsed = new Set<string>()
+
+  // ─── Animated cross-links: marching-ants dash offset ─────────────────────
+  const linkEdges = cy.edges('[kind = "link"]')
+  let dashOffset = 0
+  const dashTimer = linkEdges.length
+    ? window.setInterval(() => {
+        dashOffset = (dashOffset - 1) % 20
+        linkEdges.style('line-dash-offset', dashOffset)
+      }, 40)
+    : undefined
+
+  // ─── Hover: upstream/downstream path isolation ───────────────────────────
+  cy.on('mouseover', 'node', (evt: EventObjectNode) => {
+    const node = evt.target
+    if (node.hasClass('em-mindmap-root')) return
+    const related = node.union(node.successors()).union(node.predecessors())
+    cy.elements().difference(related).addClass('em-mindmap-faded')
+  })
+  cy.on('mouseout', 'node', () => {
+    cy.elements().removeClass('em-mindmap-faded')
+  })
+
+  // ─── Click: open detail drawer + focus-lock ───────────────────────────────
+  let savedViewport: { pan: cytoscape.Position; zoom: number } | null = null
+
+  function focusNode(node: NodeSingular): void {
+    if (!savedViewport) savedViewport = { pan: { ...cy.pan() }, zoom: cy.zoom() }
+    const drawerWidth = drawer.panel.getBoundingClientRect().width || 340
+    const zoom = cy.zoom()
+    const pos = node.position()
+    const visibleCenterX = (canvas.clientWidth - drawerWidth) / 2
+    cy.animate(
+      { pan: { x: visibleCenterX - pos.x * zoom, y: canvas.clientHeight / 2 - pos.y * zoom } },
+      { duration: 250, easing: 'ease-in-out' },
+    )
+  }
 
   function openDrawer(node: MindmapNode): void {
     drawer.title.textContent = node.label
     drawer.body.innerHTML = node.body ? options.renderBody(node.body) : ''
     drawer.panel.classList.add('is-open')
+    focusNode(cy.$id(node.id))
   }
 
-  cy.on('tap', 'node', evt => {
+  cy.on('tap', 'node', (evt: EventObjectNode) => {
     const id = evt.target.id()
     const node = nodeById.get(id)
     if (node && node.type !== 'root') openDrawer(node)
   })
-  cy.on('tap', evt => {
-    if (evt.target === cy) drawer.close()
+  cy.on('tap', (evt: EventObjectCore) => {
+    if (evt.target === cy) {
+      drawer.close()
+      if (savedViewport) {
+        cy.animate({ pan: savedViewport.pan, zoom: savedViewport.zoom }, { duration: 250 })
+        savedViewport = null
+      }
+    }
+  })
+
+  // ─── Right-click: collapse / expand subtree ───────────────────────────────
+  function hasCollapsedAncestor(node: NodeSingular): boolean {
+    for (let p = treeParent(node); p; p = treeParent(p)) {
+      if (collapsed.has(p.id())) return true
+    }
+    return false
+  }
+
+  function applyCollapsedVisibility(): void {
+    cy.nodes().forEach(n => {
+      if (n.hasClass('em-mindmap-root')) return
+      n.style('display', hasCollapsedAncestor(n) ? 'none' : 'element')
+    })
+    cy.edges().forEach(e => {
+      const hidden = e.source().style('display') === 'none' || e.target().style('display') === 'none'
+      e.style('display', hidden ? 'none' : 'element')
+    })
+  }
+
+  cy.on('cxttap', 'node', (evt: EventObjectNode) => {
+    const node = evt.target
+    const id = node.id()
+    if (node.hasClass('em-mindmap-root')) return
+    if (node.outgoers(TREE_EDGE_SELECTOR).empty()) return // leaf — nothing to collapse
+    if (collapsed.has(id)) {
+      collapsed.delete(id)
+      node.removeClass('em-mindmap-collapsed')
+    } else {
+      collapsed.add(id)
+      node.addClass('em-mindmap-collapsed')
+    }
+    applyCollapsedVisibility()
+    cy.layout(layoutOptions(currentLayout, cy)).run()
   })
 
   return {
     cy,
+    setLayout(name: MindmapLayoutName) {
+      if (name === currentLayout) return
+      currentLayout = name
+      cy.layout(layoutOptions(name, cy)).run()
+    },
+    fit() {
+      cy.animate({ fit: { eles: cy.elements(), padding: 40 } }, { duration: 250 })
+    },
     destroy() {
+      if (dashTimer !== undefined) window.clearInterval(dashTimer)
       cy.destroy()
       container.innerHTML = ''
     },

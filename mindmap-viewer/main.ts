@@ -8,11 +8,12 @@
 
 import { parseBlocks, type TextNode } from '../src/core/parser'
 import { parseMindmap } from '../src/core/mindmap/parseMindmap'
-import { mountMindmap } from '../src/core/mindmap/mountMindmap'
+import { mountMindmap, type MindmapHandle, type MindmapLayoutName } from '../src/core/mindmap/mountMindmap'
 import { createBrowserMarkdownIt } from '../src/core/markdownitBrowser'
 import SAMPLE_MD from './sample.md'
 
 const md = createBrowserMarkdownIt()
+let currentHandle: MindmapHandle | null = null
 
 function extractMindmapSource(markdown: string): string | null {
   const ast = parseBlocks(markdown)
@@ -27,6 +28,10 @@ function extractMindmapSource(markdown: string): string | null {
 function render(markdown: string): void {
   const status = document.getElementById('status')!
   const root = document.getElementById('mindmap-root')!
+
+  currentHandle?.destroy()
+  currentHandle = null
+  layoutSelect.value = 'dagre'
 
   const source = extractMindmapSource(markdown)
   if (source === null) {
@@ -43,7 +48,7 @@ function render(markdown: string): void {
   }
 
   status.textContent = `${graph.nodes.length} nodes, ${graph.edges.length} edges`
-  mountMindmap(root, graph, {
+  currentHandle = mountMindmap(root, graph, {
     renderBody: (bodyMd: string) => md.render(bodyMd),
   })
 }
@@ -57,6 +62,8 @@ function readFile(file: File): void {
 const dropZone = document.getElementById('drop-zone')!
 const fileInput = document.getElementById('file-input') as HTMLInputElement
 const sampleBtn = document.getElementById('load-sample')!
+const layoutSelect = document.getElementById('layout-select') as HTMLSelectElement
+const fitBtn = document.getElementById('fit-view')!
 
 dropZone.addEventListener('dragover', e => {
   e.preventDefault()
@@ -74,5 +81,9 @@ fileInput.addEventListener('change', () => {
   if (file) readFile(file)
 })
 sampleBtn.addEventListener('click', () => render(SAMPLE_MD))
+layoutSelect.addEventListener('change', () => {
+  currentHandle?.setLayout(layoutSelect.value as MindmapLayoutName)
+})
+fitBtn.addEventListener('click', () => currentHandle?.fit())
 
 render(SAMPLE_MD)
