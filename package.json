@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -93,6 +93,21 @@
           "default": 480,
           "minimum": 200,
           "description": "Height in pixels of the :::mindmap canvas in the preview and exported HTML."
+        },
+        "blueprintMarkdown.toc": {
+          "type": "string",
+          "enum": [
+            "off",
+            "h2",
+            "h3"
+          ],
+          "enumDescriptions": [
+            "Disable the table-of-contents rail",
+            "Include h1–h2 headings",
+            "Include h1–h3 headings"
+          ],
+          "default": "h3",
+          "description": "Table-of-contents reading rail in the preview and exported HTML."
         }
       }
     }

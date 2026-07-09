@@ -29,7 +29,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(e => {
       if (
         e.affectsConfiguration('blueprintMarkdown.theme') ||
-        e.affectsConfiguration('blueprintMarkdown.mindmapHeight')
+        e.affectsConfiguration('blueprintMarkdown.mindmapHeight') ||
+        e.affectsConfiguration('blueprintMarkdown.toc')
       ) {
         refresh()
       }

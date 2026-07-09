@@ -58,6 +58,13 @@ function resolveMindmapHeight(): number {
     .get<number>('mindmapHeight', 480)
 }
 
+/** Read blueprintMarkdown.toc from workspace config: 'off' | 'h2' | 'h3'. */
+function resolveToc(): string {
+  return vscode.workspace
+    .getConfiguration('blueprintMarkdown')
+    .get<string>('toc', 'h3')
+}
+
 // ─── Block directive regexes (mirror parser.ts) ───────────────────────────────
 
 const RE_CLOSE = /^\s*:::\s*$/
@@ -235,17 +242,20 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   // ── Table of Contents rail ──
   //
   // A core rule that:
-  //   1. Assigns slug ids to every h1/h2/h3 heading_open token so they become
+  //   1. Assigns slug ids to every included heading_open token so they become
   //      scroll targets (works with JS disabled too, via real #id anchors).
-  //   2. Prepends a <nav class="em-toc"> with one dot-item per heading so the
-  //      reading rail is present in the rendered HTML for both the live preview
-  //      and exported HTML artifacts.
+  //   2. Prepends a <nav class="em-toc"> with one level-bar item per heading so
+  //      the reading rail is present in the rendered HTML for both the live
+  //      preview and exported HTML artifacts.
   //
+  // Depth is governed by blueprintMarkdown.toc ('off' | 'h2' | 'h3').
   // Skips docs with fewer than 2 headings — no rail needed for trivial pages.
   md.core.ruler.push('em_toc', (state: StateCore) => {
     if (state.inlineMode) return false
 
-    const HEADING_TAGS = new Set(['h1', 'h2', 'h3'])
+    const tocSetting = resolveToc()
+    if (tocSetting === 'off') return false
+    const HEADING_TAGS = new Set(tocSetting === 'h2' ? ['h1', 'h2'] : ['h1', 'h2', 'h3'])
 
     // ── Pass 1: collect headings, assign ids ──
     type HeadingEntry = { level: number; id: string; text: string }
@@ -258,10 +268,7 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
 
       // The inline token immediately follows the heading_open token.
       const inlineTok = state.tokens[i + 1]
-      const rawText = inlineTok?.type === 'inline' ? inlineTok.content : ''
-
-      // Strip inline markdown (bold, italic, code, etc.) for a clean text label.
-      const text = rawText.replace(/[*_`[\]()~#]/g, '').trim()
+      const text = inlineTok?.type === 'inline' ? inlineText(inlineTok) : ''
       const base = slugify(text) || `section-${entries.length + 1}`
 
       // Deduplicate: first occurrence keeps base slug, duplicates get -2, -3 …
@@ -280,18 +287,19 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
     if (entries.length < 2) return false
 
     // ── Pass 2: build <nav class="em-toc"> HTML ──
-    // .em-toc__dot-col is a fixed-width (18px) centring column so all dots —
-    // regardless of size — share the same horizontal centre line.
+    // Each item: right-aligned label + a level-width bar (h1 widest).
     const items = entries.map((e, idx) =>
       `<li class="em-toc__item em-toc__item--h${e.level}">` +
       `<a href="#${e.id}" data-toc-target="${idx}">` +
       `<span class="em-toc__label">${escapeHtml(e.text)}</span>` +
-      `<span class="em-toc__dot-col"><span class="em-toc__dot"></span></span>` +
+      `<span class="em-toc__bar"></span>` +
       `</a></li>`,
     ).join('\n')
 
+    // Dense docs: rail hides h3 rows entirely (CSS keys off em-toc--dense).
+    const dense = entries.length > 40 ? ' em-toc--dense' : ''
     const nav =
-      `<nav class="em-toc" aria-label="Table of contents">` +
+      `<nav class="em-toc${dense}" aria-label="Table of contents">` +
       `<ol class="em-toc__list">\n${items}\n</ol>` +
       `</nav>\n`
 
@@ -308,14 +316,30 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Convert heading text to a URL-safe slug. */
+/**
+ * Plain-text content of an inline token: concatenates text and code spans,
+ * skipping formatting delimiters — unlike a regex strip, "Config (v2)" and
+ * "a_b_c" survive intact.
+ */
+function inlineText(tok: Token): string {
+  const parts: string[] = []
+  for (const child of tok.children ?? []) {
+    if (child.type === 'text' || child.type === 'code_inline') parts.push(child.content)
+  }
+  return parts.join('').trim()
+}
+
+/**
+ * Convert heading text to a URL-safe slug — GitHub-compatible (matches
+ * VS Code's own slugifier: keep letters/numbers/underscores/hyphens,
+ * spaces → hyphens, no hyphen collapsing).
+ */
 function slugify(text: string): string {
   return text
+    .trim()
     .toLowerCase()
-    .replace(/[^\w\s-]/g, '')   // remove non-word chars (except hyphens)
-    .replace(/\s+/g, '-')       // spaces → hyphens
-    .replace(/-+/g, '-')        // collapse consecutive hyphens
-    .replace(/^-|-$/g, '')      // trim leading/trailing hyphens
+    .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+    .replace(/\s/g, '-')
 }
 
 /** Escape HTML special characters for safe attribute/text insertion. */

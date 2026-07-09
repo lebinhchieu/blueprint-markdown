@@ -999,19 +999,26 @@ kbd {
   font-size: 0.875em;
 }
 
-/* ─── Table of Contents reading rail ──────────────────────────────────────── */
+/* ─── Table of Contents reading rail — level-bar design ───────────────────── */
 /*
- * Layout:
- *   .em-toc          — position:fixed right strip, 22px wide collapsed.
- *                      overflow:hidden clips labels; expands to 260px on hover.
- *   .em-toc__list    — flex column; items compress via flex-shrink to fit 100vh.
- *   .em-toc__item    — flex row: [label] [dot-col]; right-aligns the dot column.
- *   .em-toc__dot-col — fixed 18px column, centres every dot → single shared x.
- *   .em-toc__dot     — sized by heading level (h1 10px / h2 7px / h3 5px).
- *   .em-toc__label   — in-flow, flex:1, right-aligned text; hidden via opacity.
+ * Collapsed (~40px): one horizontal bar per heading, right-aligned. Bar WIDTH
+ * encodes level (h1 24px / h2 16px / h3 10px) — hierarchy readable at a glance.
+ * Active bar = full primary + thicker; passed bars = primary at half opacity,
+ * so the coloured prefix of the stack IS the reading-progress indicator.
  *
- * Progress line: .em-toc__list::before runs through dot centres.
- * JS writes --toc-progress (0–1) to the list; gradient colours the filled part.
+ * Expanded (hover, 280px, 160ms intent delay): right-aligned labels slide in
+ * to the left of the bars. Hierarchy via per-level right indent + typography
+ * (h1 bold with section spacing, h3 smaller + muted).
+ *
+ * .em-toc--dense (>40 headings, set by the core rule): h3 rows hidden while
+ * collapsed so long docs stay scannable; hover reveals everything.
+ *
+ * Layout:
+ *   .em-toc        — position:fixed right strip; overflow clips labels.
+ *   .em-toc__list  — flex column; scrolls on hover for long docs.
+ *   .em-toc__item  — flex row: [label][bar]; bar column fixed at right.
+ *   .em-toc__bar   — the level-width bar; styled by is-active / is-passed.
+ *   .em-toc__label — flex:1, right-aligned, ellipsis; revealed on hover.
  */
 
 /* ── Outer container ─────────────────────────────────────────────────────── */
@@ -1022,111 +1029,152 @@ kbd {
   top: 50%;
   transform: translateY(-50%);
   z-index: 1000;
-  /* Collapsed: only the 22px dot column is visible */
-  width: 22px;
+  /* Collapsed: only the 40px bar column is visible */
+  width: 40px;
   max-height: calc(100vh - 2rem);
-  /* overflow:hidden clips labels when collapsed — avoids the wide invisible
-     hit-area that blocked content underneath (fixes issues #1 and #2) */
+  /* Clips labels when collapsed — no invisible hit-area over content.
+     flex-end pins the list's RIGHT edge to the nav's right edge, so the
+     overflowing 280px list clips on the LEFT (labels) and the bar column
+     stays visible while collapsed. */
+  display: flex;
+  justify-content: flex-end;
   overflow: hidden;
-  border-radius: 11px;
+  border-radius: var(--radius-lg, 0.75rem);
   /* Always-present transparent border so hover doesn't shift layout */
   border: 1px solid transparent;
   background: transparent;
-  transition: width 0.22s ease, background 0.2s ease, box-shadow 0.2s ease,
-              border-color 0.2s ease, border-radius 0.18s ease;
+  /* Collapse immediately when the pointer leaves */
+  transition: width 0.24s cubic-bezier(0.22, 1, 0.36, 1), background 0.2s ease,
+              box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 @media (max-width: 720px) { .em-toc { display: none; } }
 
-/* Expanded state: reveal labels + panel background */
+/* Expanded: intent delay so brushing past the edge doesn't pop the panel */
 .em-toc:hover {
-  width: 260px;
+  width: 280px;
   background: var(--bg-raised);
   box-shadow: var(--shadow-lg);
   border-color: var(--border-color);
-  border-radius: var(--radius-lg, 0.75rem);
   overflow-y: auto;
+  transition-delay: 160ms, 160ms, 160ms, 160ms;
 }
 .em-toc:hover::-webkit-scrollbar { display: none; }
 
 /* ── List ───────────────────────────────────────────────────────────────── */
 
-.em-toc__list {
+/* .em-toc prefix lifts specificity above base.css's `.md-output ol` /
+   `.md-output li` (0,1,1), which otherwise leak margin-left/bottom in. */
+.em-toc .em-toc__list {
   list-style: none;
   margin: 0;
-  padding: 0.5rem 0;
+  padding: 0.625rem 0;
   display: flex;
   flex-direction: column;
-  position: relative;
-  /* Full panel width so labels lay out correctly even when the container clips */
-  min-width: 260px;
+  /* Full panel width so labels lay out correctly even while clipped */
+  min-width: 280px;
   scrollbar-width: none;
 }
 
-/* Progress line — single vertical stroke through all dot centres.
-   JS writes --toc-progress (0–1) so the upper part becomes accent-coloured. */
-.em-toc__list::before {
-  content: '';
-  position: absolute;
-  /* right: 9px = half of the 18px dot-col, landing on the dot centre x */
-  right: 9px;
-  top: 1.25rem;
-  bottom: 1.25rem;
-  width: 1.5px;
-  background: linear-gradient(
-    var(--c-primary) calc(var(--toc-progress, 0) * 100%),
-    var(--border-color) calc(var(--toc-progress, 0) * 100%)
-  );
-  opacity: 0.55;
-  pointer-events: none;
+/* ── Items ──────────────────────────────────────────────────────────────── */
+
+/* Row heights are constant per level and IDENTICAL collapsed vs expanded, so
+   hovering only reveals labels — bars never move vertically. Spacing tightens
+   with depth: h1 rows tallest (plus section margin), h3 tightest. */
+.em-toc .em-toc__item {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
-/* ── Items — compress to fit (Fix C) ────────────────────────────────────── */
-
-.em-toc__item {
-  position: relative;
-  display: flex;
-  align-items: center;
-  /* flex-shrink:1 lets items compress when many exist — all dots stay visible */
-  flex: 0 1 1.75rem;
-  min-height: 0;
-  transition: min-height 0.18s ease;
-}
-
-/* On hover, restore readable row height (list may scroll for long docs) */
-.em-toc:hover .em-toc__item {
-  min-height: 1.75rem;
-}
+.em-toc__item--h1 > a { height: 1.6rem; }
+.em-toc__item--h2 > a { height: 1.35rem; }
+.em-toc__item--h3 > a { height: 1.1rem; }
 
 .em-toc__item > a {
   display: flex;
   align-items: center;
   width: 100%;
-  min-height: 100%;
   text-decoration: none;
   color: inherit;
-  padding: 2px 2px 2px 0.75rem;
+  padding: 0 12px 0 0.875rem;
   box-sizing: border-box;
 }
 
-/* ── Labels ─────────────────────────────────────────────────────────────── */
+/* ── Level bars (collapsed hierarchy) ───────────────────────────────────── */
+
+.em-toc__item--h1 { --_bar-w: 24px; }
+.em-toc__item--h2 { --_bar-w: 16px; }
+.em-toc__item--h3 { --_bar-w: 10px; }
+
+.em-toc__bar {
+  flex-shrink: 0;
+  width: var(--_bar-w, 16px);
+  height: 2px;
+  border-radius: 999px;
+  background: var(--text-faint);
+  opacity: 0.65;
+  transition: background 0.18s ease, opacity 0.18s ease, height 0.18s ease;
+}
+
+/* Passed: primary at half strength — the coloured prefix shows progress */
+.em-toc__item.is-passed .em-toc__bar {
+  background: var(--c-primary);
+  opacity: 0.45;
+}
+
+/* Active: full primary, thicker */
+.em-toc__item.is-active .em-toc__bar {
+  background: var(--c-primary);
+  opacity: 1;
+  height: 3px;
+}
+
+.em-toc__item > a:hover .em-toc__bar {
+  background: var(--c-primary);
+  opacity: 0.9;
+}
+
+/* ── Labels (expanded hierarchy) ────────────────────────────────────────── */
 
 .em-toc__label {
   flex: 1;
+  min-width: 0;
   text-align: right;
-  padding-right: 8px;
   font-family: var(--font-sans);
   font-size: 0.78rem;
-  line-height: 1.35;
+  line-height: 1.4;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: var(--text-muted);
   opacity: 0;
-  transition: opacity 0.18s ease, color 0.18s ease;
+  transform: translateX(6px);
+  transition: opacity 0.18s ease, transform 0.22s cubic-bezier(0.22, 1, 0.36, 1),
+              color 0.18s ease;
 }
 
-.em-toc:hover .em-toc__label { opacity: 1; }
+.em-toc:hover .em-toc__label {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 160ms;
+}
+
+/* Per-level typography + right indent (labels anchor to the right-edge bars) */
+.em-toc__item--h1 .em-toc__label {
+  font-weight: 600;
+  font-size: 0.82rem;
+  color: var(--text-base);
+  padding-right: 10px;
+}
+.em-toc__item--h2 .em-toc__label { padding-right: 24px; }
+.em-toc__item--h3 .em-toc__label {
+  font-size: 0.74rem;
+  color: var(--text-faint);
+  padding-right: 30px;
+}
+
+/* Section rhythm: breathing room above each h1 group (except the first) */
+.em-toc .em-toc__item--h1:not(:first-child) { margin-top: 10px; }
 
 .em-toc__item.is-active .em-toc__label {
   color: var(--c-primary);
@@ -1135,69 +1183,10 @@ kbd {
 
 .em-toc__item > a:hover .em-toc__label { color: var(--text-base); }
 
-/* Staggered reveal */
-.em-toc:hover .em-toc__item:nth-child(1)   .em-toc__label { transition-delay: 0ms; }
-.em-toc:hover .em-toc__item:nth-child(2)   .em-toc__label { transition-delay: 18ms; }
-.em-toc:hover .em-toc__item:nth-child(3)   .em-toc__label { transition-delay: 34ms; }
-.em-toc:hover .em-toc__item:nth-child(4)   .em-toc__label { transition-delay: 48ms; }
-.em-toc:hover .em-toc__item:nth-child(5)   .em-toc__label { transition-delay: 60ms; }
-.em-toc:hover .em-toc__item:nth-child(6)   .em-toc__label { transition-delay: 70ms; }
-.em-toc:hover .em-toc__item:nth-child(n+7) .em-toc__label { transition-delay: 78ms; }
+/* ── Dense docs (>40 headings) — hide h3 rows in BOTH states so hovering
+      never reshuffles the stack; h3 sections stay reachable via their h2 ── */
 
-/* ── Dot column — fixed 18px for consistent line alignment (Fix #4) ─────── */
-
-.em-toc__dot-col {
-  flex-shrink: 0;
-  width: 18px;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  /* Sits above the connecting line */
-  z-index: 1;
-}
-
-/* ── Dot sizes per heading level ────────────────────────────────────────── */
-
-.em-toc__item--h1 { --_dot-size: 10px; }
-.em-toc__item--h2 { --_dot-size:  7px; }
-.em-toc__item--h3 { --_dot-size:  5px; }
-
-.em-toc__dot {
-  display: block;
-  flex-shrink: 0;
-  width: var(--_dot-size, 7px);
-  height: var(--_dot-size, 7px);
-  border-radius: 50%;
-  /* Use text-faint so dots have visible contrast on all theme backgrounds */
-  background: var(--text-faint);
-  border: 1.5px solid var(--text-faint);
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease,
-              box-shadow 0.18s ease, opacity 0.18s ease;
-}
-
-/* Passed dot */
-.em-toc__item.is-passed .em-toc__dot {
-  background: var(--c-primary);
-  border-color: var(--c-primary);
-  opacity: 0.55;
-}
-
-/* Active dot */
-.em-toc__item.is-active .em-toc__dot {
-  background: var(--c-primary);
-  border-color: var(--c-primary);
-  transform: scale(1.4);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c-primary) 22%, transparent);
-  opacity: 1;
-}
-
-/* Hover feedback on dot */
-.em-toc__item > a:hover .em-toc__dot {
-  transform: scale(1.25);
-  border-color: var(--c-primary);
-}
+.em-toc--dense .em-toc__item--h3 { display: none; }
 
 /* ─── Mindmap ───────────────────────────────────────────────────────────── */
 

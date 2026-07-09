@@ -1,10 +1,16 @@
 /**
- * toc.ts — Interactive Table of Contents reading rail.
+ * toc.ts — Interactive Table of Contents reading rail (level-bar design).
  *
  * Call setupToc(root) after each render (from previewRuntime.runShared).
  * Uses document-level event delegation (wired once, immune to morphdom) and
  * module-level state so VS Code's per-keystroke morphdom re-renders don't reset
- * the active dot or scroll listener.
+ * the active bar or scroll listener.
+ *
+ * Works identically in the VS Code preview (scrolling .output-pane / document)
+ * and exported HTML (document scroll): one capture-phase window scroll listener
+ * sees scroll events from any descendant container, and the active-heading
+ * threshold is computed from the scroll container's actual viewport top instead
+ * of a hardcoded offset.
  */
 
 // ─── State (survives morphdom re-renders) ─────────────────────────────────────
@@ -53,9 +59,10 @@ function wireOnce(): void {
 
   document.addEventListener('click', onTocClick)
 
-  // Scroll-spy: capture phase so we intercept scroll from any container.
-  const scrollEl = document.querySelector('.output-pane') ?? document
-  scrollEl.addEventListener('scroll', scheduleUpdate, { capture: true, passive: true })
+  // Scroll-spy: capture phase on window sees scroll events from ANY descendant
+  // scroll container — the preview's .output-pane or the document itself in
+  // exported HTML — with a single listener.
+  window.addEventListener('scroll', scheduleUpdate, { capture: true, passive: true })
   window.addEventListener('resize', scheduleUpdate, { passive: true })
 
   // When the .em-toc panel is entered, scroll so the active item is visible.
@@ -107,11 +114,16 @@ function scheduleUpdate(): void {
 function updateActive(): void {
   if (headings.length === 0) return
 
-  const THRESHOLD = 96
-  let activeIdx = 0
+  // Threshold = top of the actual scroll viewport (+8px grace), not a
+  // hardcoded offset — exported HTML has no .output-pane and starts at 0.
+  const pane = document.querySelector('.output-pane')
+  const threshold = (pane ? pane.getBoundingClientRect().top : 0) + 8
 
+  // Active = last heading at/above the threshold.
+  // ponytail: O(headings) rect scan per scroll frame; fine to ~1k headings.
+  let activeIdx = 0
   for (let i = 0; i < headings.length; i++) {
-    if (headings[i].getBoundingClientRect().top <= THRESHOLD) {
+    if (headings[i].getBoundingClientRect().top <= threshold) {
       activeIdx = i
     } else {
       break
@@ -122,10 +134,4 @@ function updateActive(): void {
     item.classList.toggle('is-active', i === activeIdx)
     item.classList.toggle('is-passed', i < activeIdx)
   })
-
-  // Update the progress line gradient via CSS variable.
-  if (tocList && headings.length > 1) {
-    const pct = activeIdx / (headings.length - 1)
-    tocList.style.setProperty('--toc-progress', String(pct))
-  }
 }
