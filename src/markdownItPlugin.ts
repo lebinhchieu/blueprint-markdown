@@ -26,7 +26,7 @@ import markdownItTaskLists from 'markdown-it-task-lists'
 import { parseBlocks } from './core/parser'
 import { buildRegistry } from './core/directives/index'
 import { createMarkdownIt } from './core/markdownit'
-import { installInlineRule } from './core/inline'
+import { installInlineRule, installHexColorRule } from './core/inline'
 import { installFenceRenderer } from './core/fence'
 import { installInlineCodeRenderer } from './core/inline-code'
 import { createRenderTree } from './core/renderer'
@@ -132,6 +132,7 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   // The renderText hook in createRenderTree was designed exactly for this case.
   const privateMd = createMarkdownIt()
   installInlineRule(privateMd, registry)
+  installHexColorRule(privateMd)
 
   // renderTree: walks the AST produced by parseBlocks and returns an HTML string.
   const renderTree = createRenderTree(
@@ -145,6 +146,7 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
 
   // Inline directives (:chip[Active]{primary}, :icon{home}, etc.)
   installInlineRule(md, registry)
+  installHexColorRule(md)
 
   // Custom fence renderer: line highlighting, title bars, mermaid div.
   // Supersedes VS Code's built-in fence highlighting; we call hljs ourselves.

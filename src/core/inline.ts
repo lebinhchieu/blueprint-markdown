@@ -18,7 +18,7 @@ import type MarkdownIt from 'markdown-it'
 import type StateInline from 'markdown-it/lib/rules_inline/state_inline.mjs'
 import type { DirectiveSpec, DirectiveNode } from './types'
 import { parseAttrs } from './attrs'
-import { resolveColor } from './colors'
+import { resolveColor, HEX_COLOR_RE, hexSwatchHtml } from './colors'
 
 const NAME_RE = /^:([A-Za-z][\w-]*)/
 
@@ -116,6 +116,35 @@ export function installInlineRule(
       token.content = html
       state.pos = parsed.end
 
+      return true
+    },
+  )
+}
+
+/**
+ * Install a rule that prepends a small color swatch before any bare #rgb / #rrggbb
+ * hex code in running text (not just inside backticks — see installInlineCodeRenderer
+ * for the code_inline case).
+ */
+export function installHexColorRule(md: MarkdownIt): void {
+  md.inline.ruler.before(
+    'text',
+    'hex_color_swatch',
+    (state: StateInline, silent: boolean): boolean => {
+      if (state.src.charCodeAt(state.pos) !== 0x23 /* # */) return false
+
+      const match = HEX_COLOR_RE.exec(state.src.slice(state.pos))
+      if (!match || match.index !== 0) return false
+
+      if (!silent) {
+        const hex = match[0]
+        const htmlToken = state.push('html_inline', '', 0)
+        htmlToken.content = hexSwatchHtml(hex)
+        const textToken = state.push('text', '', 0)
+        textToken.content = hex
+      }
+
+      state.pos += match[0].length
       return true
     },
   )

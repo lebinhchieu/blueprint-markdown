@@ -57,3 +57,11 @@ export function canonicalRole(token?: string): string {
   if (!token) return 'gray'
   return COLOR_ALIASES[token] ?? token
 }
+
+/** #rgb or #rrggbb only — not the 4/8-digit alpha forms accepted by resolveColor(). */
+export const HEX_COLOR_RE = /#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})(?![0-9a-fA-F])/
+
+/** Small inline swatch showing the literal color. `hex` must already be regex-validated. */
+export function hexSwatchHtml(hex: string): string {
+  return `<span class="hex-swatch" style="background:${hex}" title="${hex}"></span>`
+}

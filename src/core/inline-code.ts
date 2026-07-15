@@ -19,6 +19,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import type MarkdownIt from 'markdown-it'
 import type Token from 'markdown-it/lib/token.mjs'
+import { hexSwatchHtml } from './colors'
 
 // name.ext with optional :line or :line-range, no spaces.
 // Extension must start with a letter (filters v2.0, etc.) and be ≤8 chars.
@@ -62,6 +63,11 @@ export function installInlineCodeRenderer(md: MarkdownIt): void {
   ): string => {
     const content = tokens[idx].content.trim()
     const esc = md.utils.escapeHtml(content)
+
+    if (/^#(?:[0-9a-fA-F]{6}|[0-9a-fA-F]{3})$/.test(content)) {
+      return `${hexSwatchHtml(content)}<code>${esc}</code>`
+    }
+
     const match = content.match(FILE_REF)
     if (match) {
       const filePath = match[1]

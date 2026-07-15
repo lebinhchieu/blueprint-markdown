@@ -111,6 +111,18 @@
   border-radius: var(--radius-lg);
 }
 
+/* ─── Hex color swatch ─────────────────────────────────────────────────── */
+
+.hex-swatch {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.2em;
+  border-radius: 3px;
+  vertical-align: -2px;
+  border: 1px solid var(--border-color);
+}
+
 /* ─── File-ref inline code ─────────────────────────────────────────────── */
 
 .md-output code.file-ref {
