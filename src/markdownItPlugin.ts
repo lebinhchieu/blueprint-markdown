@@ -211,9 +211,20 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   })
 
   // Token renderer: delegate to the existing core engine.
+  //
+  // Wraps the output in a bare div carrying data-line/code-line — the same
+  // attribute/class convention VS Code's own engine stamps on its native block
+  // types (paragraph_open, heading_open, fence, …) to drive scroll sync. Custom
+  // token types like em_directive are never auto-wrapped by VS Code, and
+  // token.map alone (set above) is otherwise never read — without this, every
+  // directive is a scroll-sync dead zone.
   md.renderer.rules['em_directive'] = (tokens: Token[], idx: number): string => {
-    const ast = parseBlocks(tokens[idx].content)
-    return renderTree(ast)
+    const token = tokens[idx]
+    const ast = parseBlocks(token.content)
+    const html = renderTree(ast)
+    return token.map
+      ? `<div class="code-line" data-line="${token.map[0]}">${html}</div>\n`
+      : html
   }
 
   // ── Theme marker ──
