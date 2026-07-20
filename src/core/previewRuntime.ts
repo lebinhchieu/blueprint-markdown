@@ -28,7 +28,7 @@ export type MermaidApi = {
  */
 export function applyTheme(root: HTMLElement): string {
   const marker = root.ownerDocument.querySelector<HTMLElement>('.em-theme-config')
-  const theme = marker?.getAttribute('data-em-theme') || 'light'
+  const theme = marker?.getAttribute('data-em-theme') || root.getAttribute('data-em-theme') || 'light'
   root.setAttribute('data-em-theme', theme)
   return theme
 }
