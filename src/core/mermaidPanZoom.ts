@@ -85,12 +85,43 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
   return { bar, zoomIn, zoomOut, reset, expand }
 }
 
-/** Wires wheel-zoom, drag-to-pan, dblclick/button reset, and expand onto a viewport. */
+/**
+ * Only one inline diagram's wheel-zoom is "activated" (click-to-enable) at a
+ * time — mirrors mountMindmap.ts's userZoomingEnabled(false)-until-clicked
+ * gate, so scrolling the page past a diagram doesn't hijack the wheel.
+ * A single document-level listener (installed once) deactivates the current
+ * one on any click outside it.
+ */
+let activeZoomGate: { viewport: HTMLElement; setActive: (v: boolean) => void } | null = null
+let deactivateListenerInstalled = false
+
+function ensureDeactivateListener(doc: Document): void {
+  if (deactivateListenerInstalled) return
+  deactivateListenerInstalled = true
+  doc.addEventListener(
+    'pointerdown',
+    e => {
+      if (activeZoomGate && !activeZoomGate.viewport.contains(e.target as Node)) {
+        activeZoomGate.setActive(false)
+        activeZoomGate = null
+      }
+    },
+    true,
+  )
+}
+
+/**
+ * Wires wheel-zoom, drag-to-pan, dblclick/button reset, and expand onto a
+ * viewport. When `gateZoom` is set, wheel-zoom stays off (page scrolls
+ * normally) until the user clicks the diagram to activate it — skipped for
+ * the fullscreen modal, which has no surrounding page to fight over scroll.
+ */
 function wireViewport(
   viewport: HTMLElement,
   stage: HTMLElement,
   controls: Controls,
   content: Size,
+  gateZoom: boolean,
   onExpand?: () => void,
 ): void {
   let t = fitTransform(viewport, content)
@@ -108,9 +139,21 @@ function wireViewport(
     applyTransform(stage, t)
   }
 
+  let active = !gateZoom
+  const setActive = (v: boolean) => {
+    active = v
+    viewport.classList.toggle('em-mermaid__viewport--active', v)
+  }
+  if (gateZoom) {
+    const doc = viewport.ownerDocument
+    ensureDeactivateListener(doc)
+    viewport.title = 'Click to enable scroll-to-zoom'
+  }
+
   viewport.addEventListener(
     'wheel',
     e => {
+      if (!active) return // let the page scroll normally until activated
       e.preventDefault()
       const rect = viewport.getBoundingClientRect()
       zoomAt(t.scale * (e.deltaY < 0 ? WHEEL_STEP : 1 / WHEEL_STEP), e.clientX - rect.left, e.clientY - rect.top)
@@ -122,6 +165,11 @@ function wireViewport(
   let lastX = 0
   let lastY = 0
   viewport.addEventListener('pointerdown', e => {
+    if (gateZoom && !active) {
+      activeZoomGate?.setActive(false)
+      setActive(true)
+      activeZoomGate = { viewport, setActive }
+    }
     e.preventDefault() // stop native text/image drag-selection inside the SVG
     dragging = true
     lastX = e.clientX
@@ -189,7 +237,7 @@ function openModal(doc: Document, svg: SVGElement, originalStage: HTMLElement, c
   overlay.appendChild(panel)
   doc.body.appendChild(overlay)
 
-  wireViewport(viewport, stage, controls, content)
+  wireViewport(viewport, stage, controls, content, false)
 
   const close = () => {
     // ponytail: if the doc was edited while the modal was open, originalStage
@@ -264,6 +312,6 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
       el.style.height = `${height}px`
     }
 
-    wireViewport(viewport, stage, controls, content, () => openModal(doc, svg, stage, content))
+    wireViewport(viewport, stage, controls, content, true, () => openModal(doc, svg, stage, content))
   })
 }
