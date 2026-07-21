@@ -25,32 +25,32 @@
   },
   "Blueprint: note callout": {
     "prefix": "bp-note",
-    "body": [":::note", "$0", ":::"],
+    "body": [":::note{title=\"${1:Title}\"}", "$0", ":::"],
     "description": "Note callout"
   },
   "Blueprint: tip callout": {
     "prefix": "bp-tip",
-    "body": [":::tip", "$0", ":::"],
+    "body": [":::tip{title=\"${1:Title}\"}", "$0", ":::"],
     "description": "Tip callout"
   },
   "Blueprint: info callout": {
     "prefix": "bp-info",
-    "body": [":::info", "$0", ":::"],
+    "body": [":::info{title=\"${1:Title}\"}", "$0", ":::"],
     "description": "Info callout"
   },
   "Blueprint: warning callout": {
     "prefix": "bp-warning",
-    "body": [":::warning", "$0", ":::"],
+    "body": [":::warning{title=\"${1:Heads up}\"}", "$0", ":::"],
     "description": "Warning callout"
   },
   "Blueprint: danger callout": {
     "prefix": "bp-danger",
-    "body": [":::danger", "$0", ":::"],
+    "body": [":::danger{title=\"${1:Title}\"}", "$0", ":::"],
     "description": "Danger callout"
   },
   "Blueprint: success callout": {
     "prefix": "bp-success",
-    "body": [":::success", "$0", ":::"],
+    "body": [":::success{title=\"${1:Title}\"}", "$0", ":::"],
     "description": "Success callout"
   },
   "Blueprint: generic callout": {
