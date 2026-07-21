@@ -1,0 +1,283 @@
+{
+  "Blueprint: card": {
+    "prefix": "bp-card",
+    "body": [
+      ":::card{title=\"${1:Title}\" icon=${2:rocket}}",
+      "$0",
+      ":::"
+    ],
+    "description": "Titled content card"
+  },
+  "Blueprint: cards grid": {
+    "prefix": "bp-cards",
+    "body": [
+      ":::cards{cols=${1:3} gap=${2:md}}",
+      ":::card{title=\"${3:A}\"}",
+      "$4",
+      ":::",
+      ":::card{title=\"${5:B}\"}",
+      "$6",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Responsive grid of cards"
+  },
+  "Blueprint: note callout": {
+    "prefix": "bp-note",
+    "body": [":::note", "$0", ":::"],
+    "description": "Note callout"
+  },
+  "Blueprint: tip callout": {
+    "prefix": "bp-tip",
+    "body": [":::tip", "$0", ":::"],
+    "description": "Tip callout"
+  },
+  "Blueprint: info callout": {
+    "prefix": "bp-info",
+    "body": [":::info", "$0", ":::"],
+    "description": "Info callout"
+  },
+  "Blueprint: warning callout": {
+    "prefix": "bp-warning",
+    "body": [":::warning", "$0", ":::"],
+    "description": "Warning callout"
+  },
+  "Blueprint: danger callout": {
+    "prefix": "bp-danger",
+    "body": [":::danger", "$0", ":::"],
+    "description": "Danger callout"
+  },
+  "Blueprint: success callout": {
+    "prefix": "bp-success",
+    "body": [":::success", "$0", ":::"],
+    "description": "Success callout"
+  },
+  "Blueprint: generic callout": {
+    "prefix": "bp-callout",
+    "body": [
+      ":::callout{type=${1|primary,success,warning,danger,info,gray,low|} title=\"${2:Title}\" icon=${3:info}}",
+      "$0",
+      ":::"
+    ],
+    "description": "Generic callout with explicit type/title/icon"
+  },
+  "Blueprint: details": {
+    "prefix": "bp-details",
+    "body": [
+      ":::details{title=\"${1:Summary label}\"}",
+      "$0",
+      ":::"
+    ],
+    "description": "Collapsible details section"
+  },
+  "Blueprint: accordion": {
+    "prefix": "bp-accordion",
+    "body": [
+      ":::accordion",
+      ":::details{title=\"${1:A}\"}",
+      "$2",
+      ":::",
+      ":::details{title=\"${3:B}\"}",
+      "$4",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Accordion of details blocks"
+  },
+  "Blueprint: columns": {
+    "prefix": "bp-columns",
+    "body": [
+      ":::columns{count=${1:2} gap=${2:md}}",
+      ":::col",
+      "$3",
+      ":::",
+      ":::col{span=${4:1}}",
+      "$5",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Multi-column layout"
+  },
+  "Blueprint: col": {
+    "prefix": "bp-col",
+    "body": [
+      ":::col{span=${1:1}}",
+      "$0",
+      ":::"
+    ],
+    "description": "Single column (inside :::columns)"
+  },
+  "Blueprint: timeline": {
+    "prefix": "bp-timeline",
+    "body": [
+      ":::timeline",
+      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low|}}",
+      "$4",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Vertical timeline"
+  },
+  "Blueprint: event": {
+    "prefix": "bp-event",
+    "body": [
+      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low|}}",
+      "$0",
+      ":::"
+    ],
+    "description": "Single timeline event (inside :::timeline)"
+  },
+  "Blueprint: tabs": {
+    "prefix": "bp-tabs",
+    "body": [
+      ":::tabs",
+      ":::tab{title=\"${1:npm}\"}",
+      "$2",
+      ":::",
+      ":::tab{title=\"${3:pnpm}\"}",
+      "$4",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Tabbed content switcher"
+  },
+  "Blueprint: tab": {
+    "prefix": "bp-tab",
+    "body": [
+      ":::tab{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
+    "description": "Single tab (inside :::tabs)"
+  },
+  "Blueprint: steps": {
+    "prefix": "bp-steps",
+    "body": [
+      ":::steps",
+      ":::step{title=\"${1:Install}\"}",
+      "$2",
+      ":::",
+      ":::step{title=\"${3:Configure}\"}",
+      "$4",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Auto-numbered process steps"
+  },
+  "Blueprint: step": {
+    "prefix": "bp-step",
+    "body": [
+      ":::step{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
+    "description": "Single step (inside :::steps)"
+  },
+  "Blueprint: revision": {
+    "prefix": "bp-revision",
+    "body": [
+      ":::revision{note=\"${1:Description of the change}\" date=\"${2:2026-06-26}\"}",
+      "$3",
+      "",
+      ":::previous",
+      "$4",
+      ":::",
+      ":::",
+      "$0"
+    ],
+    "description": "Revision block with previous version"
+  },
+  "Blueprint: mindmap": {
+    "prefix": "bp-mindmap",
+    "body": [
+      ":::mindmap",
+      "# ${1:Root node} {type=${2:context}}",
+      "$3",
+      "",
+      "## ${4:Child node} {#${5:id} type=${6:action}}",
+      "$0",
+      ":::"
+    ],
+    "description": "Heading-tree mind map"
+  },
+  "Blueprint: progress": {
+    "prefix": "bp-progress",
+    "body": [
+      "::progress{value=${1:65} max=${2:100} color=${3|primary,success,warning,danger,info,gray,low|} label=\"${4:Label}\"}$0"
+    ],
+    "description": "Labeled progress bar"
+  },
+  "Blueprint: chip": {
+    "prefix": "bp-chip",
+    "body": [
+      ":chip[${1:text}]{${2|primary,success,warning,danger,info,gray,low|}}$0"
+    ],
+    "description": "Colored badge/tag"
+  },
+  "Blueprint: icon": {
+    "prefix": "bp-icon",
+    "body": [
+      ":icon[${1:home}]$0"
+    ],
+    "description": "Inline Material Symbols icon"
+  },
+  "Blueprint: color text": {
+    "prefix": "bp-color",
+    "body": [
+      ":color[${1:text}]{${2|primary,success,warning,danger,info,gray,low|}}$0"
+    ],
+    "description": "Inline colored text"
+  },
+  "Blueprint: kbd": {
+    "prefix": "bp-kbd",
+    "body": [
+      ":kbd[${1:Ctrl+K}]$0"
+    ],
+    "description": "Styled keyboard key caps"
+  },
+  "Blueprint: button": {
+    "prefix": "bp-button",
+    "body": [
+      ":button[${1:Get started}]{href=\"${2:/start}\" color=${3|primary,success,warning,danger,info,gray,low|} variant=${4|solid,outline,soft|}}$0"
+    ],
+    "description": "Inline linked button"
+  },
+  "Blueprint: tooltip": {
+    "prefix": "bp-tooltip",
+    "body": [
+      ":tooltip[${1:text}]{tip=\"${2:Explanation shown on hover.}\"}$0"
+    ],
+    "description": "Hover tooltip"
+  },
+  "Blueprint: rating": {
+    "prefix": "bp-rating",
+    "body": [
+      ":rating{value=${1:4} max=${2:5}}$0"
+    ],
+    "description": "Star rating display"
+  },
+  "Blueprint: code fence with meta": {
+    "prefix": "bp-codemeta",
+    "body": [
+      "```${1:js} {${2:1,3-5}} title=\"${3:filename}\"",
+      "$0",
+      "```"
+    ],
+    "description": "Fenced code block with line highlight and title"
+  },
+  "Blueprint: mermaid": {
+    "prefix": "bp-mermaid",
+    "body": [
+      "```mermaid",
+      "$0",
+      "```"
+    ],
+    "description": "Mermaid diagram block"
+  }
+}

@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -41,6 +41,12 @@
         "injectTo": [
           "text.html.markdown"
         ]
+      }
+    ],
+    "snippets": [
+      {
+        "language": "markdown",
+        "path": "./snippets/markdown.json"
       }
     ],
     "markdown.markdownItPlugins": true,
