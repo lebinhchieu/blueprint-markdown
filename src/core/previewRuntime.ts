@@ -13,6 +13,7 @@ import { setupToc } from './toc'
 import { createMinimalMarkdownIt } from './markdownitBrowser'
 import { mountMindmap, type CytoscapeLib, type CytoscapeDagreLib, type MindmapHandle } from './mindmap/mountMindmap'
 import type { MindmapGraph } from './mindmap/parseMindmap'
+import { enhanceMermaidZoom } from './mermaidPanZoom'
 
 export type MermaidApi = {
   initialize: (config: Record<string, unknown>) => void
@@ -114,7 +115,10 @@ export async function renderMermaid(
   })
 
   // If nothing changed, skip initialize/font-load/run entirely.
-  if (pending.length === 0) return
+  if (pending.length === 0) {
+    enhanceMermaidZoom(blocks)
+    return
+  }
 
   const css = getComputedStyle(root.ownerDocument.body)
   const v = (name: string) => css.getPropertyValue(name).trim()
@@ -191,6 +195,8 @@ export async function renderMermaid(
 
   // Cache the rendered SVGs for future incremental updates.
   pending.forEach(p => svgCacheSet(p.key, p.el.innerHTML))
+
+  enhanceMermaidZoom(blocks)
 }
 
 // ─── Mindmap ──────────────────────────────────────────────────────────────────
