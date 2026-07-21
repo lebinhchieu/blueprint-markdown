@@ -89,10 +89,19 @@ function resolveThemeColors(el: HTMLElement) {
   }
 }
 
-function truncateLabel(label: string, maxWords = 6): string {
-  const words = label.split(/\s+/).filter(Boolean)
-  if (words.length <= maxWords) return label
-  return words.slice(0, maxWords).join(' ') + '…'
+const CROSS_LINK_RE = /\[\[([\w-]+)\]\]/g
+
+/** `[` / `]` in a node label would otherwise terminate the markdown link early. */
+function escapeLinkText(label: string): string {
+  return label.replace(/[[\]]/g, '\\$&')
+}
+
+/** Replace `[[id]]` references in a node body with a markdown link to the target's title. */
+function resolveCrossLinks(body: string, nodeById: Map<string, MindmapNode>): string {
+  return body.replace(CROSS_LINK_RE, (match, id: string) => {
+    const target = nodeById.get(id)
+    return target ? `[${escapeLinkText(target.label)}](#mindmap:${id})` : match
+  })
 }
 
 function buildDrawer(container: HTMLElement): {
@@ -242,7 +251,7 @@ export function mountMindmap(
     ...graph.nodes.map(n => ({
       data: {
         id: n.id,
-        label: n.type === 'root' ? '' : truncateLabel(n.label),
+        label: n.type === 'root' ? '' : n.label,
         color: colorForNode(n),
       },
       classes: n.type === 'root' ? 'em-mindmap-root' : undefined,
@@ -267,8 +276,9 @@ export function mountMindmap(
           'text-max-width': '140px',
           'font-family': fontFamily,
           'font-size': 13,
+          'line-height': 1.35,
           color: textOnSolid,
-          padding: '10px',
+          padding: '12px',
           width: 'label',
           height: 'label',
           'background-color': 'data(color)',
@@ -324,10 +334,23 @@ export function mountMindmap(
         // glance without relying on animation.
         selector: 'edge[kind = "link"]',
         style: {
+          width: 1,
           'line-style': 'dashed',
           'line-dash-pattern': [6, 4],
           'line-color': linkColor,
           'target-arrow-color': linkColor,
+        },
+      },
+      {
+        // Hover target for a `[[id]]` reference rendered as a link in the
+        // drawer body (see wireCrossLinks) — highlights the node the link
+        // points to without waiting out the path-isolation hover dwell.
+        selector: '.em-mindmap-link-hover',
+        style: {
+          'border-width': 3,
+          'border-style': 'solid',
+          'border-color': linkColor,
+          'border-opacity': 1,
         },
       },
       {
@@ -436,7 +459,24 @@ export function mountMindmap(
 
   function renderDrawerContent(node: MindmapNode): void {
     drawer.title.textContent = node.label
-    drawer.body.innerHTML = node.body ? options.renderBody(node.body) : ''
+    drawer.body.innerHTML = node.body ? options.renderBody(resolveCrossLinks(node.body, nodeById)) : ''
+    wireCrossLinks(drawer.body)
+  }
+
+  // `[[id]]` references render as a link to the target's title (resolveCrossLinks
+  // above); hovering it highlights the target node, clicking opens its drawer.
+  function wireCrossLinks(root: HTMLElement): void {
+    root.querySelectorAll<HTMLAnchorElement>('a[href^="#mindmap:"]').forEach(a => {
+      const id = a.getAttribute('href')!.slice('#mindmap:'.length)
+      const target = nodeById.get(id)
+      if (!target) return
+      a.addEventListener('click', evt => {
+        evt.preventDefault()
+        openDrawer(target)
+      })
+      a.addEventListener('mouseenter', () => cy.$id(id).addClass('em-mindmap-link-hover'))
+      a.addEventListener('mouseleave', () => cy.$id(id).removeClass('em-mindmap-link-hover'))
+    })
   }
 
   function slideOpen(side: DrawerSide): void {
