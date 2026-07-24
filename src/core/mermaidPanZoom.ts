@@ -164,13 +164,28 @@ function wireViewport(
   let dragging = false
   let lastX = 0
   let lastY = 0
+  let lastRightClickAt = 0
+  const DBLCLICK_MS = 400
+  viewport.addEventListener('contextmenu', e => e.preventDefault()) // right button drags instead of opening the menu
   viewport.addEventListener('pointerdown', e => {
     if (gateZoom && !active) {
       activeZoomGate?.setActive(false)
       setActive(true)
       activeZoomGate = { viewport, setActive }
     }
-    e.preventDefault() // stop native text/image drag-selection inside the SVG
+    if (e.button !== 2) return // left button: leave native text selection alone
+    e.preventDefault()
+
+    // Chromium doesn't reliably fire 'dblclick' for the right button, so
+    // detect it by hand from consecutive right-button pointerdowns.
+    const now = e.timeStamp
+    if (now - lastRightClickAt < DBLCLICK_MS) {
+      lastRightClickAt = 0
+      reset()
+      return
+    }
+    lastRightClickAt = now
+
     dragging = true
     lastX = e.clientX
     lastY = e.clientY
@@ -191,7 +206,6 @@ function wireViewport(
   }
   viewport.addEventListener('pointerup', endDrag)
   viewport.addEventListener('pointerleave', endDrag)
-  viewport.addEventListener('dblclick', reset)
 
   controls.zoomIn.addEventListener('click', () => {
     const rect = viewport.getBoundingClientRect()

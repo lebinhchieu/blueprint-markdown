@@ -116,13 +116,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  cursor: grab;
   touch-action: none;
-  user-select: none;
-}
-
-.em-mermaid__viewport--dragging {
-  cursor: grabbing;
 }
 
 .em-mermaid__stage {
@@ -203,7 +197,6 @@
 
 .em-mermaid-modal .em-mermaid__viewport--modal {
   flex: 1;
-  cursor: grab;
 }
 
 .em-mermaid-modal__close {
