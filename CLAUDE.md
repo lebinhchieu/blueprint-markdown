@@ -13,6 +13,39 @@ npm run publish:ovsx # publish to Open VSX Registry
 
 There are no automated tests. Development testing means launching the **Extension Development Host** from VS Code (F5), which runs `node esbuild.mjs` as a pre-launch task and opens a second window with the extension loaded.
 
+**F5 passing is not proof the extension works.** Everything contributed through
+`package.json` (`snippets`, `grammars`, `markdown.previewStyles`/`previewScripts`,
+`commands`) is read from the source tree under F5 but from the packaged bundle after
+install — a path missing from the `!`-allowlist in `.vscodeignore` vanishes silently,
+with no error anywhere. Any change touching `contributes`, `.vscodeignore`, or files
+under `media/` / `snippets/` / `syntaxes/` must be verified from a real install:
+
+```bash
+npm run package
+code --install-extension blueprint-markdown-chieu-<version>.vsix
+# reload, then exercise the feature in a normal window (not the Extension Dev Host)
+```
+
+**Mouse handlers: two components, opposite conventions.** `core/mermaidPanZoom.ts`
+and `core/mindmap/mountMindmap.ts` disagree on every button, so a fix verified on
+one proves nothing about the other:
+
+|              | mermaid                             | mindmap                       |
+|--------------|-------------------------------------|-------------------------------|
+| pan          | right-drag (`e.button !== 2` bails) | left-drag (Cytoscape default) |
+| reset / fit  | double *right*-click, 400 ms        | `dbltap` (left)               |
+| right-click  | `contextmenu` suppressed            | collapse/expand subtree       |
+
+Each button is a separate code path and a screenshot proves nothing about any of
+them — switching mermaid pan to right-drag silently broke left-drag text selection
+(Jul 2026, three corrections in one sitting). Changing a mouse handler means
+driving *every* button on that element: left drag, right drag, double-click each,
+plus the resting cursor.
+
+The preview webview isn't reachable by Playwright, but the **exported HTML is** —
+it loads the same runtime. Run `blueprintMarkdown.exportHtml`, serve the file, and
+drive it with `playwright-cli`. Then say which buttons you actually drove.
+
 ## Architecture
 
 The extension has two runtimes that share a common core engine:
@@ -61,6 +94,20 @@ src/core/
 2. Import and spread it inside `buildRegistry()` in `src/core/directives/index.ts`
 3. Re-run `npm run build` — the TextMate grammar regenerates automatically from the registry
 4. Add the new name(s) and form(s) to the `REGISTRY` map in `skills/blueprint-markdown/validate.mjs`
+
+### Changing the parser, renderer, or preview runtime
+
+Every directive is one token type (`em_directive`) behind one renderer, so a change in
+`parser.ts`, `renderer.ts`, `markdownItPlugin.ts`, or `previewRuntime.ts` hits **all**
+of them at once. Verify against a document exercising several forms — container, leaf,
+inline, nested, and one inside a list/blockquote — not just the directive named in the
+bug report.
+
+Scroll sync is the fragile one. It works only because the `token.map` set on the
+`em_directive` token reaches the `data-line`/`code-line` wrapper div in the renderer
+rule (see `markdownItPlugin.ts`). Anything that re-wraps, replaces, or short-circuits
+that output silently turns the directive back into a scroll-sync dead zone. Check a
+nested/indented directive, not only a top-level one.
 
 ### Adding a new theme
 
