@@ -52,6 +52,15 @@ interface EditCommentArg {
  */
 const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
+// Between two rendered words, the source can hold markdown syntax that renders as nothing
+// at all — not just whitespace. "the **Department**" renders as "the Department" with
+// emphasis markers sitting right where a plain \s+ join expects only a literal space; a link
+// like "click [here](url) now" hides brackets and a whole (url) segment the same way. Matches
+// zero or more of: whitespace, a single emphasis/strikethrough/code/bracket marker, or an
+// entire (…) run (a link's target) — so the word-to-word join tolerates any mix of these
+// instead of requiring literal whitespace only.
+const INLINE_SYNTAX_GAP = String.raw`(?:\s|[*_~\x60\[\]]|\([^)]*\))*`
+
 /**
  * Runs `pattern` (global) forward from `fromOffset`, taking the `nth` match found before
  * `windowEnd` — shared by addComment/editComment, both of which need to pick the same
@@ -92,11 +101,19 @@ async function addComment(arg: AddCommentArg): Promise<void> {
   const fromOffset = document.offsetAt(new vscode.Position(line, 0))
   const text = document.getText()
 
-  const body = arg.selectedText.trim().split(/\s+/).map(escapeRegExp).join('\\s+')
-  const pattern = arg.inlineCode ? '`' + body + '`' : body
-  const re = new RegExp(pattern, 'g')
+  const words = arg.selectedText.trim().split(/\s+/).map(escapeRegExp)
   const windowEnd = searchWindowEnd(fromOffset, arg.blockLength)
-  const match = findNthMatch(text, re, fromOffset, windowEnd, arg.nth ?? 0)
+  const findWithGap = (gap: string) => {
+    const body = words.join(gap)
+    const pattern = arg.inlineCode ? '`' + body + '`' : body
+    return findNthMatch(text, new RegExp(pattern, 'g'), fromOffset, windowEnd, arg.nth ?? 0)
+  }
+
+  // First try the curated gap (handles the common markdown constructs above); if that still
+  // doesn't find it — some other syntax not anticipated there, e.g. a footnote reference or
+  // HTML entity sitting between two words — fall back to an unrestricted (but still
+  // window-bounded, so still scoped to roughly this block) gap rather than giving up.
+  const match = findWithGap(INLINE_SYNTAX_GAP) ?? (words.length > 1 ? findWithGap('[\\s\\S]*?') : null)
   if (!match) {
     vscode.window.showWarningMessage(
       'Blueprint Markdown: could not locate the selected text — comment not inserted.',
