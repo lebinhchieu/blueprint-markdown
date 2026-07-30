@@ -11,6 +11,7 @@
  * :tooltip[hover me]{tip="explanation"}
  * :rating{value=4 max=5}
  * :comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
+ * :ai[Double-check this assumption next time]
  */
 
 import type { DirectiveSpec } from '../types'
@@ -146,29 +147,34 @@ const ratingSpec: DirectiveSpec = {
   },
 }
 
-// ─── :comment ─────────────────────────────────────────────────────────────
+// ─── :comment / :ai (identical rendering, different icon) ─────────────────
 
-const commentSpec: DirectiveSpec = {
-  forms: ['inline'],
-  render(node, ctx) {
-    const note   = node.text ?? ''
-    const author = node.attrs.named['author']
-    const date   = node.attrs.named['date']
-    const role   = canonicalRole(node.attrs.named['color'] ?? 'info')
+function makeCommentSpec(icon: string): DirectiveSpec {
+  return {
+    forms: ['inline'],
+    render(node, ctx) {
+      const note   = node.text ?? ''
+      const author = node.attrs.named['author']
+      const date   = node.attrs.named['date']
+      const role   = canonicalRole(node.attrs.named['color'] ?? 'info')
 
-    const authorHtml = author ? `<span class="comment__author">${ctx.esc(author)}</span>` : ''
-    const dateHtml   = date   ? `<span class="comment__date">${ctx.esc(date)}</span>`     : ''
-    const metaHtml   = (author || date) ? `<span class="comment__meta">${authorHtml}${dateHtml}</span>` : ''
+      const authorHtml = author ? `<span class="comment__author">${ctx.esc(author)}</span>` : ''
+      const dateHtml   = date   ? `<span class="comment__date">${ctx.esc(date)}</span>`     : ''
+      const metaHtml   = (author || date) ? `<span class="comment__meta">${authorHtml}${dateHtml}</span>` : ''
 
-    return (
-      `<span class="comment comment--${ctx.esc(role)}">` +
-      `<span class="material-symbols-outlined comment__icon" aria-hidden="true">sticky_note_2</span>` +
-      metaHtml +
-      `<span class="comment__note-body">${ctx.renderInline(note)}</span>` +
-      `</span>`
-    )
-  },
+      return (
+        `<span class="comment comment--${ctx.esc(role)}">` +
+        `<span class="material-symbols-outlined comment__icon" aria-hidden="true">${icon}</span>` +
+        metaHtml +
+        `<span class="comment__note-body">${ctx.renderInline(note)}</span>` +
+        `</span>`
+      )
+    },
+  }
 }
+
+const commentSpec = makeCommentSpec('notes')
+const aiSpec = makeCommentSpec('smart_toy')
 
 export const inlineWidgetDirectives: Record<string, DirectiveSpec> = {
   chip:    chipSpec,
@@ -179,4 +185,5 @@ export const inlineWidgetDirectives: Record<string, DirectiveSpec> = {
   tooltip: tooltipSpec,
   rating:  ratingSpec,
   comment: commentSpec,
+  ai:      aiSpec,
 }

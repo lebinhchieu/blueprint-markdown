@@ -34,8 +34,11 @@ interface EditCommentArg {
 }
 
 /**
- * Right-click "Add Comment" in the preview (see src/core/commentInsert.ts) — inserts
- * `:comment[note]` right after the selected text in the source document.
+ * Right-click "Add Comment" / "Add AI Comment" in the preview (see
+ * src/core/commentInsert.ts) — inserts `:comment[note]` or `:ai[note]` right after the
+ * selected text in the source document. Both commands call this with a different
+ * `directiveName` (see registerCommand calls in `activate` below) — same insertion logic,
+ * just a different directive name and input-box copy.
  *
  * The source line is only the *start* of the block the selection landed in (see
  * markdownItPlugin.ts's data-line stamping), so this searches forward from that line's
@@ -85,12 +88,12 @@ function findNthMatch(text: string, pattern: RegExp, fromOffset: number, windowE
  *  if this padding heuristic misfires in practice. */
 const searchWindowEnd = (fromOffset: number, blockLength?: number) => fromOffset + Math.max((blockLength ?? 0) * 4, 200)
 
-async function addComment(arg: AddCommentArg): Promise<void> {
+async function addComment(arg: AddCommentArg, directiveName: 'comment' | 'ai' = 'comment'): Promise<void> {
   if (!arg?.uri || !arg.selectedText) return
 
   const note = await vscode.window.showInputBox({
-    prompt: 'Comment note',
-    placeHolder: 'Add a note…',
+    prompt: directiveName === 'ai' ? 'AI comment note' : 'Comment note',
+    placeHolder: directiveName === 'ai' ? 'Add a note for the AI…' : 'Add a note…',
     validateInput: v => (v.includes(']') ? 'Note text cannot contain "]"' : undefined),
   })
   if (!note) return // Escape or empty input — no-op
@@ -123,13 +126,14 @@ async function addComment(arg: AddCommentArg): Promise<void> {
 
   const insertAt = document.positionAt(match.index + match[0].length)
   const edit = new vscode.WorkspaceEdit()
-  edit.insert(uri, insertAt, ` :comment[${note}]`)
+  edit.insert(uri, insertAt, ` :${directiveName}[${note}]`)
   await vscode.workspace.applyEdit(edit)
 }
 
 /**
  * Right-click "Edit Comment" in the preview (see src/core/commentInsert.ts) — lets a user
- * change just the note text of an existing `:comment[...]` without retyping its `{attrs}`.
+ * change just the note text of an existing `:comment[...]`/`:ai[...]` without retyping its
+ * `{attrs}`.
  *
  * `arg.rawSource` is the directive's exact original source text (e.g.
  * `:comment[Old note]{author="Alice"}`), read straight off the `data-em-source` marker
@@ -137,13 +141,19 @@ async function addComment(arg: AddCommentArg): Promise<void> {
  * whitespace-flexible reconstruction needed: the regex search is a literal match on that
  * verbatim string, anchored the same way (from the block's line offset, disambiguated by
  * `arg.nth` when the same directive text repeats nearby).
+ *
+ * `:ai` renders with the same `.comment` class as `:comment` (see inline-widgets.ts's
+ * `makeCommentSpec`), so commentInsert.ts's `.closest('.comment')` check — and therefore this
+ * command — fires for either directive. The directive name is captured rather than hardcoded
+ * so an `:ai[...]` badge gets rewritten back to `:ai[...]`, not silently dropped or rewritten
+ * to `:comment[...]`.
  */
 async function editComment(arg: EditCommentArg): Promise<void> {
   if (!arg?.uri || !arg.rawSource) return
 
-  const parsed = arg.rawSource.match(/^:comment\[([\s\S]*)\](\{[\s\S]*\})?$/)
-  if (!parsed) return // rawSource always comes from a rendered :comment directive
-  const [, currentNote, attrsPart = ''] = parsed
+  const parsed = arg.rawSource.match(/^:(comment|ai)\[([\s\S]*)\](\{[\s\S]*\})?$/)
+  if (!parsed) return // rawSource always comes from a rendered :comment/:ai directive
+  const [, directiveName, currentNote, attrsPart = ''] = parsed
 
   const note = await vscode.window.showInputBox({
     prompt: 'Edit comment note',
@@ -170,7 +180,7 @@ async function editComment(arg: EditCommentArg): Promise<void> {
 
   const range = new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[0].length))
   const edit = new vscode.WorkspaceEdit()
-  edit.replace(uri, range, `:comment[${note}]${attrsPart}`)
+  edit.replace(uri, range, `:${directiveName}[${note}]${attrsPart}`)
   await vscode.workspace.applyEdit(edit)
 }
 
@@ -183,7 +193,11 @@ export function activate(context: vscode.ExtensionContext) {
   )
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('blueprintMarkdown.addComment', addComment),
+    vscode.commands.registerCommand('blueprintMarkdown.addComment', (arg: AddCommentArg) => addComment(arg, 'comment')),
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('blueprintMarkdown.addAiComment', (arg: AddCommentArg) => addComment(arg, 'ai')),
   )
 
   context.subscriptions.push(

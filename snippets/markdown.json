@@ -269,6 +269,13 @@
     ],
     "description": "Always-visible inline annotation badge"
   },
+  "Blueprint: ai comment": {
+    "prefix": "bp-ai",
+    "body": [
+      ":ai[${1:Note for the AI to pick up next time}]$0"
+    ],
+    "description": "Inline annotation badge addressed to the AI, same as :comment with a robot icon"
+  },
   "Blueprint: code fence with meta": {
     "prefix": "bp-codemeta",
     "body": [

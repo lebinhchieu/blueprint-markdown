@@ -947,7 +947,7 @@ kbd {
   gap: 0.35em;
   font-size: var(--chip-font-size);
   line-height: 1.3;
-  padding: 0.3em 0.6em;
+  padding: 0 0.6em;
   border-radius: var(--radius-md);
   vertical-align: middle;
 }
@@ -960,8 +960,8 @@ kbd {
 .comment--gray    { background: var(--c-gray-bg);    color: var(--c-gray-text);    }
 .comment--low     { background: var(--c-low-bg);     color: var(--c-low-text);     }
 
-.comment__icon {
-  font-size: 1em;
+.comment .comment__icon {
+  font-size: 2em;
   line-height: 1;
   flex-shrink: 0;
 }

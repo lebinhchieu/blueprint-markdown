@@ -9,7 +9,7 @@
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
-   - chip, icon, color, kbd, button, tooltip, rating, comment
+   - chip, icon, color, kbd, button, tooltip, rating, comment, ai
 6. [Fenced code extensions](#fenced-code)
 7. [Strict syntax rules](#strict-rules)
 8. [Fail-soft rule](#fail-soft)
@@ -452,6 +452,20 @@ Optionally shows an author/date. No hover needed.
 | `author` | string | — |
 | `date` | string | — |
 | `color` | color token | `info` |
+
+---
+
+### `:ai[note]`
+
+Identical to `:comment` — same attrs, same badge — except its icon is a robot (`smart_toy`)
+instead of `notes`. Meant for feedback addressed to an AI rather than a human collaborator,
+e.g. leaving a note in a plan or generated doc for the AI to pick up next time.
+
+```
+:ai[Double-check this assumption next time]
+```
+
+Same attribute table as `:comment[note]` above (`author`, `date`, `color`, default `info`).
 
 ---
 
