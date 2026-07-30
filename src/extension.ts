@@ -16,12 +16,93 @@ import type MarkdownIt from 'markdown-it'
 import { installEnhancedMarkdown } from './markdownItPlugin'
 import { exportToHtml } from './export/exportHtml'
 
+interface AddCommentArg {
+  uri?: string
+  line?: number
+  selectedText?: string
+  inlineCode?: boolean
+  nth?: number
+  blockLength?: number
+}
+
+/**
+ * Right-click "Add Comment" in the preview (see src/core/commentInsert.ts) — inserts
+ * `:comment[note]` right after the selected text in the source document.
+ *
+ * The source line is only the *start* of the block the selection landed in (see
+ * markdownItPlugin.ts's data-line stamping), so this searches forward from that line's
+ * start offset rather than trusting it as an exact line. The search is whitespace-flexible
+ * because a rendered selection collapses a soft-wrapped source line break to a single space.
+ * When the phrase repeats nearby, `arg.nth` (which occurrence within the block) picks the
+ * right one instead of erroring or always taking the first.
+ *
+ * `arg.inlineCode` means the selection landed inside an inline code span — inline code is
+ * opaque to the directive parser (src/core/inline.ts runs before markdown-it's backtick rule,
+ * which still swallows its whole span as one token), so `arg.selectedText` there is the code
+ * span's full text and the match must be widened to its surrounding backticks so the comment
+ * lands right after the closing backtick, not inside the span.
+ */
+async function addComment(arg: AddCommentArg): Promise<void> {
+  if (!arg?.uri || !arg.selectedText) return
+
+  const note = await vscode.window.showInputBox({
+    prompt: 'Comment note',
+    placeHolder: 'Add a note…',
+    validateInput: v => (v.includes(']') ? 'Note text cannot contain "]"' : undefined),
+  })
+  if (!note) return // Escape or empty input — no-op
+
+  const uri = vscode.Uri.parse(arg.uri)
+  const document = await vscode.workspace.openTextDocument(uri)
+  const line = Math.min(Math.max(arg.line ?? 0, 0), document.lineCount - 1)
+  const fromOffset = document.offsetAt(new vscode.Position(line, 0))
+  const text = document.getText()
+
+  const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const body = arg.selectedText.trim().split(/\s+/).map(esc).join('\\s+')
+  const pattern = arg.inlineCode ? '`' + body + '`' : body
+  const re = new RegExp(pattern, 'g')
+  re.lastIndex = fromOffset
+  // ponytail: rendered length is a proxy for the source span's length, padded generously for
+  // markdown syntax overhead (**bold**, links, etc). Upgrade to an exact next-data-line bound
+  // if this padding heuristic misfires in practice.
+  const windowEnd = fromOffset + Math.max((arg.blockLength ?? 0) * 4, 200)
+
+  // Selected text can repeat within the same block (e.g. two "the"s in one sentence) —
+  // arg.nth (counted in the block's rendered text before the selection, see
+  // commentInsert.ts) picks the matching occurrence instead of always grabbing the first.
+  // If the source has fewer matches than the render implied (rare — e.g. an occurrence
+  // hidden in markdown syntax that doesn't render as visible text), fall back to the
+  // nearest occurrence found instead of erroring.
+  let match: RegExpExecArray | null = null
+  for (let i = 0; i <= (arg.nth ?? 0); i++) {
+    const next = re.exec(text)
+    if (!next || next.index > windowEnd) break
+    match = next
+  }
+  if (!match) {
+    vscode.window.showWarningMessage(
+      'Blueprint Markdown: could not locate the selected text — comment not inserted.',
+    )
+    return
+  }
+
+  const insertAt = document.positionAt(match.index + match[0].length)
+  const edit = new vscode.WorkspaceEdit()
+  edit.insert(uri, insertAt, ` :comment[${note}]`)
+  await vscode.workspace.applyEdit(edit)
+}
+
 export function activate(context: vscode.ExtensionContext) {
   const refresh = () =>
     vscode.commands.executeCommand('markdown.preview.refresh')
 
   context.subscriptions.push(
     vscode.commands.registerCommand('blueprintMarkdown.exportHtml', () => exportToHtml(context)),
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('blueprintMarkdown.addComment', addComment),
   )
 
   // Re-render when the user changes the theme or mindmap height setting.

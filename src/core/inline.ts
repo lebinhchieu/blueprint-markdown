@@ -112,8 +112,17 @@ export function installInlineRule(
         html = spec.render(node, ctx)
       }
 
+      // Wrap with the exact consumed source text so the preview's right-click "Add Comment"
+      // (src/core/commentInsert.ts) can anchor to the whole directive and insert after it,
+      // rather than searching for its *rendered* text — which, for something like
+      // `:chip[Active]{success}`, doesn't roundtrip back to source and would otherwise let a
+      // comment land inside the `[...]`, corrupting both directives. Inert everywhere else
+      // (preview JS is the only reader; harmless extra markup in exported HTML).
+      const rawSource = src.slice(pos, parsed.end)
+      const wrappedHtml = `<span data-em-source="${md.utils.escapeHtml(rawSource)}">${html}</span>`
+
       const token = state.push('html_inline', '', 0)
-      token.content = html
+      token.content = wrappedHtml
       state.pos = parsed.end
 
       return true

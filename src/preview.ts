@@ -18,6 +18,7 @@ import mermaid from 'mermaid'
 import cytoscape from 'cytoscape'
 import cytoscapeDagre from 'cytoscape-dagre'
 import { runShared } from './core/previewRuntime'
+import './core/commentInsert'
 
 // Drop VS Code's built-in markdown-language-features styles. Both files are
 // superseded by our own:
