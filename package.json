@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -37,14 +37,21 @@
         "command": "blueprintMarkdown.addComment",
         "title": "Add Comment",
         "category": "Blueprint Markdown"
+      },
+      {
+        "command": "blueprintMarkdown.editComment",
+        "title": "Edit Comment",
+        "category": "Blueprint Markdown"
       }
     ],
     "menus": {
       "webview/context": [
-        { "command": "blueprintMarkdown.addComment", "when": "emCommentTarget" }
+        { "command": "blueprintMarkdown.addComment", "when": "emCommentTarget" },
+        { "command": "blueprintMarkdown.editComment", "when": "emCommentEdit" }
       ],
       "commandPalette": [
-        { "command": "blueprintMarkdown.addComment", "when": "false" }
+        { "command": "blueprintMarkdown.addComment", "when": "false" },
+        { "command": "blueprintMarkdown.editComment", "when": "false" }
       ]
     },
     "grammars": [

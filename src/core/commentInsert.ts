@@ -1,5 +1,5 @@
 /**
- * commentInsert.ts — preview-only right-click "Add Comment" bridge.
+ * commentInsert.ts — preview-only right-click "Add Comment" / "Edit Comment" bridge.
  *
  * The built-in markdown preview webview never sets `enableCommandUris`, so `command:`
  * links are silently dropped — there is no message channel a contributed previewScript
@@ -8,12 +8,15 @@
  * `data-vscode-context`: VS Code's webview host reads this JSON blob off the nearest
  * ancestor of a right-clicked (or, for keybindings, focused) element and forwards it as
  * the command's argument via `contributes.menus["webview/context"]` (see package.json)
- * or any keybinding the user assigns to `blueprintMarkdown.addComment` themselves (e.g.
- * via the Keyboard Shortcuts editor, scoped with `"when": "emCommentTarget"`).
+ * or any keybinding the user assigns to `blueprintMarkdown.addComment`/`.editComment`
+ * themselves (e.g. via the Keyboard Shortcuts editor, scoped with `"when": "emCommentTarget"`
+ * / `"when": "emCommentEdit"`).
  *
  * Tracked on `selectionchange` (not `contextmenu`) rather than only computed lazily when
  * the menu opens, so the context is already live and correct the moment a user-assigned
- * keybinding fires — it never depends on where a right-click happened.
+ * keybinding fires — it never depends on where a right-click happened. A plain click (no
+ * drag) still fires `selectionchange`, which is what lets "Edit Comment" work without the
+ * user needing to select any text first — just click into the badge and right-click.
  *
  * Installed once at module load (this file is only ever imported for its side effect,
  * from src/preview.ts, never re-run) — a listener on `document` survives every morphdom
@@ -25,10 +28,45 @@
 const settingsRaw = document.getElementById('vscode-markdown-preview-data')?.getAttribute('data-settings')
 const sourceUri: string | undefined = settingsRaw ? JSON.parse(settingsRaw).source : undefined
 
+/** Which occurrence `target` is among same-source directive wrappers in `block` — see the
+ *  matching "Selected/anchor text can repeat" comment below for why this exists. */
+function nthDirectiveOccurrence(block: HTMLElement, target: HTMLElement, source: string): number {
+  const sameSource = Array.from(block.querySelectorAll<HTMLElement>('[data-em-source]')).filter(
+    m => m.getAttribute('data-em-source') === source,
+  )
+  return sameSource.indexOf(target)
+}
+
 document.addEventListener('selectionchange', () => {
   if (!sourceUri) return
 
   const sel = window.getSelection()
+  const anchorNode = sel?.anchorNode
+  const anchorEl = anchorNode instanceof Element ? anchorNode : anchorNode?.parentElement
+
+  // Clicking (or right-clicking) anywhere inside an existing `:comment` badge — offer
+  // "Edit Comment" instead, regardless of whether anything is selected. Checked first so
+  // it always wins over "Add Comment" when the two would otherwise both apply.
+  const commentEl = anchorEl?.closest<HTMLElement>('.comment')
+  if (commentEl) {
+    const directiveEl = commentEl.closest<HTMLElement>('[data-em-source]')
+    const block = commentEl.closest<HTMLElement>('[data-line]')
+    const rawSource = directiveEl?.getAttribute('data-em-source')
+    if (directiveEl && block && rawSource) {
+      document.body.dataset.vscodeContext = JSON.stringify({
+        emCommentEdit: true,
+        uri: sourceUri,
+        line: Number(block.getAttribute('data-line')),
+        rawSource,
+        nth: nthDirectiveOccurrence(block, directiveEl, rawSource),
+        blockLength: block.textContent?.length ?? 0,
+      })
+    } else {
+      delete document.body.dataset.vscodeContext
+    }
+    return
+  }
+
   const range = sel && sel.rangeCount > 0 && !sel.isCollapsed ? sel.getRangeAt(0) : null
   const container = range?.commonAncestorContainer
   const el = container instanceof Element ? container : container?.parentElement
@@ -76,10 +114,7 @@ document.addEventListener('selectionchange', () => {
   // rendered text before this point, which is reliable for plain prose and inline code.
   let nth: number
   if (directiveEl) {
-    const sameSource = Array.from(block.querySelectorAll<HTMLElement>('[data-em-source]')).filter(
-      m => m.getAttribute('data-em-source') === anchorText,
-    )
-    nth = sameSource.indexOf(directiveEl)
+    nth = nthDirectiveOccurrence(block, directiveEl, anchorText)
   } else {
     const preRange = document.createRange()
     preRange.selectNodeContents(block)
