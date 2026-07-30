@@ -67,6 +67,7 @@ const REGISTRY = {
   button:    ['inline'],
   tooltip:   ['inline'],
   rating:    ['inline'],
+  comment:   ['inline'],
 }
 
 // ─── Parser — ported from src/core/parser.ts (exact regexes, same logic) ─────

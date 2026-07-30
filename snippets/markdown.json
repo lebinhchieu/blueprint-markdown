@@ -262,6 +262,13 @@
     ],
     "description": "Star rating display"
   },
+  "Blueprint: comment": {
+    "prefix": "bp-comment",
+    "body": [
+      ":comment[${1:Comment text}]{author=\"${2:Name}\" date=\"${3:2026-06-26}\"}$0"
+    ],
+    "description": "Always-visible inline annotation badge"
+  },
   "Blueprint: code fence with meta": {
     "prefix": "bp-codemeta",
     "body": [

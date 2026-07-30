@@ -9,7 +9,7 @@
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
-   - chip, icon, color, kbd, button, tooltip, rating
+   - chip, icon, color, kbd, button, tooltip, rating, comment
 6. [Fenced code extensions](#fenced-code)
 7. [Strict syntax rules](#strict-rules)
 8. [Fail-soft rule](#fail-soft)
@@ -434,6 +434,24 @@ Star rating display (read-only).
 |------|--------|---------|
 | `value` | number | `0` |
 | `max` | integer | `5` |
+
+---
+
+### `:comment[note]`
+
+An always-visible inline annotation badge — the note text goes directly inside `[…]`.
+Optionally shows an author/date. No hover needed.
+
+```
+:comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
+```
+
+| Attr | Values | Default |
+|------|--------|---------|
+| text (primary) | string (comment content) | required |
+| `author` | string | — |
+| `date` | string | — |
+| `color` | color token | `info` |
 
 ---
 

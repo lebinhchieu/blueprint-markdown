@@ -10,6 +10,7 @@
  * :button[Get started]{href="/start" color=primary variant=solid}
  * :tooltip[hover me]{tip="explanation"}
  * :rating{value=4 max=5}
+ * :comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
  */
 
 import type { DirectiveSpec } from '../types'
@@ -145,6 +146,30 @@ const ratingSpec: DirectiveSpec = {
   },
 }
 
+// ─── :comment ─────────────────────────────────────────────────────────────
+
+const commentSpec: DirectiveSpec = {
+  forms: ['inline'],
+  render(node, ctx) {
+    const note   = node.text ?? ''
+    const author = node.attrs.named['author']
+    const date   = node.attrs.named['date']
+    const role   = canonicalRole(node.attrs.named['color'] ?? 'info')
+
+    const authorHtml = author ? `<span class="comment__author">${ctx.esc(author)}</span>` : ''
+    const dateHtml   = date   ? `<span class="comment__date">${ctx.esc(date)}</span>`     : ''
+    const metaHtml   = (author || date) ? `<span class="comment__meta">${authorHtml}${dateHtml}</span>` : ''
+
+    return (
+      `<span class="comment comment--${ctx.esc(role)}">` +
+      `<span class="material-symbols-outlined comment__icon" aria-hidden="true">sticky_note_2</span>` +
+      metaHtml +
+      `<span class="comment__note-body">${ctx.renderInline(note)}</span>` +
+      `</span>`
+    )
+  },
+}
+
 export const inlineWidgetDirectives: Record<string, DirectiveSpec> = {
   chip:    chipSpec,
   icon:    iconSpec,
@@ -153,4 +178,5 @@ export const inlineWidgetDirectives: Record<string, DirectiveSpec> = {
   button:  buttonSpec,
   tooltip: tooltipSpec,
   rating:  ratingSpec,
+  comment: commentSpec,
 }

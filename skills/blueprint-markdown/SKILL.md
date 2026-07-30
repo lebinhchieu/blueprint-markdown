@@ -230,6 +230,7 @@ Keys: :kbd[Ctrl+K]
 Button: :button[Get started]{href="/start" color=primary variant=solid}
 Hover: :tooltip[this word]{tip="Tooltip content."}
 Stars: :rating{value=4 max=5}
+Comment: :comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
 ```
 
 ### Reused GFM — no directive needed

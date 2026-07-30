@@ -194,7 +194,7 @@
     },
     "directive-inline-known": {
       "comment": "Inline directive with a known name, e.g. :chip[Active]{green}",
-      "match": "(:)(chip|icon|color|kbd|button|tooltip|rating)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
+      "match": "(:)(chip|icon|color|kbd|button|tooltip|rating|comment)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"
