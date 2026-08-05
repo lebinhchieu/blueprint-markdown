@@ -51,6 +51,22 @@
   --c-low-bg:       #fbf3cf;
   --c-low-text:     #7a5c00;
 
+  --c-purple:       #7c4f96;   /* dusty plum */
+  --c-purple-bg:    #f2e7f5;
+  --c-purple-text:  #5c3570;
+
+  --c-teal:         #2f7a6e;   /* jade teal */
+  --c-teal-bg:      #e0f2ee;
+  --c-teal-text:    #1f5b52;
+
+  --c-pink:         #b8527a;   /* dusty rose */
+  --c-pink-bg:      #faeaf0;
+  --c-pink-text:    #8a3559;
+
+  --c-cyan:         #2f8fae;   /* sky cyan */
+  --c-cyan-bg:      #e2f3f8;
+  --c-cyan-text:    #1f6883;
+
   /* ─── 2. Surface stack ────────────────────────────────────────────────── */
   --bg-base:    #faf6ef;   /* warm parchment */
   --bg-surface: #f2ebe0;   /* inset / code block bg */

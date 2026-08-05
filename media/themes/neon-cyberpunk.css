@@ -36,6 +36,22 @@ body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) {
   --c-low-bg:       #1e2200;
   --c-low-text:     #f8ff8f;
 
+  --c-purple:       #b026ff;
+  --c-purple-bg:    #1c0630;
+  --c-purple-text:  #d68cff;
+
+  --c-teal:         #00ffc8;
+  --c-teal-bg:      #032420;
+  --c-teal-text:    #7dffdf;
+
+  --c-pink:         #ff2fa8;
+  --c-pink-bg:      #2b0a20;
+  --c-pink-text:    #ff8ecf;
+
+  --c-cyan:         #0090ff;
+  --c-cyan-bg:      #041a2e;
+  --c-cyan-text:    #6cc4ff;
+
   --bg-base:    #050505;
   --bg-surface: #0d100d;
   --bg-raised:  #111511;

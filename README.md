@@ -299,7 +299,7 @@ Status: :chip[Stable]{success}  Shortcut: :kbd[Ctrl+Shift+V]  Priority: :rating{
 
 ### Color tokens
 
-`primary` · `success` (`green`) · `warning` (`amber`) · `danger` (`red`) · `info` (`blue`) · `gray` · `low` (`yellow`) · raw hex (e.g. `#0a7`)
+`primary` · `success` (`green`) · `warning` (`amber`) · `danger` (`red`) · `info` (`blue`) · `gray` · `low` (`yellow`) · `purple` · `teal` · `pink` · `cyan` · raw hex (e.g. `#0a7`)
 
 ### Fails silently — common mistakes
 

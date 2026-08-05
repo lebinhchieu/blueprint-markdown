@@ -30,6 +30,10 @@ A shared semantic palette used by `chip`, `callout`, `timeline`, `progress`, `bu
 | `info` | `blue` | `--c-info` | Informational |
 | `gray` | — | `--c-gray` | Neutral / secondary |
 | `low` | `yellow` | `--c-low` | Low / minor severity (golden yellow) |
+| `purple` | — | `--c-purple` | Extra categorical hue (no fixed meaning) |
+| `teal` | — | `--c-teal` | Extra categorical hue (no fixed meaning) |
+| `pink` | — | `--c-pink` | Extra categorical hue (no fixed meaning) |
+| `cyan` | — | `--c-cyan` | Extra categorical hue (no fixed meaning) |
 
 **Aliases** (`green`, `amber`, `red`, `blue`, `yellow`) are accepted everywhere a token
 name is accepted — they fold to the canonical token's CSS variable. Prefer the canonical
@@ -483,6 +487,21 @@ The enhanced renderer reads metadata after the language identifier in a code fen
 | Title | `title="filename"` | Renders a header bar above the code |
 
 **` ```mermaid `** (the language identifier `mermaid`) emits a `<div class="mermaid">` block; `mermaid.js` renders it on page load.
+
+**Mermaid colors — never hardcode hex.** The preview already themes the diagram's base
+palette (background, text, borders) from the active theme; the only thing that can clash is
+a `classDef`/`style` override you add yourself with a literal hex. If a diagram needs to
+highlight specific nodes, use the same CSS variables as the [color tokens](#color-tokens)
+table (`var(--c-primary)`, `var(--c-danger-bg)`, `var(--text-base)`, `var(--border-color)`, …)
+instead — mermaid inlines the string as CSS, so `var()` resolves live against whichever theme
+is active:
+
+```
+classDef alert fill:var(--c-danger-bg),stroke:var(--c-danger),color:var(--text-base)
+class Fail alert
+```
+
+Skip `classDef`/`style` entirely when the default theme coloring is enough — most diagrams don't need it.
 
 Standard GFM mark: `==text==` renders as `<mark>`.
 

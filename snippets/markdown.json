@@ -56,7 +56,7 @@
   "Blueprint: generic callout": {
     "prefix": "bp-callout",
     "body": [
-      ":::callout{type=${1|primary,success,warning,danger,info,gray,low|} title=\"${2:Title}\" icon=${3:info}}",
+      ":::callout{type=${1|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|} title=\"${2:Title}\" icon=${3:info}}",
       "$0",
       ":::"
     ],
@@ -114,7 +114,7 @@
     "prefix": "bp-timeline",
     "body": [
       ":::timeline",
-      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low|}}",
+      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|}}",
       "$4",
       ":::",
       ":::",
@@ -125,7 +125,7 @@
   "Blueprint: event": {
     "prefix": "bp-event",
     "body": [
-      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low|}}",
+      ":::event{date=\"${1:2024-01}\" icon=${2:rocket} color=${3|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|}}",
       "$0",
       ":::"
     ],
@@ -209,14 +209,14 @@
   "Blueprint: progress": {
     "prefix": "bp-progress",
     "body": [
-      "::progress{value=${1:65} max=${2:100} color=${3|primary,success,warning,danger,info,gray,low|} label=\"${4:Label}\"}$0"
+      "::progress{value=${1:65} max=${2:100} color=${3|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|} label=\"${4:Label}\"}$0"
     ],
     "description": "Labeled progress bar"
   },
   "Blueprint: chip": {
     "prefix": "bp-chip",
     "body": [
-      ":chip[${1:text}]{${2|primary,success,warning,danger,info,gray,low|}}$0"
+      ":chip[${1:text}]{${2|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|}}$0"
     ],
     "description": "Colored badge/tag"
   },
@@ -230,7 +230,7 @@
   "Blueprint: color text": {
     "prefix": "bp-color",
     "body": [
-      ":color[${1:text}]{${2|primary,success,warning,danger,info,gray,low|}}$0"
+      ":color[${1:text}]{${2|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|}}$0"
     ],
     "description": "Inline colored text"
   },
@@ -244,7 +244,7 @@
   "Blueprint: button": {
     "prefix": "bp-button",
     "body": [
-      ":button[${1:Get started}]{href=\"${2:/start}\" color=${3|primary,success,warning,danger,info,gray,low|} variant=${4|solid,outline,soft|}}$0"
+      ":button[${1:Get started}]{href=\"${2:/start}\" color=${3|primary,success,warning,danger,info,gray,low,purple,teal,pink,cyan|} variant=${4|solid,outline,soft|}}$0"
     ],
     "description": "Inline linked button"
   },

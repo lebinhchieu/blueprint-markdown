@@ -30,6 +30,22 @@ body:has(.em-theme-config[data-em-theme="dark"]) {
   --c-low-bg:       #211c08;
   --c-low-text:     #ead488;
 
+  --c-purple:       #b088d0;
+  --c-purple-bg:    #221730;
+  --c-purple-text:  #d8b8ec;
+
+  --c-teal:         #4fae9a;
+  --c-teal-bg:      #0e1f1a;
+  --c-teal-text:    #8ad4c0;
+
+  --c-pink:         #d97fa8;
+  --c-pink-bg:      #2a1420;
+  --c-pink-text:    #f0a8c8;
+
+  --c-cyan:         #5ab8d4;
+  --c-cyan-bg:      #0d1f2a;
+  --c-cyan-text:    #8ad8ec;
+
   --bg-base:    #1c1914;
   --bg-surface: #252018;
   --bg-raised:  #2d2820;

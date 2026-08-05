@@ -36,6 +36,22 @@ body:has(.em-theme-config[data-em-theme="neon-synthwave"]) {
   --c-low-bg:       #1c1030;
   --c-low-text:     #e0b8ff;
 
+  --c-purple:       #8a5cf7;
+  --c-purple-bg:    #180f30;
+  --c-purple-text:  #b89bff;
+
+  --c-teal:         #00d9a3;
+  --c-teal-bg:      #052a22;
+  --c-teal-text:    #6dffcf;
+
+  --c-pink:         #ff6ab3;
+  --c-pink-bg:      #2b0f20;
+  --c-pink-text:    #ffa8d0;
+
+  --c-cyan:         #00b8d4;
+  --c-cyan-bg:      #072a30;
+  --c-cyan-text:    #6de0f0;
+
   --bg-base:    #0a0a14;
   --bg-surface: #12121f;
   --bg-raised:  #16162a;

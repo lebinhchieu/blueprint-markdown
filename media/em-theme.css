@@ -32,6 +32,22 @@ body:has(.em-theme-config[data-em-theme="dark"]) {
   --c-low-bg:       #211c08;
   --c-low-text:     #ead488;
 
+  --c-purple:       #b088d0;
+  --c-purple-bg:    #221730;
+  --c-purple-text:  #d8b8ec;
+
+  --c-teal:         #4fae9a;
+  --c-teal-bg:      #0e1f1a;
+  --c-teal-text:    #8ad4c0;
+
+  --c-pink:         #d97fa8;
+  --c-pink-bg:      #2a1420;
+  --c-pink-text:    #f0a8c8;
+
+  --c-cyan:         #5ab8d4;
+  --c-cyan-bg:      #0d1f2a;
+  --c-cyan-text:    #8ad8ec;
+
   --bg-base:    #1c1914;
   --bg-surface: #252018;
   --bg-raised:  #2d2820;
@@ -100,6 +116,22 @@ body:has(.em-theme-config[data-em-theme="neon-synthwave"]) {
   --c-low:          #c77dff;
   --c-low-bg:       #1c1030;
   --c-low-text:     #e0b8ff;
+
+  --c-purple:       #8a5cf7;
+  --c-purple-bg:    #180f30;
+  --c-purple-text:  #b89bff;
+
+  --c-teal:         #00d9a3;
+  --c-teal-bg:      #052a22;
+  --c-teal-text:    #6dffcf;
+
+  --c-pink:         #ff6ab3;
+  --c-pink-bg:      #2b0f20;
+  --c-pink-text:    #ffa8d0;
+
+  --c-cyan:         #00b8d4;
+  --c-cyan-bg:      #072a30;
+  --c-cyan-text:    #6de0f0;
 
   --bg-base:    #0a0a14;
   --bg-surface: #12121f;
@@ -176,6 +208,22 @@ body:has(.em-theme-config[data-em-theme="neon-cyberpunk"]) {
   --c-low-bg:       #1e2200;
   --c-low-text:     #f8ff8f;
 
+  --c-purple:       #b026ff;
+  --c-purple-bg:    #1c0630;
+  --c-purple-text:  #d68cff;
+
+  --c-teal:         #00ffc8;
+  --c-teal-bg:      #032420;
+  --c-teal-text:    #7dffdf;
+
+  --c-pink:         #ff2fa8;
+  --c-pink-bg:      #2b0a20;
+  --c-pink-text:    #ff8ecf;
+
+  --c-cyan:         #0090ff;
+  --c-cyan-bg:      #041a2e;
+  --c-cyan-text:    #6cc4ff;
+
   --bg-base:    #050505;
   --bg-surface: #0d100d;
   --bg-raised:  #111511;
@@ -251,6 +299,22 @@ body:has(.em-theme-config[data-em-theme="neon-vaporwave"]) {
   --c-low-bg:       #24220c;
   --c-low-text:     #feffd1;
 
+  --c-purple:       #9d4edd;
+  --c-purple-bg:    #201040;
+  --c-purple-text:  #c9a0ff;
+
+  --c-teal:         #2dd4bf;
+  --c-teal-bg:      #082622;
+  --c-teal-text:    #7de8da;
+
+  --c-pink:         #e0409e;
+  --c-pink-bg:      #2a0e22;
+  --c-pink-text:    #f4a0d0;
+
+  --c-cyan:         #38bdf8;
+  --c-cyan-bg:      #0e222e;
+  --c-cyan-text:    #9adcf8;
+
   --bg-base:    #14101f;
   --bg-surface: #1c1730;
   --bg-raised:  #221c38;
@@ -308,6 +372,11 @@ body:has(.em-theme-config[data-em-theme="aurora"]) {
   --c-gray:         #8b85a8;   --c-gray-bg:      #ebe8f3;   --c-gray-text:    #4a4564;
   --c-low:          #eab308;   --c-low-bg:       #faf3cf;   --c-low-text:     #a16207;
 
+  --c-purple:       #a855f7;   --c-purple-bg:    #f3e8ff;   --c-purple-text:  #7e22ce;
+  --c-teal:         #14b8a6;   --c-teal-bg:      #d7f5f0;   --c-teal-text:    #0f766e;
+  --c-pink:         #ec4899;   --c-pink-bg:      #fce7f3;   --c-pink-text:    #be185d;
+  --c-cyan:         #06b6d4;   --c-cyan-bg:      #d3f4fa;   --c-cyan-text:    #0e7490;
+
   --bg-base:    #f7f5ff;
   --bg-surface: #eee9fb;
   --bg-raised:  #fdfcff;
@@ -358,6 +427,11 @@ body:has(.em-theme-config[data-em-theme="jewel-garden"]) {
   --c-info:         #1d4ed8;   --c-info-bg:      #dde6fb;   --c-info-text:    #1638a8;
   --c-gray:         #7a7363;   --c-gray-bg:      #ebe6d9;   --c-gray-text:    #443f33;
   --c-low:          #ca8a04;   --c-low-bg:       #f7eec2;   --c-low-text:     #845a04;
+
+  --c-purple:       #a21caf;   --c-purple-bg:    #f3d9f7;   --c-purple-text:  #701a75;
+  --c-teal:         #0d9488;   --c-teal-bg:      #d1f2ea;   --c-teal-text:    #0a6d63;
+  --c-pink:         #db2777;   --c-pink-bg:      #fbdce9;   --c-pink-text:    #9d174d;
+  --c-cyan:         #0891b2;   --c-cyan-bg:      #d3eef5;   --c-cyan-text:    #0c5c72;
 
   --bg-base:    #fdfbf4;
   --bg-surface: #f4f0e3;
@@ -410,6 +484,11 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet"]) {
   --c-gray:         #8a7d72;   --c-gray-bg:      #f0e7df;   --c-gray-text:    #4c4138;
   --c-low:          #eab308;   --c-low-bg:       #fbf1c8;   --c-low-text:     #a16207;
 
+  --c-purple:       #a855f7;   --c-purple-bg:    #f2e4fd;   --c-purple-text:  #7e22ce;
+  --c-teal:         #14b8a6;   --c-teal-bg:      #d3f5ef;   --c-teal-text:    #0f766e;
+  --c-pink:         #ec4899;   --c-pink-bg:      #fce3f0;   --c-pink-text:    #be185d;
+  --c-cyan:         #38bdf8;   --c-cyan-bg:      #dcf1fc;   --c-cyan-text:    #0369a1;
+
   --bg-base:    #fffdf6;
   --bg-surface: #fdf1e6;
   --bg-raised:  #fef9f5;
@@ -460,6 +539,11 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) {
   --c-info:     #46D7C4;  --c-info-bg:    #07241f;  --c-info-text:    #82ead9;
   --c-gray:     #B6A08E;  --c-gray-bg:    #322420;  --c-gray-text:    #d8c4b4;
   --c-low:      #FFD45E;  --c-low-bg:     #322607;  --c-low-text:     #ffe492;
+
+  --c-purple:   #C792EA;  --c-purple-bg:  #241a30;  --c-purple-text:  #ddb8f5;
+  --c-teal:     #2FBFA0;  --c-teal-bg:    #10281f;  --c-teal-text:    #7fe0c4;
+  --c-pink:     #FF6FB8;  --c-pink-bg:    #3a1a2c;  --c-pink-text:    #ffa8d8;
+  --c-cyan:     #4FC3E8;  --c-cyan-bg:    #10262f;  --c-cyan-text:    #93dbf2;
 
   --bg-base: #2B1E1B; --bg-surface: #34251f; --bg-raised: #3d2c25; --bg-overlay: #4a352f;
 

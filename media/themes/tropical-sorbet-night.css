@@ -18,6 +18,11 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) {
   --c-gray:     #B6A08E;  --c-gray-bg:    #322420;  --c-gray-text:    #d8c4b4;
   --c-low:      #FFD45E;  --c-low-bg:     #322607;  --c-low-text:     #ffe492;
 
+  --c-purple:   #C792EA;  --c-purple-bg:  #241a30;  --c-purple-text:  #ddb8f5;
+  --c-teal:     #2FBFA0;  --c-teal-bg:    #10281f;  --c-teal-text:    #7fe0c4;
+  --c-pink:     #FF6FB8;  --c-pink-bg:    #3a1a2c;  --c-pink-text:    #ffa8d8;
+  --c-cyan:     #4FC3E8;  --c-cyan-bg:    #10262f;  --c-cyan-text:    #93dbf2;
+
   --bg-base: #2B1E1B; --bg-surface: #34251f; --bg-raised: #3d2c25; --bg-overlay: #4a352f;
 
   --text-base: #F5E6D8; --text-muted: #c2a892; --text-faint: #806656; --text-on-solid: #2B1E1B;

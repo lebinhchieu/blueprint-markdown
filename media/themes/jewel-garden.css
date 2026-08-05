@@ -18,6 +18,11 @@ body:has(.em-theme-config[data-em-theme="jewel-garden"]) {
   --c-gray:         #7a7363;   --c-gray-bg:      #ebe6d9;   --c-gray-text:    #443f33;
   --c-low:          #ca8a04;   --c-low-bg:       #f7eec2;   --c-low-text:     #845a04;
 
+  --c-purple:       #a21caf;   --c-purple-bg:    #f3d9f7;   --c-purple-text:  #701a75;
+  --c-teal:         #0d9488;   --c-teal-bg:      #d1f2ea;   --c-teal-text:    #0a6d63;
+  --c-pink:         #db2777;   --c-pink-bg:      #fbdce9;   --c-pink-text:    #9d174d;
+  --c-cyan:         #0891b2;   --c-cyan-bg:      #d3eef5;   --c-cyan-text:    #0c5c72;
+
   --bg-base:    #fdfbf4;
   --bg-surface: #f4f0e3;
   --bg-raised:  #fffefb;

@@ -20,6 +20,10 @@ export const COLOR_TOKENS: Record<string, string> = {
   gray:    'var(--c-gray)',
   low:     'var(--c-low)',
   yellow:  'var(--c-low)',
+  purple:  'var(--c-purple)',
+  teal:    'var(--c-teal)',
+  pink:    'var(--c-pink)',
+  cyan:    'var(--c-cyan)',
 }
 
 /** Alias map for token → semantic name (used for CSS class generation). */

@@ -18,6 +18,11 @@ body:has(.em-theme-config[data-em-theme="aurora"]) {
   --c-gray:         #8b85a8;   --c-gray-bg:      #ebe8f3;   --c-gray-text:    #4a4564;
   --c-low:          #eab308;   --c-low-bg:       #faf3cf;   --c-low-text:     #a16207;
 
+  --c-purple:       #a855f7;   --c-purple-bg:    #f3e8ff;   --c-purple-text:  #7e22ce;
+  --c-teal:         #14b8a6;   --c-teal-bg:      #d7f5f0;   --c-teal-text:    #0f766e;
+  --c-pink:         #ec4899;   --c-pink-bg:      #fce7f3;   --c-pink-text:    #be185d;
+  --c-cyan:         #06b6d4;   --c-cyan-bg:      #d3f4fa;   --c-cyan-text:    #0e7490;
+
   --bg-base:    #f7f5ff;
   --bg-surface: #eee9fb;
   --bg-raised:  #fdfcff;

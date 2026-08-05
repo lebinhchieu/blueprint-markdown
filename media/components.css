@@ -576,6 +576,10 @@ details[open] > .details__summary::before {
 .timeline-event--danger  { --event-color: var(--c-danger);  }
 .timeline-event--info    { --event-color: var(--c-info);    }
 .timeline-event--low     { --event-color: var(--c-low);     }
+.timeline-event--purple  { --event-color: var(--c-purple);  }
+.timeline-event--teal    { --event-color: var(--c-teal);    }
+.timeline-event--pink    { --event-color: var(--c-pink);    }
+.timeline-event--cyan    { --event-color: var(--c-cyan);    }
 
 /* ─── Tabs ──────────────────────────────────────────────────────────────── */
 
@@ -733,6 +737,10 @@ details[open] > .details__summary::before {
 .progress--info    .progress__fill { background: var(--c-info); }
 .progress--gray    .progress__fill { background: var(--c-gray); }
 .progress--low     .progress__fill { background: var(--c-low); }
+.progress--purple  .progress__fill { background: var(--c-purple); }
+.progress--teal    .progress__fill { background: var(--c-teal); }
+.progress--pink    .progress__fill { background: var(--c-pink); }
+.progress--cyan    .progress__fill { background: var(--c-cyan); }
 
 /* ─── Chip ───────────────────────────────────────────────────────────────── */
 
@@ -755,6 +763,10 @@ details[open] > .details__summary::before {
 .chip--soft.chip--info     { background: var(--c-info-bg);     color: var(--c-info-text);    }
 .chip--soft.chip--gray     { background: var(--c-gray-bg);     color: var(--c-gray-text);    }
 .chip--soft.chip--low      { background: var(--c-low-bg);      color: var(--c-low-text);     }
+.chip--soft.chip--purple   { background: var(--c-purple-bg);   color: var(--c-purple-text);  }
+.chip--soft.chip--teal     { background: var(--c-teal-bg);     color: var(--c-teal-text);    }
+.chip--soft.chip--pink     { background: var(--c-pink-bg);     color: var(--c-pink-text);    }
+.chip--soft.chip--cyan     { background: var(--c-cyan-bg);     color: var(--c-cyan-text);    }
 
 /* Outline variants */
 .chip--outline.chip--primary  { border: 1px solid var(--c-primary);  color: var(--c-primary-text); }
@@ -764,6 +776,10 @@ details[open] > .details__summary::before {
 .chip--outline.chip--info     { border: 1px solid var(--c-info);     color: var(--c-info-text);    }
 .chip--outline.chip--gray     { border: 1px solid var(--c-gray);     color: var(--c-gray-text);    }
 .chip--outline.chip--low      { border: 1px solid var(--c-low);      color: var(--c-low-text);     }
+.chip--outline.chip--purple   { border: 1px solid var(--c-purple);   color: var(--c-purple-text);  }
+.chip--outline.chip--teal     { border: 1px solid var(--c-teal);     color: var(--c-teal-text);    }
+.chip--outline.chip--pink     { border: 1px solid var(--c-pink);     color: var(--c-pink-text);    }
+.chip--outline.chip--cyan     { border: 1px solid var(--c-cyan);     color: var(--c-cyan-text);    }
 
 /* Solid variants */
 .chip--solid.chip--primary  { background: var(--c-primary);  color: var(--text-on-solid); }
@@ -773,6 +789,10 @@ details[open] > .details__summary::before {
 .chip--solid.chip--info     { background: var(--c-info);     color: var(--text-on-solid); }
 .chip--solid.chip--gray     { background: var(--c-gray);     color: var(--text-on-solid); }
 .chip--solid.chip--low      { background: var(--c-low);      color: var(--text-on-solid); }
+.chip--solid.chip--purple   { background: var(--c-purple);   color: var(--text-on-solid); }
+.chip--solid.chip--teal     { background: var(--c-teal);     color: var(--text-on-solid); }
+.chip--solid.chip--pink     { background: var(--c-pink);     color: var(--text-on-solid); }
+.chip--solid.chip--cyan     { background: var(--c-cyan);     color: var(--text-on-solid); }
 
 /* ─── Icon ───────────────────────────────────────────────────────────────── */
 
@@ -792,6 +812,10 @@ details[open] > .details__summary::before {
 .color--info    { color: var(--c-info-text);    }
 .color--gray    { color: var(--c-gray-text);    }
 .color--low     { color: var(--c-low-text);     }
+.color--purple  { color: var(--c-purple-text);  }
+.color--teal    { color: var(--c-teal-text);    }
+.color--pink    { color: var(--c-pink-text);    }
+.color--cyan    { color: var(--c-cyan-text);    }
 
 /* ─── Kbd ────────────────────────────────────────────────────────────────── */
 
@@ -850,6 +874,10 @@ kbd {
 .btn--solid.btn--info    { background: var(--c-info);    color: #fff; }
 .btn--solid.btn--gray    { background: var(--c-gray);    color: #fff; }
 .btn--solid.btn--low     { background: var(--c-low);     color: #fff; }
+.btn--solid.btn--purple  { background: var(--c-purple);  color: #fff; }
+.btn--solid.btn--teal    { background: var(--c-teal);    color: #fff; }
+.btn--solid.btn--pink    { background: var(--c-pink);    color: #fff; }
+.btn--solid.btn--cyan    { background: var(--c-cyan);    color: #fff; }
 
 /* Outline */
 .btn--outline.btn--primary { border-color: var(--c-primary); color: var(--c-primary-text); }
@@ -859,6 +887,10 @@ kbd {
 .btn--outline.btn--info    { border-color: var(--c-info);    color: var(--c-info-text);    }
 .btn--outline.btn--gray    { border-color: var(--c-gray);    color: var(--c-gray-text);    }
 .btn--outline.btn--low     { border-color: var(--c-low);     color: var(--c-low-text);     }
+.btn--outline.btn--purple  { border-color: var(--c-purple);  color: var(--c-purple-text);  }
+.btn--outline.btn--teal    { border-color: var(--c-teal);    color: var(--c-teal-text);    }
+.btn--outline.btn--pink    { border-color: var(--c-pink);    color: var(--c-pink-text);    }
+.btn--outline.btn--cyan    { border-color: var(--c-cyan);    color: var(--c-cyan-text);    }
 
 /* Soft */
 .btn--soft.btn--primary { background: var(--c-primary-bg); color: var(--c-primary-text); }
@@ -868,6 +900,10 @@ kbd {
 .btn--soft.btn--info    { background: var(--c-info-bg);    color: var(--c-info-text);    }
 .btn--soft.btn--gray    { background: var(--c-gray-bg);    color: var(--c-gray-text);    }
 .btn--soft.btn--low     { background: var(--c-low-bg);     color: var(--c-low-text);     }
+.btn--soft.btn--purple  { background: var(--c-purple-bg);  color: var(--c-purple-text);  }
+.btn--soft.btn--teal    { background: var(--c-teal-bg);    color: var(--c-teal-text);    }
+.btn--soft.btn--pink    { background: var(--c-pink-bg);    color: var(--c-pink-text);    }
+.btn--soft.btn--cyan    { background: var(--c-cyan-bg);    color: var(--c-cyan-text);    }
 
 /* ─── Tooltip ─────────────────────────────────────────────────────────────── */
 
