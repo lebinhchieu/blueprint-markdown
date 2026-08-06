@@ -204,6 +204,19 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('blueprintMarkdown.editComment', editComment),
   )
 
+  // Clicking a file ref in the preview that didn't resolve on disk (see inline-code.ts's
+  // FIND_URI) — open VS Code's own file search with it prefilled instead of erroring on a
+  // path we had to guess. Quick Open reads a trailing `:line` as a line target itself.
+  context.subscriptions.push(
+    vscode.window.registerUriHandler({
+      handleUri(uri) {
+        if (uri.path !== '/find') return
+        const query = new URLSearchParams(uri.query).get('q')
+        if (query) vscode.commands.executeCommand('workbench.action.quickOpen', query)
+      },
+    }),
+  )
+
   // Re-render when the user changes the theme or mindmap height setting.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {

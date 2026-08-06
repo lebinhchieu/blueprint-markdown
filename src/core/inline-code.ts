@@ -8,8 +8,9 @@
  * Resolution strategy (mirrors VS Code's own link resolver):
  *   1. Doc-relative:  <dirname of .md>/<path> — emit path as-is (VS Code default).
  *   2. Root-relative: <workspaceFolder>/<path> — emit /path (leading slash).
- * Only linkifies when the file actually exists on disk, which also filters out
- * false positives like `Node.js`, `v2.0`, `e.g`, etc.
+ * A ref that resolves to neither is handed to VS Code's own file search instead
+ * (Quick Open, prefilled) — see FIND_URI below. The extension-shaped regex is
+ * what filters out false positives like `Node.js`, `v2.0`, `e.g`, etc.
  *
  * Usage: call installInlineCodeRenderer(md) after creating the markdown-it instance.
  */
@@ -25,6 +26,19 @@ import { hexSwatchHtml } from './colors'
 // Extension must start with a letter (filters v2.0, etc.) and be ≤8 chars.
 // Allows paths with slashes (src/a/b.tsx) and dotfiles (.eslintrc.js).
 const FILE_REF = /^([\w.\-/]+\.[A-Za-z][A-Za-z0-9]{0,7})(?::(\d+)(?:-\d+)?)?$/
+
+/**
+ * Where an unresolved ref points, handled by the URI handler in extension.ts (which runs
+ * `workbench.action.quickOpen` — VS Code's built-in fuzzy file search, and it understands the
+ * `name:line` suffix as a line target, so the whole ref is passed through verbatim).
+ *
+ * Must be a `vscode:` URI, not a `command:` one: the built-in preview's click handler passes
+ * `http/https/mailto/vscode/vscode-insiders` hrefs through to VS Code's opener and posts
+ * scheme-less ones back to the extension host as `openLink`, but *drops everything else* —
+ * `command:` links never fire (see also the header comment in commentInsert.ts). The authority
+ * must stay in sync with publisher+name in package.json.
+ */
+const FIND_URI = 'vscode://ChieuLe.blueprint-markdown-chieu/find?q='
 
 /**
  * Tries to find filePath on disk by checking the doc's own folder, then each
@@ -79,8 +93,13 @@ export function installInlineCodeRenderer(md: MarkdownIt): void {
         const full = lineNum ? `${escapedHref}#L${lineNum}` : escapedHref
         return `<a class="file-ref" href="${full}" title="Click to open ${esc}"><code>${esc}</code></a>`
       }
-      // Unresolved — still a plausible file ref; make it copy-on-click.
-      // hydrateFileRefs() in hydrate.ts wires this; components.css shows the "Copied!" pill.
+      // Unresolved — hand the ref to VS Code's file search rather than guessing a path.
+      if (env?.currentDocument) {
+        return `<a class="file-ref" href="${FIND_URI}${encodeURIComponent(content)}" title="Search workspace for ${esc}"><code>${esc}</code></a>`
+      }
+      // No document in env means exported HTML (exportHtml.ts renders with no env) — there is no
+      // VS Code to search, so fall back to copy-on-click. The click handler is in hydrate.ts;
+      // components.css shows the "Copied!" pill.
       return `<code class="file-ref" data-copy="${esc}" title="Click to copy">${esc}</code>`
     }
     return `<code>${esc}</code>`
