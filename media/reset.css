@@ -37,3 +37,9 @@ pre code {
   margin: 0;
   padding: 0;
 }
+
+/* VS Code 1.13x injects a copy button into every `pre > code` from its own
+   preview script.  There is no setting to turn it off, so hide it. */
+.code-block-copy-button {
+  display: none;
+}
