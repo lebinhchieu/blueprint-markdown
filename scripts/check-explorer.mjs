@@ -1,8 +1,10 @@
 /**
- * check-explorer.mjs — runnable assert check for splitAtMermaidFence.
+ * check-explorer.mjs — runnable assert checks for the two pieces of :::explorer
+ * logic that fail silently: the mermaid-fence split, and the node-id regex that
+ * decides which diagram types can be linked.
  *
- * No test framework in this repo. Transpiles the TS module to a throwaway
- * CJS file and requires it, mirroring esbuild.mjs:280-293.
+ * No test framework in this repo. Transpiles the TS modules to throwaway CJS
+ * files and requires them, mirroring esbuild.mjs:280-293.
  *
  * Run: node scripts/check-explorer.mjs
  */
@@ -91,3 +93,45 @@ const warn = { type: 'directive', form: 'container', name: 'warning', attrs: {},
 }
 
 console.log('✓ splitAtMermaidFence: 7 checks passed')
+
+// ── RE_NODE_ID — which diagram types link ────────────────────────────────────
+// Probed against mermaid 11.15 on 2026-08-13. Each id below is a real value
+// taken from a rendered SVG, not a guess.
+
+const tmpSync = path.resolve('dist', '.tmp-explorer-sync.cjs')
+await esbuild.build({
+  entryPoints: ['src/core/explorerSync.ts'],
+  bundle: true,
+  platform: 'node',
+  format: 'cjs',
+  outfile: tmpSync,
+  logLevel: 'silent',
+})
+const { RE_NODE_ID } = createRequire(import.meta.url)(tmpSync)
+try { fs.unlinkSync(tmpSync) } catch {}
+
+const num = id => { const m = id.match(RE_NODE_ID); return m ? m[1] : null }
+
+// Supported types — the author's N<k> survives into the id.
+assert.equal(num('mermaid-1786602232448-flowchart-N1-0'), '1')  // graph / flowchart
+assert.equal(num('mermaid-1786630164967-state-N2-0'), '2')      // stateDiagram-v2
+assert.equal(num('mermaid-1786630165035-classId-N7-1'), '7')    // classDiagram
+
+// N1 must not swallow N10 — the trailing dash is what separates them.
+assert.equal(num('mermaid-1-flowchart-N10-2'), '10')
+assert.notEqual(num('mermaid-1-flowchart-N10-2'), '1')
+
+// Deliberately excluded: addressable, but mermaid 11.15 rejects entity
+// aliases, so the box would be labelled "N1" and the number never shown.
+assert.equal(num('mermaid-1786630165006-entity-N1-0'), null)
+
+// No author id in the DOM at all — matching these would be positional.
+assert.equal(num('actor0'), null)                        // sequenceDiagram
+assert.equal(num('mermaid-1786630165105-node-0'), null)  // timeline
+assert.equal(num('mermaid-1786630165126-node_0'), null)  // mermaid mindmap
+assert.equal(num('mermaid-1786630165204-task0'), null)   // journey
+
+// Edge ids embed node names — they must never be mistaken for nodes.
+assert.equal(num('mermaid-1786602232448-L_N1_N2_0'), null)
+
+console.log('✓ RE_NODE_ID: 11 checks passed')

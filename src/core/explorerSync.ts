@@ -1,7 +1,7 @@
 /**
  * explorerSync.ts — client-side node↔section linking for :::explorer.
  *
- * Pairs each mermaid node whose id ends `flowchart-N<k>-<n>` with the detail
+ * Pairs each mermaid node whose id ends `<kind>-N<k>-<n>` with the detail
  * heading whose text starts `<k>.`, marks the linked nodes, and scrolls to a
  * section when its node is clicked. Called from previewRuntime.runShared AFTER
  * renderMermaid resolves — there is no SVG to match against before that.
@@ -13,7 +13,8 @@
  *
  * Two hard constraints, both measured against mermaid 11.15:
  *  1. Node ids carry a per-render prefix (`mermaid-<ts>-flowchart-N1-0`), so
- *     an `[id^="flowchart-…"]` selector silently matches nothing.
+ *     an `[id^="flowchart-…"]` selector silently matches nothing. Match on the
+ *     tail, never the head.
  *  2. `classDef` writes `!important` inline on the node <rect>, so no CSS can
  *     restyle its fill or border. The <g> has no inline style — style that,
  *     and append the "has detail" badge as a new child.
@@ -21,7 +22,23 @@
 
 import { getMermaidPanHandle } from './mermaidPanZoom'
 
-const RE_NODE_ID = /flowchart-N(\d+)-\d+$/
+/**
+ * Node id → section number. The prefix differs per diagram type but the shape
+ * is identical, and all three render the node as `g.node` with a usable bbox:
+ *
+ *   graph / flowchart   mermaid-<ts>-flowchart-N1-0
+ *   stateDiagram-v2     mermaid-<ts>-state-N1-0
+ *   classDiagram        mermaid-<ts>-classId-N1-0
+ *
+ * `erDiagram` also emits `entity-N1-0`, but is deliberately excluded: mermaid
+ * 11.15 rejects entity aliases (`N1["1. Name"]` is a parse error), so the box
+ * would be labelled `N1` and the reader would never see the number the
+ * pairing is built on. Every other type (sequenceDiagram, C4Context, timeline,
+ * journey, gitGraph, mermaid's own mindmap) drops the author's id entirely and
+ * numbers its elements positionally, which would silently mispair the moment
+ * anything is reordered.
+ */
+export const RE_NODE_ID = /(?:flowchart|state|classId)-N(\d+)-\d+$/
 const RE_HEADING_NUM = /^\s*(\d+)\s*\./
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -99,7 +116,7 @@ export function setupExplorers(root: HTMLElement): void {
       pairs.push({ n, g, heading })
     })
 
-    if (pairs.length === 0) return // non-flowchart diagram, or no matches
+    if (pairs.length === 0) return // unsupported diagram type, or no matches
 
     instances.push({ el, pin, detail, pairs })
   })

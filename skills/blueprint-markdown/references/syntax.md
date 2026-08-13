@@ -347,6 +347,15 @@ fences are ordinary diagrams inside the detail pane.
 halves are required: `N3["3. Cache"]` pairs with `### 3. Cache`. The number in the label is
 what the reader sees; the `N<k>` id is what does the linking.
 
+Per supported diagram type, the id goes in a different place — the label must carry the
+number in all of them:
+
+```
+graph TD              N1["1. AuthService"]
+stateDiagram-v2       N1 : 1. AuthService
+classDiagram          class N1["1. AuthService"]
+```
+
 **Linked nodes are marked** with a dot, so an *unmarked* box reliably means "nothing more to
 read". A node with no matching heading, or a heading with no matching node, renders normally —
 neither errors.
@@ -361,8 +370,16 @@ neither errors.
 
 **Limits**
 
-- **`graph` / `flowchart` only.** Other diagram types (`sequenceDiagram`, `stateDiagram-v2`,
-  `erDiagram`, …) render pinned but never link — they use different internal node ids.
+- **Linking works for `graph`/`flowchart`, `stateDiagram-v2`, and `classDiagram`.** Every
+  other type renders pinned but never links, and that is not a gap to be filled cheaply:
+
+  | Type | Why not |
+  |------|---------|
+  | `erDiagram` | Nodes *are* addressable, but mermaid 11.15 rejects entity aliases — `N1["1. Name"]` is a parse error — so the box would read `N1` and the reader would never see the number the pairing is built on |
+  | `sequenceDiagram`, `C4Context`, `timeline`, `journey`, `gitGraph`, mermaid's own `mindmap` | The author's id never reaches the rendered SVG. Elements are numbered positionally (`actor0`, `node-0`, `task0`), so any matching would silently point at the wrong section as soon as the diagram is reordered |
+
+  Declaring `N<k>` in an unsupported type is harmless — the diagram pins and the sections
+  read normally, they just aren't clickable.
 - **Section headings must be top-level inside the block.** A heading wrapped in a nested
   directive stops being a link target, silently.
 - **Node fill and border can't be restyled by the renderer.** `classDef` and `style` are

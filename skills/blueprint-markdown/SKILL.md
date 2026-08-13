@@ -89,7 +89,7 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
 | `:::explorer` pairs mermaid id `N<k>` with heading `<k>.` | `N3["3. Cache"]` + `### 3. Cache` | `C1["Cache"]` + `### Cache` (box goes dead, no error) |
-| `:::explorer` only syncs `graph`/`flowchart` | ` ```mermaid ` + `graph TD` | `sequenceDiagram` (renders pinned, never links) |
+| `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `N1 : 1. Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
 | `:::explorer` section headings must be top-level in the block | `### 3. Cache` | `### 3. Cache` wrapped in a nested `:::card` (drops out of the pairing) |
 
 Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
@@ -221,7 +221,8 @@ body draws a dashed cross-link to that node.
 pins; everything after it scrolls in the detail pane. Mermaid id `N<k>` pairs with the heading
 whose text starts `<k>.` — clicking a box scrolls to its section and keeps both highlighted.
 A box with no matching heading renders unmarked, so an *unmarked* box means "nothing more to
-read". `graph`/`flowchart` only; other diagram types render pinned but never link.
+read". Links `graph`/`flowchart` (`N1["1. Name"]`), `stateDiagram-v2` (`N1 : 1. Name`) and
+`classDiagram` (`class N1["1. Name"]`); other types render pinned but never link.
 ````
 :::explorer
 ```mermaid

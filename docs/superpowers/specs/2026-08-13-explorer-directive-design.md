@@ -50,7 +50,7 @@ Redis-backed. TTL is 15m, not configurable.
 |---|---|
 | Layout | First `mermaid` fence pins; **everything after it** scrolls in the detail pane |
 | Matching | Mermaid node id `N<k>` ↔ heading whose text starts `<k>.` |
-| Diagram types | `graph` / `flowchart` only — others render pinned, unsynced |
+| Diagram types | `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` — others render pinned, unlinked |
 | Click node | Scroll that section into view (`block: 'nearest'`), highlight node + section |
 | Selection | Click-driven only, and **persists** until the next click — no scroll-spy |
 | Linked node | Visibly marked, so an *unmarked* node reliably means "nothing more to read" |
@@ -177,8 +177,25 @@ empirically on 2026-08-13 against mermaid 11.15 — see *Verified facts* below. 
 ```ts
 // ponytail: one regex pass over g.node beats a per-number selector and is
 // immune to the mermaid-<timestamp>- id prefix changing between renders.
-const RE = /flowchart-N(\d+)-\d+$/
+const RE = /(?:flowchart|state|classId)-N(\d+)-\d+$/
 ```
+
+**Diagram-type coverage, probed 2026-08-13 against mermaid 11.15.** The three supported
+types share one id shape and all render nodes as `g.node` with a usable bbox, so the badge,
+flash and reveal code is type-agnostic and support costs exactly one alternation:
+
+| Type | Node id | Author writes | Supported |
+|---|---|---|---|
+| `graph` / `flowchart` | `flowchart-N1-0` | `N1["1. Name"]` | yes |
+| `stateDiagram-v2` | `state-N1-0` | `N1 : 1. Name` | yes |
+| `classDiagram` | `classId-N1-0` | `class N1["1. Name"]` | yes |
+| `erDiagram` | `entity-N1-0` | — | no: aliases are a parse error, so the box reads `N1` |
+| `sequenceDiagram` | `actor0` | — | no: author id absent, positional only |
+| `C4Context`, `timeline`, `journey`, `gitGraph`, mermaid `mindmap` | positional or none | — | no |
+
+`erDiagram` is the notable exclusion: it *is* addressable, but with no alias support the
+reader never sees the number the pairing is built on. Linking a box labelled `N1` is worse
+than not linking it.
 
 ### 6. mermaidPanZoom.ts — `src/core/mermaidPanZoom.ts:170`
 
@@ -245,7 +262,7 @@ Consequent design:
 |---|---|
 | Plain markdown viewer, no renderer | `:::explorer` is literal text; content reads top-to-bottom |
 | No mermaid fence in the block | Everything renders as detail |
-| Non-flowchart diagram (`sequenceDiagram`, …) | Pinned layout, zero matches, no sync |
+| Unsupported diagram type (`sequenceDiagram`, `erDiagram`, …) | Pinned layout, zero matches, no linking |
 | Node with no matching section | Renders, stays unmarked |
 | Section with no matching node | Renders normally |
 
