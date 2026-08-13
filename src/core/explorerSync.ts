@@ -30,7 +30,7 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
 const STACKED_STICKY_MAX = 0.6
 
 /** Must outlast the flash animations in components.css. */
-const FLASH_MS = 900
+const FLASH_MS = 1400
 
 interface Pair {
   n: number
@@ -166,13 +166,33 @@ function onNodeClick(e: MouseEvent): void {
   for (const inst of instances) {
     const pair = inst.pairs.find(p => p.g === g)
     if (!pair) continue
-    // 'nearest' scrolls the minimum needed; scroll-margin-top on the heading
-    // (fed by layout() below) keeps it clear of a pinned diagram above it.
+    // Reveal the whole section, not just its heading. scroll-margin-bottom
+    // extends the heading's scroll box down over its own content, so
+    // 'nearest' — which still scrolls the minimum, and does nothing when the
+    // section already fits — treats the section as the thing to bring into
+    // view. When the section is taller than the viewport, 'nearest' falls back
+    // to aligning the top edge, which is what we'd want anyway.
+    pair.heading.style.scrollMarginBottom = `${sectionContentHeight(inst, pair.heading)}px`
     pair.heading.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     flash(pair.g, 'em-explorer__node--flash')
     flash(pair.heading, 'em-explorer__section--flash')
     return
   }
+}
+
+/**
+ * Height of everything below `heading` up to the next top-level heading in the
+ * detail pane (or the end of the pane) — i.e. the section's body.
+ */
+function sectionContentHeight(inst: Instance, heading: HTMLElement): number {
+  let end = inst.detail.getBoundingClientRect().bottom
+  for (let el = heading.nextElementSibling; el; el = el.nextElementSibling) {
+    if (/^H[1-6]$/.test(el.tagName)) {
+      end = el.getBoundingClientRect().top
+      break
+    }
+  }
+  return Math.max(0, Math.round(end - heading.getBoundingClientRect().bottom))
 }
 
 /**

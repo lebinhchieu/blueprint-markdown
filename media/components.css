@@ -1520,12 +1520,13 @@ kbd {
   position: sticky;
   top: 0;
   align-self: start;
-  /* Opaque and raised so detail content scrolls UNDER the diagram. Inline
-   * <code> is position:relative, and a later positioned sibling paints over a
+  /* Raised so detail content scrolls UNDER the diagram. Inline <code> is
+   * position:relative, and a later positioned sibling paints over a
    * z-index:auto sticky element — which is what put code spans on top of the
-   * diagram in stacked mode. No overflow: it would clip .em-mermaid__controls. */
+   * diagram in stacked mode. The pin has no background, so content still
+   * shows through the padding strips above and below the panel while
+   * scrolling. No overflow: it would clip .em-mermaid__controls. */
   z-index: 1;
-  background: var(--bg-base);
   /* Keeps the diagram's border off the sticky edge. border-box because this
    * file's default is content-box, and the wide-mode rule below sets an
    * explicit 100vh height that the padding must fit inside. */
@@ -1533,10 +1534,14 @@ kbd {
   padding: var(--sp-sm) 0;
 }
 
-/* The panel's own bottom margin would otherwise show as a strip of pin
- * background hanging below the diagram. */
+/* The panel's own 16px bottom margin would otherwise make the pin's padding
+ * lopsided — 8px above the diagram, 24px below. */
 .em-explorer__pin > .mermaid {
   margin-bottom: 0;
+}
+
+.em-explorer__detail {
+  padding: var(--sp-sm) 0;
 }
 
 .em-explorer__detail > :first-child { margin-top: 0; }
@@ -1588,24 +1593,36 @@ kbd {
 
 /* Clicking a node is a transient action: both ends flash once and clean up.
  * Nothing stays selected, so the pinned diagram remains the only thing
- * telling you where you are. */
+ * telling you where you are.
+ *
+ * The peak is held to 55% of a 1.4s run for two reasons: a smooth
+ * scrollIntoView takes ~450ms, so a short flash is already fading by the time
+ * the section arrives; and --c-primary-bg alone differs from --bg-base by
+ * about 8/255 on two channels, which is invisible. The solid --c-primary ring
+ * is what actually reads as a flash. */
 @keyframes em-explorer-node-flash {
-  0%, 40% { filter: drop-shadow(0 0 8px var(--c-primary)); }
+  0%, 55% { filter: drop-shadow(0 0 6px var(--c-primary)) drop-shadow(0 0 14px var(--c-primary)); }
   100%    { filter: drop-shadow(0 0 0 transparent); }
 }
 
 @keyframes em-explorer-section-flash {
-  0%, 40% { background-color: var(--c-primary-bg); }
-  100%    { background-color: transparent; }
+  0%, 55% {
+    background-color: var(--c-primary-bg);
+    box-shadow: 0 0 0 3px var(--c-primary);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 3px transparent;
+  }
 }
 
 .em-explorer__node--flash {
-  animation: em-explorer-node-flash 0.85s ease-out;
+  animation: em-explorer-node-flash 1.4s ease-out;
 }
 
 .em-explorer__section--flash {
-  animation: em-explorer-section-flash 0.85s ease-out;
-  border-radius: 4px;
+  animation: em-explorer-section-flash 1.4s ease-out;
+  border-radius: var(--radius-sm);
 }
 
 @media (prefers-reduced-motion: reduce) {
