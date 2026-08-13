@@ -1624,8 +1624,3 @@ kbd {
   animation: em-explorer-section-flash 1.4s ease-out;
   border-radius: var(--radius-sm);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .em-explorer__node--flash,
-  .em-explorer__section--flash { animation: none; }
-}
