@@ -18,7 +18,7 @@
  * :::
  */
 
-import type { ASTNode } from '../types'
+import type { ASTNode, DirectiveSpec } from '../types'
 
 const RE_FENCE = /^(\s*)(`{3,}|~{3,})/
 
@@ -83,4 +83,34 @@ function closeIndex(lines: string[], open: number, marker: string): number {
     if (m && m[2][0] === marker[0] && m[2].length >= marker.length) return i
   }
   return lines.length - 1
+}
+
+/** Only accept a width that is unambiguously a CSS length — this value is
+ *  interpolated into a style attribute, so an unvalidated string would let
+ *  markdown source inject arbitrary declarations. */
+const RE_WIDTH = /^\d+(\.\d+)?(%|px|rem|em|ch|vw)$/
+
+export const explorerDirectives: Record<string, DirectiveSpec> = {
+  explorer: {
+    forms: ['container'],
+    render(node, ctx) {
+      const { pin, detail } = splitAtMermaidFence(node.children)
+
+      const pinSide = node.attrs.named['pin'] === 'top' ? 'top' : 'left'
+      const rawWidth = node.attrs.named['width'] ?? '45%'
+      const width = RE_WIDTH.test(rawWidth) ? rawWidth : '45%'
+
+      // Render each half through a synthetic node — renderChildren only ever
+      // reads `children`, so this needs no change to renderer.ts or RenderCtx.
+      const pinHtml = ctx.renderChildren({ ...node, children: pin })
+      const detailHtml = ctx.renderChildren({ ...node, children: detail })
+
+      return (
+        `<div class="em-explorer" data-pin="${pinSide}" style="--em-explorer-pin-width:${width}">` +
+        `<div class="em-explorer__pin">${pinHtml}</div>` +
+        `<div class="em-explorer__detail">${detailHtml}</div>` +
+        `</div>`
+      )
+    },
+  },
 }

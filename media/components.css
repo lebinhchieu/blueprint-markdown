@@ -1500,3 +1500,35 @@ kbd {
 .em-mindmap__drawer-body > *:last-child {
   margin-bottom: 0;
 }
+
+/* ─── :::explorer — pinned diagram + scrolling detail ──────────────────────
+ *
+ * A CSS grid, NOT a nested scroll container. The page scrolls and the pin
+ * column sticks: that keeps VS Code's editor↔preview scroll sync alive inside
+ * the block and leaves toc.ts's heading rects unclipped. An inner
+ * overflow:auto pane would break both.
+ */
+.em-explorer {
+  display: grid;
+  grid-template-columns: var(--em-explorer-pin-width, 45%) 1fr;
+  gap: var(--sp-lg);
+  align-items: start;
+  margin-bottom: 1em;
+}
+
+.em-explorer__pin {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  /* No overflow here — it would clip .em-mermaid__controls. */
+  max-height: calc(100vh - 2rem);
+}
+
+.em-explorer__detail > :first-child { margin-top: 0; }
+
+/* pin=top and the narrow-screen stack are the same single-column rule. */
+.em-explorer[data-pin="top"] { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+  .em-explorer { grid-template-columns: 1fr; }
+}
