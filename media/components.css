@@ -1511,7 +1511,13 @@ kbd {
  */
 .em-explorer {
   display: grid;
-  grid-template-columns: var(--em-explorer-pin-width, 45%) 1fr;
+  /* minmax(0, 1fr), never a bare 1fr: `1fr` means minmax(auto, 1fr), and an
+   * auto minimum resolves to min-content — so one wide table or a long
+   * unwrappable code line pushes the detail track past its share and scrolls
+   * the whole page sideways. Pinning the minimum to 0 lets the track shrink
+   * and leaves the overflow to the element that owns it (.code-block already
+   * has overflow-x: auto). */
+  grid-template-columns: var(--em-explorer-pin-width, 45%) minmax(0, 1fr);
   gap: var(--sp-lg);
   align-items: start;
   margin-bottom: 1em;
@@ -1550,6 +1556,16 @@ kbd {
 }
 
 .em-explorer__detail > :first-child { margin-top: 0; }
+
+/* The detail pane is roughly half width, and sections are written
+ * "### 1. Name — `path:line`", so long unbreakable file refs are the norm
+ * here. Inline code can't scroll the way .code-block does, so let it break.
+ * `anywhere` rather than `break-word` because only `anywhere` also lowers the
+ * element's min-content width, which is what keeps the grid track honest.
+ * Scoped to inline code — code inside a <pre> should still scroll, not wrap. */
+.em-explorer__detail :not(pre) > code {
+  overflow-wrap: anywhere;
+}
 
 /* Land scrolled-to headings below the pinned diagram rather than behind it.
  * --em-explorer-pin-h is set by explorerSync.layout() and stays 0 whenever
