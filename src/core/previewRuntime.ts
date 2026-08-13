@@ -14,6 +14,7 @@ import { createMinimalMarkdownIt } from './markdownitBrowser'
 import { mountMindmap, type CytoscapeLib, type CytoscapeDagreLib, type MindmapHandle } from './mindmap/mountMindmap'
 import type { MindmapGraph } from './mindmap/parseMindmap'
 import { enhanceMermaidZoom } from './mermaidPanZoom'
+import { setupExplorers } from './explorerSync'
 
 export type MermaidApi = {
   initialize: (config: Record<string, unknown>) => void
@@ -284,6 +285,8 @@ export function runShared(
   applyMindmapHeight(root)
   hydrate(root)
   setupToc(root)
-  if (mermaid) void renderMermaid(root, theme, mermaid)
+  // renderMermaid is async — called unchained, setupExplorers would run before
+  // any SVG exists and match nothing.
+  if (mermaid) void renderMermaid(root, theme, mermaid).then(() => setupExplorers(root))
   mountMindmaps(root, theme, cytoscape, cytoscapeDagre)
 }

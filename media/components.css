@@ -1520,15 +1520,59 @@ kbd {
   position: sticky;
   top: 0;
   align-self: start;
-  /* No overflow here — it would clip .em-mermaid__controls. */
-  max-height: calc(100vh - 2rem);
+  /* Opaque and raised so detail content scrolls UNDER the diagram. Inline
+   * <code> is position:relative, and a later positioned sibling paints over a
+   * z-index:auto sticky element — which is what put code spans on top of the
+   * diagram in stacked mode. No overflow: it would clip .em-mermaid__controls. */
+  z-index: 1;
+  background: var(--bg-base);
 }
 
 .em-explorer__detail > :first-child { margin-top: 0; }
+
+/* Land scrolled-to headings below the pinned diagram rather than behind it.
+ * --em-explorer-pin-h is set by explorerSync.layout() and stays 0 whenever
+ * nothing is pinned above the detail pane. */
+.em-explorer__detail > h1,
+.em-explorer__detail > h2,
+.em-explorer__detail > h3,
+.em-explorer__detail > h4,
+.em-explorer__detail > h5,
+.em-explorer__detail > h6 {
+  scroll-margin-top: calc(var(--em-explorer-pin-h, 0px) + var(--sp-sm));
+}
+
+/* Side-by-side: give the diagram the full display height, and keep the block
+ * at least one screen tall even when the detail column is shorter. */
+@media (min-width: 901px) {
+  .em-explorer:not([data-pin="top"]) { min-height: 100vh; }
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin { height: 100vh; }
+  /* Beats the inline height enhanceMermaidZoom sets on the panel. */
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .mermaid { height: 100% !important; }
+}
 
 /* pin=top and the narrow-screen stack are the same single-column rule. */
 .em-explorer[data-pin="top"] { grid-template-columns: 1fr; }
 
 @media (max-width: 900px) {
   .em-explorer { grid-template-columns: 1fr; }
+}
+
+/* A stacked diagram taller than 60% of the viewport would cover the text it
+ * points at. explorerSync.layout() adds this class; the diagram then scrolls
+ * away like ordinary content. */
+.em-explorer--no-sticky .em-explorer__pin {
+  position: static;
+}
+
+/* Node states. Only the <g> and appended children are stylable — classDef
+ * writes `!important` inline onto the node's <rect>. */
+.em-explorer__node--linked { cursor: pointer; }
+.em-explorer__badge { fill: var(--c-primary); }
+.em-explorer__node--active { filter: drop-shadow(0 0 6px var(--c-primary)); }
+
+.em-explorer__section--active {
+  border-left: 3px solid var(--c-primary);
+  padding-left: var(--sp-sm);
+  margin-left: calc(-1 * var(--sp-sm) - 3px);
 }
