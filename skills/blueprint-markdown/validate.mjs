@@ -59,6 +59,8 @@ const REGISTRY = {
   previous:  ['container'],
   // mindmap.ts — body is plain heading markdown, not nested directives
   mindmap:   ['container'],
+  // explorer.ts — first mermaid fence pins, everything after it is the detail pane
+  explorer:  ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],

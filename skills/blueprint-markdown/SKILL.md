@@ -88,6 +88,9 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
+| `:::explorer` pairs mermaid id `N<k>` with heading `<k>.` | `N3["3. Cache"]` + `### 3. Cache` | `C1["Cache"]` + `### Cache` (box goes dead, no error) |
+| `:::explorer` only syncs `graph`/`flowchart` | ` ```mermaid ` + `graph TD` | `sequenceDiagram` (renders pinned, never links) |
+| `:::explorer` section headings must be top-level in the block | `### 3. Cache` | `### 3. Cache` wrapped in a nested `:::card` (drops out of the pairing) |
 
 Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
 of the document.
@@ -213,6 +216,35 @@ Shares invalidation logic with [[redis]].
 `{#id}` (optional) sets a stable id (else slugified from the heading text); `[[id]]` anywhere in a
 body draws a dashed cross-link to that node.
 `{type}` to group nodes by color (otherwise depth→color)
+
+**Explorer** — pins a mermaid diagram beside its detail sections. The first `mermaid` fence
+pins; everything after it scrolls in the detail pane. Mermaid id `N<k>` pairs with the heading
+whose text starts `<k>.` — clicking a box scrolls to its section and keeps both highlighted.
+A box with no matching heading renders unmarked, so an *unmarked* box means "nothing more to
+read". `graph`/`flowchart` only; other diagram types render pinned but never link.
+````
+:::explorer
+```mermaid
+graph TD
+  N1["1. AuthService ⚠"] --> N2["2. TokenStore"]
+  style N1 stroke-dasharray: 6 4
+```
+
+### 1. AuthService — `src/auth/service.ts:44`
+Validates creds, issues JWT.
+
+**Simplified:** one box, but refresh and revoke are separate flows.
+
+### 2. TokenStore — `src/auth/store.ts:12`
+Redis-backed. TTL is 15m, not configurable.
+
+:::warning{title="Not shown" icon=visibility_off}
+- Retry / backoff on token refresh
+:::
+:::
+````
+`{pin=left}` (default) or `{pin=top}`; `{width=45%}` sets the diagram column. Section headings
+must be top-level inside the block — one wrapped in a nested directive drops out of the pairing.
 
 ### Leaf blocks (::)
 
