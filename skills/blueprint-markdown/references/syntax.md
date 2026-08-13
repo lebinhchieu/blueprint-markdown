@@ -5,7 +5,7 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, mindmap
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, mindmap, explorer
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
@@ -307,6 +307,75 @@ Offload static assets. Shares invalidation logic with [[redis]].
 **Cross-links** — `[[id]]` anywhere in a node's body
 ---
 
+### `:::explorer`
+
+Pins a mermaid diagram beside its per-node detail sections. Clicking a box scrolls to that
+box's section, so you read the detail without losing sight of the picture.
+
+````
+:::explorer
+```mermaid
+graph TD
+  N1["1. AuthService ⚠"] --> N2["2. TokenStore"]
+  style N1 stroke-dasharray: 6 4
+```
+
+### 1. AuthService — `src/auth/service.ts:44`
+Validates creds, issues JWT.
+
+**Simplified:** one box, but refresh and revoke are separate flows.
+
+### 2. TokenStore — `src/auth/store.ts:12`
+Redis-backed. TTL is 15m, not configurable.
+
+:::warning{title="Not shown" icon=visibility_off}
+- Retry / backoff on token refresh
+:::
+:::
+````
+
+| Attr | Values | Default | Notes |
+|------|--------|---------|-------|
+| `pin` | `left`, `top` | `left` | `top` stacks the diagram above the detail on any width |
+| `width` | CSS length — `%`, `px`, `rem`, `em`, `ch`, `vw` | `45%` | Diagram column width. Anything else falls back to the default |
+
+**Splitting** — the **first** `mermaid` fence pins; everything after it becomes the detail
+pane, including nested directives such as the closing `Not shown` callout. Later mermaid
+fences are ordinary diagrams inside the detail pane.
+
+**Pairing** — mermaid node id `N<k>` ↔ the detail heading whose text starts `<k>.`. Both
+halves are required: `N3["3. Cache"]` pairs with `### 3. Cache`. The number in the label is
+what the reader sees; the `N<k>` id is what does the linking.
+
+**Linked nodes are marked** with a dot, so an *unmarked* box reliably means "nothing more to
+read". A node with no matching heading, or a heading with no matching node, renders normally —
+neither errors.
+
+**Clicking** scrolls the section into view — the whole section, not just its heading — and
+flashes both the box and the section. Nothing stays selected afterwards.
+
+**Layout**
+
+| Situation | Behaviour |
+|-----------|-----------|
+| Wide, side by side | Diagram gets the full display height; the block is at least one screen tall |
+| Narrow, or `pin=top` | Stacks, diagram sticky at the top |
+| Stacked diagram over 60% of the viewport height | Doesn't pin at all — it would cover the text it points at |
+
+**Limits**
+
+- **`graph` / `flowchart` only.** Other diagram types (`sequenceDiagram`, `stateDiagram-v2`,
+  `erDiagram`, …) render pinned but never link — they use different internal node ids.
+- **Section headings must be top-level inside the block.** A heading wrapped in a nested
+  directive stops being a link target, silently.
+- **Node fill and border can't be restyled by the renderer.** `classDef` and `style` are
+  written inline with `!important`, which is why a linked node is marked with an added dot
+  rather than a changed border. Your own `classDef` colors always win — use the CSS variables
+  from [color tokens](#color-tokens) there, as described under
+  [fenced code extensions](#fenced-code).
+
+---
+
 ## Leaf blocks (::) {#leaf-blocks}
 
 ### `::progress`
@@ -509,12 +578,16 @@ Standard GFM mark: `==text==` renders as `<mark>`.
 
 ## Strict syntax nuances {#strict-rules}
 
-The SKILL.md traps table covers all common failures. Two additional nuances:
+The SKILL.md traps table covers all common failures. Three additional nuances:
 
 - **Opener line must be alone.** Body text on the same line as `:::name{…}` is not parsed —
   always start the body on the next line.
 - **Unclosed container** renders with class `directive-unclosed` (visible but unstyled) and
   silently consumes everything to end-of-file into its body.
+- **A fenced block hides directives from the parser entirely.** Lines inside ``` / ~~~ are
+  never classified, so a `:::explorer` shown as an example inside a ` ```` ` fence is not
+  parsed — and `validate.mjs` may attribute an error elsewhere in the file to that example's
+  line number. Check the real unclosed block, not the reported line.
 
 ---
 
