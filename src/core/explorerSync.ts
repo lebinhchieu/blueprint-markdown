@@ -19,6 +19,8 @@
  *     and append the "has detail" badge as a new child.
  */
 
+import { getMermaidPanHandle } from './mermaidPanZoom'
+
 const RE_NODE_ID = /flowchart-N(\d+)-\d+$/
 const RE_HEADING_NUM = /^\s*(\d+)\s*\./
 const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -93,6 +95,7 @@ export function setupExplorers(root: HTMLElement): void {
       const heading = byNum.get(n)
       if (!heading) return // fail-soft: node with no section stays unmarked
       markLinked(g)
+      heading.classList.add('em-explorer__section--linked')
       pairs.push({ n, g, heading })
     })
 
@@ -145,24 +148,80 @@ function markLinked(g: SVGGElement): void {
 function wireOnce(): void {
   if (wired) return
   wired = true
-  document.addEventListener('click', onNodeClick)
+  document.addEventListener('click', onClick)
   // Resize only — no scroll listener. Layout depends on the pin's measured
   // height, which changes with the viewport and nothing else.
   window.addEventListener('resize', scheduleLayout, { passive: true })
 }
 
-// ─── Click → scroll the section into view and flash both ends ────────────────
+// ─── Click → jump to the other end of the pair and flash both ────────────────
 
-function onNodeClick(e: MouseEvent): void {
+const HEADING_SEL =
+  '.em-explorer__detail > h1, .em-explorer__detail > h2, .em-explorer__detail > h3,' +
+  '.em-explorer__detail > h4, .em-explorer__detail > h5, .em-explorer__detail > h6'
+
+function onClick(e: MouseEvent): void {
   if (e.button !== 0) return // pan is right-drag; only claim the left button
   // A left-drag that selected text also fires click — don't hijack that.
   const sel = document.getSelection()
   if (sel && !sel.isCollapsed) return
 
   const target = e.target as Element | null
-  const g = target?.closest?.('g.node')
-  if (!g) return
+  // Links and click-to-copy file refs own their clicks. Section headings are
+  // written as "### 1. Name — `path:line`", so every one of them contains a
+  // code.file-ref — without this the copy gesture would pan the diagram instead.
+  if (!target || target.closest('a, code.file-ref[data-copy]')) return
 
+  const g = target.closest?.('g.node')
+  if (g) {
+    onNodeClick(g)
+    return
+  }
+
+  const heading = target.closest<HTMLElement>(HEADING_SEL)
+  if (heading) onSectionClick(heading)
+}
+
+/** Section heading clicked → bring its node into view in the pinned diagram. */
+function onSectionClick(heading: HTMLElement): void {
+  for (const inst of instances) {
+    const pair = inst.pairs.find(p => p.heading === heading)
+    if (!pair) continue
+    revealNode(inst, pair.g)
+    flash(pair.g, 'em-explorer__node--flash')
+    flash(pair.heading, 'em-explorer__section--flash')
+    return
+  }
+}
+
+/**
+ * Pan the pinned diagram so a node is visible, but only when it isn't already —
+ * at the default fit transform everything is on screen and nothing should move.
+ * Only reachable once the reader has panned or zoomed.
+ */
+function revealNode(inst: Instance, g: SVGGElement): void {
+  const panel = inst.pin.querySelector<HTMLElement>('.mermaid')
+  const viewport = inst.pin.querySelector<HTMLElement>('.em-mermaid__viewport')
+  if (!panel || !viewport) return
+
+  const vb = viewport.getBoundingClientRect()
+  const nb = g.getBoundingClientRect()
+  const margin = 12
+  const inside =
+    nb.left >= vb.left + margin &&
+    nb.right <= vb.right - margin &&
+    nb.top >= vb.top + margin &&
+    nb.bottom <= vb.bottom - margin
+  if (inside) return
+
+  getMermaidPanHandle(panel)?.panBy(
+    vb.left + vb.width / 2 - (nb.left + nb.width / 2),
+    vb.top + vb.height / 2 - (nb.top + nb.height / 2),
+  )
+}
+
+/** Diagram node clicked → scroll its section into view. */
+function onNodeClick(g: Element): void {
   for (const inst of instances) {
     const pair = inst.pairs.find(p => p.g === g)
     if (!pair) continue

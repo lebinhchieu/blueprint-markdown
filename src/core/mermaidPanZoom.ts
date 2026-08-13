@@ -61,6 +61,24 @@ interface Controls {
   expand?: HTMLElement
 }
 
+/** Lets another module move a diagram without desyncing this one's transform. */
+export interface MermaidPanHandle {
+  /** Shift the view by a screen-pixel delta. */
+  panBy: (dx: number, dy: number) => void
+}
+
+/**
+ * Handles keyed by the `.mermaid` panel element. The pan/zoom transform lives
+ * in a `wireViewport` closure, so writing `stage.style.transform` from outside
+ * would be silently overwritten by the next drag. explorerSync uses this to
+ * bring a clicked node into view.
+ */
+const panHandles = new WeakMap<HTMLElement, MermaidPanHandle>()
+
+export function getMermaidPanHandle(el: HTMLElement): MermaidPanHandle | undefined {
+  return panHandles.get(el)
+}
+
 function buildControls(doc: Document, withExpand: boolean): Controls {
   const bar = doc.createElement('div')
   bar.className = 'em-mermaid__controls'
@@ -123,7 +141,7 @@ function wireViewport(
   content: Size,
   gateZoom: boolean,
   onExpand?: () => void,
-): void {
+): MermaidPanHandle {
   let t = fitTransform(viewport, content)
   applyTransform(stage, t)
 
@@ -217,6 +235,16 @@ function wireViewport(
   })
   controls.reset.addEventListener('click', reset)
   controls.expand?.addEventListener('click', () => onExpand?.())
+
+  return {
+    panBy(dx, dy) {
+      // `t.x`/`t.y` are in unscaled parent pixels — the transform is
+      // `translate(x,y) scale(s)`, so a screen-pixel delta maps 1:1.
+      t.x += dx
+      t.y += dy
+      applyTransform(stage, t)
+    },
+  }
 }
 
 let activeModalClose: (() => void) | null = null
@@ -326,6 +354,9 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
       el.style.height = `${height}px`
     }
 
-    wireViewport(viewport, stage, controls, content, true, () => openModal(doc, svg, stage, content))
+    const handle = wireViewport(viewport, stage, controls, content, true, () =>
+      openModal(doc, svg, stage, content),
+    )
+    panHandles.set(el, handle)
   })
 }

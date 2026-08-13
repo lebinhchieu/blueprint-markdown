@@ -102,7 +102,6 @@
 /* Mermaid */
 .md-output .mermaid {
   position: relative;
-  overflow: hidden;
   resize: vertical;
   min-height: 120px;
   margin-bottom: 1em;

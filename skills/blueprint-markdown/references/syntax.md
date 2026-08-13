@@ -351,9 +351,6 @@ what the reader sees; the `N<k>` id is what does the linking.
 read". A node with no matching heading, or a heading with no matching node, renders normally —
 neither errors.
 
-**Clicking** scrolls the section into view — the whole section, not just its heading — and
-flashes both the box and the section. Nothing stays selected afterwards.
-
 **Layout**
 
 | Situation | Behaviour |
