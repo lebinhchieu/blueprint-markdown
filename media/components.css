@@ -1526,6 +1526,17 @@ kbd {
    * diagram in stacked mode. No overflow: it would clip .em-mermaid__controls. */
   z-index: 1;
   background: var(--bg-base);
+  /* Keeps the diagram's border off the sticky edge. border-box because this
+   * file's default is content-box, and the wide-mode rule below sets an
+   * explicit 100vh height that the padding must fit inside. */
+  box-sizing: border-box;
+  padding: var(--sp-sm) 0;
+}
+
+/* The panel's own bottom margin would otherwise show as a strip of pin
+ * background hanging below the diagram. */
+.em-explorer__pin > .mermaid {
+  margin-bottom: 0;
 }
 
 .em-explorer__detail > :first-child { margin-top: 0; }
@@ -1547,8 +1558,13 @@ kbd {
 @media (min-width: 901px) {
   .em-explorer:not([data-pin="top"]) { min-height: 100vh; }
   .em-explorer:not([data-pin="top"]) .em-explorer__pin { height: 100vh; }
-  /* Beats the inline height enhanceMermaidZoom sets on the panel. */
-  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .mermaid { height: 100% !important; }
+  /* Beats the inline height enhanceMermaidZoom sets on the panel. border-box
+   * so the panel's 1px border fits inside the 100%, instead of overflowing and
+   * eating 2px of the pin's bottom padding. */
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .mermaid {
+    height: 100% !important;
+    box-sizing: border-box;
+  }
 }
 
 /* pin=top and the narrow-screen stack are the same single-column rule. */
@@ -1569,10 +1585,30 @@ kbd {
  * writes `!important` inline onto the node's <rect>. */
 .em-explorer__node--linked { cursor: pointer; }
 .em-explorer__badge { fill: var(--c-primary); }
-.em-explorer__node--active { filter: drop-shadow(0 0 6px var(--c-primary)); }
 
-.em-explorer__section--active {
-  border-left: 3px solid var(--c-primary);
-  padding-left: var(--sp-sm);
-  margin-left: calc(-1 * var(--sp-sm) - 3px);
+/* Clicking a node is a transient action: both ends flash once and clean up.
+ * Nothing stays selected, so the pinned diagram remains the only thing
+ * telling you where you are. */
+@keyframes em-explorer-node-flash {
+  0%, 40% { filter: drop-shadow(0 0 8px var(--c-primary)); }
+  100%    { filter: drop-shadow(0 0 0 transparent); }
+}
+
+@keyframes em-explorer-section-flash {
+  0%, 40% { background-color: var(--c-primary-bg); }
+  100%    { background-color: transparent; }
+}
+
+.em-explorer__node--flash {
+  animation: em-explorer-node-flash 0.85s ease-out;
+}
+
+.em-explorer__section--flash {
+  animation: em-explorer-section-flash 0.85s ease-out;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .em-explorer__node--flash,
+  .em-explorer__section--flash { animation: none; }
 }

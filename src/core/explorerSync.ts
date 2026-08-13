@@ -6,10 +6,10 @@
  * section when its node is clicked. Called from previewRuntime.runShared AFTER
  * renderMermaid resolves — there is no SVG to match against before that.
  *
- * Selection is click-driven only. There is deliberately no scroll-spy: a
- * pinned diagram already tells you where you are, and a spy fighting the
- * sticky pin made the highlight flicker as sections crossed the threshold.
- * The active pair stays put until the next click.
+ * Clicking is a *transient* action: scroll to the section, flash both ends of
+ * the pair, then everything returns to normal. There is no persistent selected
+ * state and deliberately no scroll-spy — the pinned diagram already tells you
+ * where you are, and a lingering highlight only competes with it.
  *
  * Two hard constraints, both measured against mermaid 11.15:
  *  1. Node ids carry a per-render prefix (`mermaid-<ts>-flowchart-N1-0`), so
@@ -29,6 +29,9 @@ const SVG_NS = 'http://www.w3.org/2000/svg'
  */
 const STACKED_STICKY_MAX = 0.6
 
+/** Must outlast the flash animations in components.css. */
+const FLASH_MS = 900
+
 interface Pair {
   n: number
   g: SVGGElement
@@ -36,8 +39,6 @@ interface Pair {
 }
 
 interface Instance {
-  /** Position in document order — the key `activeByIndex` is stored under. */
-  index: number
   el: HTMLElement
   pin: HTMLElement
   detail: HTMLElement
@@ -49,23 +50,22 @@ let instances: Instance[] = []
 let wired = false
 let rafHandle = 0
 
-/**
- * Active section per explorer, by document-order index. The selection is set
- * by clicking and has to outlive VS Code's morphdom re-render, which throws
- * away every element in `instances` on each keystroke.
- *
- * ponytail: keyed by index, so reordering explorers mid-edit can move a
- * highlight. It is a highlight; keying by content hash would cost more than
- * the bug.
- */
-const activeByIndex = new Map<number, number>()
+/** Watches each pin's own box, so dragging the diagram's native resize handle
+ *  re-evaluates the sticky budget — a window `resize` never fires for that. */
+let pinObserver: ResizeObserver | null = null
+
+/** Pending flash timers, so a repeat click doesn't get cut short by the
+ *  previous click's cleanup. */
+const flashTimers = new WeakMap<Element, number>()
 
 // ─── Public ───────────────────────────────────────────────────────────────────
 
 export function setupExplorers(root: HTMLElement): void {
   instances = []
+  // morphdom replaces the pins, so the previous pass's observations are stale.
+  pinObserver?.disconnect()
 
-  root.querySelectorAll<HTMLElement>('.em-explorer').forEach((el, index) => {
+  root.querySelectorAll<HTMLElement>('.em-explorer').forEach(el => {
     const pin = el.querySelector<HTMLElement>('.em-explorer__pin')
     const detail = el.querySelector<HTMLElement>('.em-explorer__detail')
     if (!pin || !detail) return
@@ -98,15 +98,16 @@ export function setupExplorers(root: HTMLElement): void {
 
     if (pairs.length === 0) return // non-flowchart diagram, or no matches
 
-    const inst: Instance = { index, el, pin, detail, pairs }
-    instances.push(inst)
-
-    // Re-apply the click selection this explorer had before the re-render.
-    const previous = activeByIndex.get(index)
-    if (previous !== undefined) paint(inst, previous)
+    instances.push({ el, pin, detail, pairs })
   })
 
   wireOnce()
+
+  if (typeof ResizeObserver !== 'undefined') {
+    pinObserver ??= new ResizeObserver(scheduleLayout)
+    for (const inst of instances) pinObserver.observe(inst.pin)
+  }
+
   layout()
 }
 
@@ -150,7 +151,7 @@ function wireOnce(): void {
   window.addEventListener('resize', scheduleLayout, { passive: true })
 }
 
-// ─── Click → scroll the section into view and keep it selected ───────────────
+// ─── Click → scroll the section into view and flash both ends ────────────────
 
 function onNodeClick(e: MouseEvent): void {
   if (e.button !== 0) return // pan is right-drag; only claim the left button
@@ -168,22 +169,32 @@ function onNodeClick(e: MouseEvent): void {
     // 'nearest' scrolls the minimum needed; scroll-margin-top on the heading
     // (fed by layout() below) keeps it clear of a pinned diagram above it.
     pair.heading.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
-    setActive(inst, pair.n)
+    flash(pair.g, 'em-explorer__node--flash')
+    flash(pair.heading, 'em-explorer__section--flash')
     return
   }
 }
 
-function setActive(inst: Instance, n: number): void {
-  activeByIndex.set(inst.index, n)
-  paint(inst, n)
-}
+/**
+ * Run a one-shot highlight and clean up after itself, leaving no state behind.
+ * Re-adding the class after a forced reflow restarts the CSS animation, so
+ * clicking the same node twice flashes twice instead of doing nothing.
+ */
+function flash(el: Element, cls: string): void {
+  const pending = flashTimers.get(el)
+  if (pending !== undefined) window.clearTimeout(pending)
 
-function paint(inst: Instance, n: number): void {
-  for (const p of inst.pairs) {
-    const on = p.n === n
-    p.g.classList.toggle('em-explorer__node--active', on)
-    p.heading.classList.toggle('em-explorer__section--active', on)
-  }
+  el.classList.remove(cls)
+  el.getBoundingClientRect() // force reflow — works on SVG and HTML alike
+  el.classList.add(cls)
+
+  flashTimers.set(
+    el,
+    window.setTimeout(() => {
+      el.classList.remove(cls)
+      flashTimers.delete(el)
+    }, FLASH_MS),
+  )
 }
 
 // ─── Layout: stacked-mode sticky budget and scroll offset ────────────────────
