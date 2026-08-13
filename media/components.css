@@ -1563,11 +1563,18 @@ kbd {
   scroll-margin-top: calc(var(--em-explorer-pin-h, 0px) + var(--sp-sm));
 }
 
-/* Side-by-side: give the diagram the full display height, and keep the block
- * at least one screen tall even when the detail column is shorter. */
+/* Side-by-side: the diagram is as tall as the detail column, capped at one
+ * screen. `align-self: stretch` makes the pin take the grid row's height —
+ * which the detail column decides — and `max-height` caps it, so the result is
+ * min(detail height, 100vh) without JS measuring anything. Using `height:
+ * 100vh` here instead would leave a screen-tall diagram beside a short detail
+ * column. The row stays taller than the capped pin, which is what gives the
+ * sticky pin somewhere to travel. */
 @media (min-width: 901px) {
-  .em-explorer:not([data-pin="top"]) { min-height: 100vh; }
-  .em-explorer:not([data-pin="top"]) .em-explorer__pin { height: 100vh; }
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin {
+    align-self: stretch;
+    max-height: 100vh;
+  }
   /* Beats the inline height enhanceMermaidZoom sets on the panel. border-box
    * so the panel's 1px border fits inside the 100%, instead of overflowing and
    * eating 2px of the pin's bottom padding. */

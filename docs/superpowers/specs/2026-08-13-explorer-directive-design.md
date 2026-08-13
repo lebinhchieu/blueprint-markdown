@@ -56,7 +56,7 @@ Redis-backed. TTL is 15m, not configurable.
 | Linked node | Visibly marked, so an *unmarked* node reliably means "nothing more to read" |
 | No match | Section renders normally, node stays unmarked — fail-soft |
 | Attributes | `{pin=left}` (default), `{pin=top}`, `{width=45%}` |
-| Wide screen | Diagram gets the full display height; block is at least one screen tall |
+| Wide screen | Diagram height = `min(detail column height, 100vh)` |
 | Narrow screen | Stacks vertically, diagram sticky at top |
 | Tall diagram | Stacked and over 60% of the viewport → doesn't pin at all |
 
@@ -217,13 +217,15 @@ unclipped. Sticky is viable in all three hosts: `.output-pane` is `overflow:auto
 `pin=top` and the narrow-screen stack are the same rule.
 
 **Simplified:** one box, but three separate stacking and sizing problems live here.
-The pin needs `z-index: 1` **and an opaque background** — inline `<code>` is
-`position: relative`, and a positioned later sibling paints over a `z-index: auto` sticky
-element, which put code spans on top of the diagram in stacked mode. Above 900px the pin is
-`height: 100vh` and the block `min-height: 100vh`, so the diagram fills the screen and a short
-detail column doesn't shrink it; the inner `.mermaid` needs `height: 100% !important` to beat
-the inline height `enhanceMermaidZoom` sets. `.em-explorer--no-sticky` (added by `layout()`)
-drops the pin back to `position: static`.
+The pin needs `z-index: 1` — inline `<code>` is `position: relative`, and a positioned later
+sibling paints over a `z-index: auto` sticky element, which put code spans on top of the
+diagram in stacked mode. Above 900px the pin is `align-self: stretch` + `max-height: 100vh`,
+which yields `min(detail height, 100vh)` with no JS measuring: stretch takes the grid row's
+height (decided by the detail column) and `max-height` caps it, while the row staying taller
+than the capped pin is what gives sticky somewhere to travel. `height: 100vh` was the first
+attempt and left a screen-tall diagram beside a short detail column. The inner `.mermaid`
+needs `height: 100% !important` to beat the inline height `enhanceMermaidZoom` sets.
+`.em-explorer--no-sticky` (added by `layout()`) drops the pin back to `position: static`.
 :::
 
 ## Verified facts

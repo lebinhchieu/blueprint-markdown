@@ -364,7 +364,7 @@ neither errors.
 
 | Situation | Behaviour |
 |-----------|-----------|
-| Wide, side by side | Diagram gets the full display height; the block is at least one screen tall |
+| Wide, side by side | Diagram is as tall as the detail column, capped at one screen — a short section list gets a short diagram, not a screen-tall one |
 | Narrow, or `pin=top` | Stacks, diagram sticky at the top |
 | Stacked diagram over 60% of the viewport height | Doesn't pin at all — it would cover the text it points at |
 
