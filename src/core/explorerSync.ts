@@ -294,8 +294,9 @@ export function setupExplorers(root: HTMLElement): void {
       pairs.push({ key, g, heading })
     })
 
-    if (pairs.length === 0) return // unsupported diagram type, or no matches
-
+    // Pushed even with zero pairs (unsupported diagram type, or no {#id}
+    // matches) — layout() below still needs to measure this pin for the
+    // sticky-height cap, which has nothing to do with node/heading pairing.
     instances.push({ el, pin, detail, pairs })
   })
 
