@@ -1,0 +1,11 @@
+{
+  "name": "blueprint-markdown-skills-marketplace",
+  "owner": { "name": "Chieu Le" },
+  "plugins": [
+    {
+      "name": "blueprint-markdown-skills",
+      "source": ".",
+      "description": "blueprint-markdown and mermaid-diagrams skills"
+    }
+  ]
+}

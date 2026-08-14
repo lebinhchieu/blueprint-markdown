@@ -68,7 +68,7 @@ export function installInlineRule(
 ): void {
   md.inline.ruler.before(
     'backticks',
-    'enhanced_inline_directive',
+    'blueprint_inline_directive',
     (state: StateInline, silent: boolean): boolean => {
       const src = state.src
       const pos = state.pos

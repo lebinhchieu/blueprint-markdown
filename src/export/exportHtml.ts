@@ -2,7 +2,7 @@
  * exportHtml.ts — "Blueprint Markdown: Export to HTML" command.
  *
  * Renders the active Markdown document through the same pipeline used by the
- * preview (installEnhancedMarkdown → markdown-it → HTML), then assembles a
+ * preview (installBlueprintMarkdown → markdown-it → HTML), then assembles a
  * portable .html file that anyone can open in a browser without the extension.
  *
  * What goes into the output file:
@@ -28,7 +28,7 @@ import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
 import MarkdownIt from 'markdown-it'
-import { installEnhancedMarkdown } from '../markdownItPlugin'
+import { installBlueprintMarkdown } from '../markdownItPlugin'
 
 // Google Fonts URL covering all four families used by the extension.
 const GOOGLE_FONTS_URL =
@@ -80,7 +80,7 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
   // Create a fresh markdown-it instance and install the same plugin as the preview.
   // This re-uses: custom directive rendering, hljs fence, inline directives, and
   // the em_theme_marker core rule that injects <div class="em-theme-config" …>.
-  const md = installEnhancedMarkdown(
+  const md = installBlueprintMarkdown(
     new MarkdownIt({ html: true, linkify: true }),
   )
   const rendered = md.render(document.getText())

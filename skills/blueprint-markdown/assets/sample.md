@@ -1,4 +1,4 @@
-# Enhanced Markdown — Syntax Reference
+# Blueprint Markdown — Syntax Reference
 
 > This file is the conformance fixture for the blueprint-markdown renderer.
 > Every feature is exercised here in one readable document.
@@ -36,7 +36,7 @@ import { md } from './renderer'
 
 const html = md.render(source)
 document.getElementById('app').innerHTML = html
-document.title = 'Enhanced Markdown'
+document.title = 'Blueprint Markdown'
 var a = () => { () => {} }
 ```
 

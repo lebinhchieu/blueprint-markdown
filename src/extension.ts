@@ -13,7 +13,7 @@
 
 import * as vscode from 'vscode'
 import type MarkdownIt from 'markdown-it'
-import { installEnhancedMarkdown } from './markdownItPlugin'
+import { installBlueprintMarkdown } from './markdownItPlugin'
 import { exportToHtml } from './export/exportHtml'
 
 interface AddCommentArg {
@@ -244,7 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   return {
     extendMarkdownIt(md: MarkdownIt): MarkdownIt {
-      return installEnhancedMarkdown(md)
+      return installBlueprintMarkdown(md)
     },
   }
 }

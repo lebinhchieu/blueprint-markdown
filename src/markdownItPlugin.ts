@@ -123,7 +123,7 @@ function findBlockEnd(state: StateBlock, startLine: number): number {
 
 // ─── Public installer ─────────────────────────────────────────────────────────
 
-export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
+export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
   // Build the directive registry (same set as the web viewer).
   const registry = buildRegistry()
 

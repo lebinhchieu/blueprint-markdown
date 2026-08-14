@@ -1,4 +1,4 @@
-# Enhanced Markdown — Full Attribute Reference
+# Blueprint Markdown — Full Attribute Reference
 
 ## Table of Contents
 
