@@ -59,6 +59,7 @@ interface Controls {
   zoomOut: HTMLElement
   reset: HTMLElement
   expand?: HTMLElement
+  grow?: HTMLElement
 }
 
 /** Lets another module move a diagram without desyncing this one's transform. */
@@ -98,9 +99,10 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
   const zoomOut = makeButton('−', 'zoom-out', 'Zoom out')
   const reset = makeButton('⟳', 'reset', 'Reset view')
   const zoomIn = makeButton('+', 'zoom-in', 'Zoom in')
+  const grow = withExpand ? makeButton('⇕', 'grow', 'Grow to full height') : undefined
   const expand = withExpand ? makeButton('⤢', 'expand', 'Expand') : undefined
 
-  return { bar, zoomIn, zoomOut, reset, expand }
+  return { bar, zoomIn, zoomOut, reset, expand, grow }
 }
 
 /**
@@ -364,5 +366,18 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
       openModal(doc, svg, stage, content),
     )
     panHandles.set(el, handle)
+
+    // "Grow" is a one-way resize of the resizable panel itself (distinct from
+    // "expand", which pops a fullscreen modal): fill the browser viewport
+    // height minus top/bottom margin, refit the diagram to the new size via
+    // the existing reset button, then scroll it into view. Centering the
+    // scroll leaves ~marginY of gap on both edges since the panel height is
+    // already viewport-height minus 2*marginY.
+    controls.grow?.addEventListener('click', () => {
+      const marginY = 24 // ponytail: mirrors --sp-lg; not read from CSS to avoid a rem->px lookup for one number
+      el.style.height = `${Math.max(DEFAULT_PANEL_HEIGHT_MIN, window.innerHeight - marginY * 2)}px`
+      controls.reset.click()
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
   })
 }
