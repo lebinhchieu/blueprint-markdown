@@ -128,6 +128,28 @@ cp -r skills/blueprint-markdown .claude/skills/
 Restart Claude Code (or reload the session) after placing the skill. It will be
 picked up automatically from the `skills/` directory.
 
+### Install via Claude Code plugin marketplace
+
+This repo is also a Claude Code plugin marketplace bundling both skills
+(`blueprint-markdown` and `mermaid-diagrams`) — no cloning required:
+
+```
+/plugin marketplace add lebinhchieu/blueprint-markdown
+/plugin install blueprint-markdown-skills@blueprint-markdown-skills-marketplace
+```
+
+**Enable auto-update** so new releases show up without re-running commands:
+
+- `/plugin` → **Marketplaces** tab → select `blueprint-markdown-skills-marketplace` → toggle **Enable auto-update**.
+- Claude Code then checks for updates after each session start (up to a 10-minute delay) and updates the plugin on disk automatically.
+
+Without auto-update, upgrade manually:
+
+```
+/plugin marketplace update lebinhchieu/blueprint-markdown
+/plugin update blueprint-markdown-skills@blueprint-markdown-skills-marketplace
+```
+
 ### Skill files
 
 | File | Purpose |
