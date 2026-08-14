@@ -84,7 +84,10 @@ Machine-local overlay…
 
 ## State, Files & Next Steps
 
-**Current state:** design agreed, **no code written in this repo yet.**
+**Current state:** :white_check_mark: **SHIPPED** as of v1.2.4 (`5b70ea92`). Implemented in
+`src/core/directives/explorer.ts` + `src/core/explorerSync.ts`. The "next steps" below are
+historical — do not re-execute them. Follow-up work:
+`.claude/session-notes/2026-08-14-explorer-id-pairing.md`.
 
 **Key files (in this repo — none modified yet):**
 - `src/core/directives/index.ts` — directive registry; `explorer` gets registered here
