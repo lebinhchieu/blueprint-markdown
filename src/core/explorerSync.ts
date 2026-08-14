@@ -111,8 +111,42 @@ interface PinOverride {
  * buttons included. So only the *choice* needs to survive; buildControls()
  * below rebuilds the buttons fresh every time setupExplorers runs and
  * restores this choice onto them.
+ *
+ * This WeakMap alone only survives a doc *edit* — a webview reload (closing
+ * and reopening the VS Code preview tab, or a browser reload of the exported
+ * HTML) starts with an empty one. `loadOverride`/`saveOverride` below mirror
+ * the same choice into localStorage, keyed by the diagram's own source text
+ * (explorer.ts's `data-em-explorer-key`) so it survives that too, in both
+ * surfaces — localStorage is native to both a browser tab and a VS Code
+ * webview, no extension-side plumbing needed.
  */
 const overrides = new WeakMap<HTMLElement, PinOverride>()
+
+const STORAGE_PREFIX = 'em-explorer-pin:'
+
+/** Fails soft: a sandboxed/private-browsing context without localStorage
+ *  just falls back to the WeakMap's session-only behavior. */
+function loadOverride(key: string): PinOverride | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<PinOverride>
+    if ((parsed.pin === 'left' || parsed.pin === 'top') && typeof parsed.width === 'string') {
+      return { pin: parsed.pin, width: parsed.width }
+    }
+  } catch {
+    // ignore — malformed/inaccessible storage, same as no stored choice
+  }
+  return null
+}
+
+function saveOverride(key: string, override: PinOverride): void {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(override))
+  } catch {
+    // ignore — WeakMap still holds the choice for the rest of this session
+  }
+}
 
 const WIDTH_PRESETS: { label: string; value: string; title: string }[] = [
   { label: 'S', value: '30%', title: 'Narrow diagram (30%)' },
@@ -123,6 +157,20 @@ const WIDTH_PRESETS: { label: string; value: string; title: string }[] = [
 function applyOverride(el: HTMLElement, override: PinOverride): void {
   el.dataset.pin = override.pin
   el.style.setProperty('--em-explorer-pin-width', override.width)
+}
+
+/**
+ * Refit the pinned diagram's pan/zoom to its current box. mermaidPanZoom.ts's
+ * fitTransform() only runs once, when the panel is first wired — a width/pin
+ * change resizes the box (whether from a click or a restored override) without
+ * it, so the diagram keeps showing whatever framing fit the *previous* size.
+ * Reading el.clientWidth inside reset() forces the layout flush that makes
+ * the just-applied CSS change visible, so this is safe to call synchronously
+ * right after applyOverride().
+ */
+function refitPin(pin: HTMLElement): void {
+  const panel = pin.querySelector<HTMLElement>('.mermaid')
+  if (panel) getMermaidPanHandle(panel)?.reset()
 }
 
 /**
@@ -167,9 +215,12 @@ function buildExplorerControls(el: HTMLElement, pin: HTMLElement): void {
     overrides.set(el, next)
     applyOverride(el, next)
     refresh()
+    refitPin(pin)
     // The grid change resizes the pin box, which the ResizeObserver would
     // eventually catch too — scheduling directly avoids waiting a frame.
     scheduleLayout()
+    const key = el.dataset['emExplorerKey']
+    if (key) saveOverride(key, next)
   }
 
   pinBtn.addEventListener('click', () => {
@@ -203,9 +254,19 @@ export function setupExplorers(root: HTMLElement): void {
     if (!pin || !detail) return
 
     // Restore a reader's pin/width choice before anything below measures the
-    // pin's box, and before the pin/width buttons are rebuilt onto it.
-    const override = overrides.get(el)
-    if (override) applyOverride(el, override)
+    // pin's box, and before the pin/width buttons are rebuilt onto it. The
+    // WeakMap (this session's edits) wins over localStorage (a past session)
+    // when both exist.
+    const key = el.dataset['emExplorerKey']
+    const override = overrides.get(el) ?? (key ? loadOverride(key) ?? undefined : undefined)
+    if (override) {
+      overrides.set(el, override)
+      applyOverride(el, override)
+      // enhanceMermaidZoom (previewRuntime's renderMermaid, run just before
+      // this) already fit the diagram to the pre-restore size — refit now
+      // that the override's width/pin has actually changed the box.
+      refitPin(pin)
+    }
     buildExplorerControls(el, pin)
 
     // Detail headings are direct children: privateMd.render() emits them at

@@ -129,6 +129,21 @@ export function extractHeadingKeys(html: string): string {
   })
 }
 
+/**
+ * A short, stable id for the pinned diagram's own source text, so the reader's
+ * width/pin choice (explorerSync.ts) can be looked up from localStorage across
+ * webview reloads — position-in-document isn't stable enough (editing an
+ * earlier block shifts every explorer after it), but the diagram's own text
+ * is. djb2: collisions are harmless here (worst case, two diagrams share a
+ * width/pin default), so no need for anything cryptographic.
+ */
+function pinKey(pin: ASTNode[]): string {
+  const text = pin.map(n => (n.type === 'text' ? n.lines.join('\n') : '')).join('\n')
+  let h = 5381
+  for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0
+  return h.toString(36)
+}
+
 export const explorerDirectives: Record<string, DirectiveSpec> = {
   explorer: {
     forms: ['container'],
@@ -145,7 +160,7 @@ export const explorerDirectives: Record<string, DirectiveSpec> = {
       const detailHtml = extractHeadingKeys(ctx.renderChildren({ ...node, children: detail }))
 
       return (
-        `<div class="em-explorer" data-pin="${pinSide}" style="--em-explorer-pin-width:${width}">` +
+        `<div class="em-explorer" data-pin="${pinSide}" data-em-explorer-key="${pinKey(pin)}" style="--em-explorer-pin-width:${width}">` +
         `<div class="em-explorer__pin">${pinHtml}</div>` +
         `<div class="em-explorer__detail">${detailHtml}</div>` +
         `</div>`

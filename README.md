@@ -140,8 +140,9 @@ This repo is also a Claude Code plugin marketplace bundling both skills
 
 **Enable auto-update** so new releases show up without re-running commands:
 
-- `/plugin` → **Marketplaces** tab → select `blueprint-markdown-skills-marketplace` → toggle **Enable auto-update**.
-- Claude Code then checks for updates after each session start (up to a 10-minute delay) and updates the plugin on disk automatically.
+- `/plugin` → **Marketplaces** tab → select `blueprint-markdown-skills-marketplace` from the list to open its detail view → **Enable auto-update**.
+- Claude Code then checks for updates after each session start (up to a 10-minute delay) and updates the plugin on disk automatically. You'll see a prompt to run `/reload-plugins` once it does.
+- No CLI flag for this — it's only in the interactive `/plugin` panel, not `claude plugin marketplace update`.
 
 Without auto-update, upgrade manually:
 

@@ -60,12 +60,17 @@ interface Controls {
   reset: HTMLElement
   expand?: HTMLElement
   grow?: HTMLElement
+  help: HTMLElement
 }
 
 /** Lets another module move a diagram without desyncing this one's transform. */
 export interface MermaidPanHandle {
   /** Shift the view by a screen-pixel delta. */
   panBy: (dx: number, dy: number) => void
+  /** Refit to the viewport's current size — call after anything resizes the
+   *  viewport out from under the cached transform (e.g. explorerSync.ts's
+   *  width/pin toggle), since fitTransform() otherwise only runs once, at wiring time. */
+  reset: () => void
 }
 
 /**
@@ -99,10 +104,23 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
   const zoomOut = makeButton('−', 'zoom-out', 'Zoom out')
   const reset = makeButton('⟳', 'reset', 'Reset view')
   const zoomIn = makeButton('+', 'zoom-in', 'Zoom in')
-  const grow = withExpand ? makeButton('⇕', 'grow', 'Grow to full height') : undefined
+  const grow = withExpand ? makeButton('⇕', 'grow', 'Grow to full height (f)') : undefined
   const expand = withExpand ? makeButton('⤢', 'expand', 'Expand') : undefined
+  // ponytail: guide is a native title tooltip (hover), same mechanism every
+  // other button already uses — no popover component needed for one block of text.
+  const help = makeButton(
+    '?',
+    'help',
+    [
+      withExpand ? 'Scroll: zoom (click diagram first to enable)' : 'Scroll: zoom',
+      'Right-drag: pan',
+      'Double right-click: reset view',
+      'Esc to disable (to scroll page instead of zooming)',
+      'F: grow to full height (after clicking diagram to activate it)',
+    ].join('\n'),
+  )
 
-  return { bar, zoomIn, zoomOut, reset, expand, grow }
+  return { bar, zoomIn, zoomOut, reset, expand, grow, help }
 }
 
 /**
@@ -252,6 +270,7 @@ function wireViewport(
       t.y += dy
       applyTransform(stage, t)
     },
+    reset,
   }
 }
 
@@ -373,11 +392,18 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
     // the existing reset button, then scroll it into view. Centering the
     // scroll leaves ~marginY of gap on both edges since the panel height is
     // already viewport-height minus 2*marginY.
-    controls.grow?.addEventListener('click', () => {
+    const grow = () => {
       const marginY = 24 // ponytail: mirrors --sp-lg; not read from CSS to avoid a rem->px lookup for one number
       el.style.height = `${Math.max(DEFAULT_PANEL_HEIGHT_MIN, window.innerHeight - marginY * 2)}px`
       controls.reset.click()
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+    controls.grow?.addEventListener('click', grow)
+    // "f" shortcut fires only for the diagram the user has clicked into scroll-zoom
+    // activation on (em-mermaid__viewport--active, toggled by setActive in wireViewport) —
+    // reuses that existing gate instead of adding separate focus/hover tracking.
+    doc.addEventListener('keydown', e => {
+      if (e.key.toLowerCase() === 'f' && viewport.classList.contains('em-mermaid__viewport--active')) grow()
     })
   })
 }
