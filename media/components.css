@@ -1600,11 +1600,15 @@ kbd {
   }
 }
 
-/* pin=top and the narrow-screen stack are the same single-column rule. */
-.em-explorer[data-pin="top"] { grid-template-columns: 1fr; }
+/* pin=top and the narrow-screen stack are the same single-column rule.
+ * minmax(0, 1fr), not a bare 1fr, for the same reason as the two-column rule
+ * above: a bare 1fr's auto minimum resolves to min-content, so a long
+ * unwrappable code line in the detail column pushes the single track past the
+ * viewport and scrolls the whole page sideways instead of just the code block. */
+.em-explorer[data-pin="top"] { grid-template-columns: minmax(0, 1fr); }
 
 @media (max-width: 900px) {
-  .em-explorer { grid-template-columns: 1fr; }
+  .em-explorer { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* A stacked diagram taller than 60% of the viewport would cover the text it

@@ -221,7 +221,12 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
   md.renderer.rules['em_directive'] = (tokens: Token[], idx: number): string => {
     const token = tokens[idx]
     const ast = parseBlocks(token.content)
-    const html = renderTree(ast)
+    let html = renderTree(ast)
+    // Stamp id/data-em-toc-id onto directive-internal headings the em_toc rule
+    // found ahead of time (see tocHeadings below) — this html is otherwise the
+    // only place those headings exist as real tags.
+    const tocHeadings = (token.meta as { tocHeadings?: TocHeadingStamp[] } | null)?.tocHeadings
+    if (tocHeadings?.length) html = stampTocHeadings(html, tocHeadings)
     return token.map
       ? `<div class="code-line" data-line="${token.map[0]}">${html}</div>\n`
       : html
@@ -277,6 +282,30 @@ export function installEnhancedMarkdown(md: MarkdownIt): MarkdownIt {
 
     for (let i = 0; i < state.tokens.length; i++) {
       const tok = state.tokens[i]
+
+      // Directive-internal headings (e.g. ### Auth Service {#auth} inside an
+      // :::explorer detail pane) never reach this loop as heading_open tokens —
+      // the whole directive body is one opaque em_directive token whose content
+      // is only parsed/rendered later, by a private md instance, inside the
+      // renderer rule below. Scan the raw content directly so they still make
+      // the rail; the assigned ids are handed back via token.meta so the
+      // renderer can stamp the same ids onto the actual <h#> tags it produces.
+      if (tok.type === 'em_directive') {
+        const found = collectDirectiveHeadings(tok.content).filter((h) => HEADING_TAGS.has(`h${h.level}`))
+        if (found.length === 0) continue
+        const stamps: TocHeadingStamp[] = []
+        for (const h of found) {
+          const base = h.explicitId ?? slugify(h.text) ?? `section-${entries.length + 1}`
+          const count = (slugCount.get(base) ?? 0) + 1
+          slugCount.set(base, count)
+          const id = count === 1 ? base : `${base}-${count}`
+          stamps.push({ id, idx: entries.length, level: h.level })
+          entries.push({ level: h.level, id, text: h.text })
+        }
+        tok.meta = { tocHeadings: stamps }
+        continue
+      }
+
       if (tok.type !== 'heading_open' || !HEADING_TAGS.has(tok.tag)) continue
 
       // The inline token immediately follows the heading_open token.
@@ -353,6 +382,75 @@ function slugify(text: string): string {
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s_-]/gu, '')
     .replace(/\s/g, '-')
+}
+
+/** One directive-internal heading whose id em_toc already assigned, keyed by
+ *  the order it will appear in the em_directive token's rendered html. */
+type TocHeadingStamp = { id: string; idx: number; level: number }
+
+/** A `{#id}` at the very end of a heading's text — mirrors explorer.ts's
+ *  RE_TRAILING_ANCHOR (`### Auth Service {#auth}`), duplicated rather than
+ *  imported since this file already mirrors parser.ts's regexes locally. */
+const RE_TRAILING_ANCHOR = /^([\s\S]*?)\s*\{#([A-Za-z][\w-]*)\}\s*$/
+
+/**
+ * Scan a directive's raw (unparsed) content for ATX headings (`### Text`),
+ * skipping fenced code regions so a code sample showing directive syntax
+ * never counts. `:::name` / `::name` lines don't interfere — heading
+ * detection is a plain per-line regex, so nested containers need no special
+ * handling; their heading lines are just more lines in this same content.
+ */
+function collectDirectiveHeadings(
+  content: string,
+): { level: number; text: string; explicitId?: string }[] {
+  const results: { level: number; text: string; explicitId?: string }[] = []
+  let inFence = false
+  let fenceChar = ''
+  let fenceLen = 0
+
+  for (const line of content.split('\n')) {
+    const fenceMatch = line.match(/^(\s*)(```+|~~~+)/)
+    if (!inFence && fenceMatch) {
+      inFence = true
+      fenceChar = fenceMatch[2][0]
+      fenceLen = fenceMatch[2].length
+      continue
+    }
+    if (inFence) {
+      if (fenceMatch && fenceMatch[2][0] === fenceChar && fenceMatch[2].length >= fenceLen) inFence = false
+      continue
+    }
+
+    const headingMatch = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/)
+    if (!headingMatch) continue
+
+    const level = headingMatch[1].length
+    const raw = headingMatch[2].trim()
+    const anchor = raw.match(RE_TRAILING_ANCHOR)
+    results.push(
+      anchor
+        ? { level, text: anchor[1].trim(), explicitId: anchor[2] }
+        : { level, text: raw },
+    )
+  }
+
+  return results
+}
+
+/**
+ * Stamp `id`/`data-em-toc-id` onto the `<h#>` tags produced for a directive's
+ * headings, in the order em_toc already assigned them. Matched by level, not
+ * position: a tag's own level tells us whether it's one em_toc counted (e.g.
+ * h4-h6 are skipped when blueprintMarkdown.toc is 'h3') without needing the
+ * heading-depth setting here too.
+ */
+function stampTocHeadings(html: string, stamps: TocHeadingStamp[]): string {
+  let next = 0
+  return html.replace(/<h([1-6])([^>]*)>/g, (whole, levelStr: string, attrs: string) => {
+    if (next >= stamps.length || stamps[next].level !== parseInt(levelStr, 10)) return whole
+    const { id, idx } = stamps[next++]
+    return `<h${levelStr}${attrs} id="${id}" data-em-toc-id="${idx}">`
+  })
 }
 
 /** Escape HTML special characters for safe attribute/text insertion. */

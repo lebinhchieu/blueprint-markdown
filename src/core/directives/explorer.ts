@@ -109,12 +109,11 @@ const RE_TRAILING_ANCHOR = /^([\s\S]*?)\s*\{#([A-Za-z][\w-]*)\}\s*$/
  * Move a heading's trailing `{#id}` into `data-em-key` and drop it from the
  * visible text.
  *
- * Nothing else in the pipeline reads this anchor: markdown-it-attrs is
- * deliberately not installed (it would double-parse our directive `{}` attrs),
- * and the em_toc rule only ever sees top-level headings — directive-internal
- * ones are rendered by the private markdown-it instance and never enter the
- * outer token stream. Without this pass the braces simply render as literal
- * text in the heading.
+ * markdown-it-attrs is deliberately not installed (it would double-parse our
+ * directive `{}` attrs), so without this pass the braces would simply render
+ * as literal text in the heading. The em_toc rule (markdownItPlugin.ts) reads
+ * this same `{#id}` convention separately, from the raw directive content
+ * before it's rendered, to give directive-internal headings a ToC entry.
  *
  * Operating on our own just-generated HTML rather than the markdown source
  * keeps the id off the `renderChildren` path, so no other directive is

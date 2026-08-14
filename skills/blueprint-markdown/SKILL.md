@@ -230,6 +230,8 @@ which must be the **last** thing in the heading and is stripped from the rendere
 Subgraphs pair the same way.
 
 ````
+## Login flow
+
 :::explorer
 ```mermaid
 graph TD

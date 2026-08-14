@@ -20,8 +20,9 @@ let wired = false
 
 /**
  * Heading elements in index order (by data-em-toc-id value).
- * Only includes headings stamped by our core rule — excludes directive-internal
- * headings so the array stays 1:1 with tocItems.
+ * Includes directive-internal headings (e.g. an :::explorer detail pane's
+ * `### … {#id}`) — the em_directive renderer stamps data-em-toc-id onto them
+ * too, so this stays 1:1 with tocItems regardless of where a heading lives.
  */
 let headings: HTMLElement[] = []
 

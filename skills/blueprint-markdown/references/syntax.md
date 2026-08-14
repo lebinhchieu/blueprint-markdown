@@ -317,6 +317,8 @@ box's section, so you read the detail without losing sight of the picture.
 > structure below is a convention to copy.
 
 ````
+## Login flow
+
 :::explorer
 ```mermaid
 graph TD
@@ -358,6 +360,11 @@ Body for this node.
 **Splitting** — the **first** `mermaid` fence pins; everything after it becomes the detail
 pane, including nested directives such as the closing `Not shown` callout. Later mermaid
 fences are ordinary diagrams inside the detail pane.
+
+**Titling** — the block has no title of its own. Put a heading immediately *before* it, one
+level above the section headings inside (`##` outside, `###` inside), so the sections nest
+under it in the reading rail and multiple blocks in one file stay distinguishable. A heading
+placed *inside* the block lands in the detail column and labels only half the view.
 
 **Content** — the detail pane is a full document, not captions. Tables, code fences, nested
 directives, sub-headings (`####` and deeper), lists and images all work under a section
