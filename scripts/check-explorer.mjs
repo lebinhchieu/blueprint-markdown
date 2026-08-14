@@ -158,7 +158,7 @@ await esbuild.build({
   outfile: tmpSync,
   logLevel: 'silent',
 })
-const { RE_NODE_ID, RE_CLUSTER_ID, lookupHeading } = createRequire(import.meta.url)(tmpSync)
+const { RE_NODE_ID, RE_CLUSTER_ID } = createRequire(import.meta.url)(tmpSync)
 try { fs.unlinkSync(tmpSync) } catch {}
 
 const nodeKey = id => { const m = id.match(RE_NODE_ID); return m ? m[1] : null }
@@ -169,7 +169,8 @@ assert.equal(nodeKey('mermaid-1786681998933-flowchart-auth-0'), 'auth')   // gra
 assert.equal(nodeKey('mermaid-1786630164967-state-auth-0'), 'auth')       // stateDiagram-v2
 assert.equal(nodeKey('mermaid-1786630165035-classId-auth-1'), 'auth')     // classDiagram
 
-// House-style numeric ids still resolve, and N1 must not swallow N10.
+// An id is an arbitrary string — `N1` is nothing special, just an id, and
+// must not be confused with `N10`.
 assert.equal(nodeKey('mermaid-1786602232448-flowchart-N1-0'), 'N1')
 assert.equal(nodeKey('mermaid-1-flowchart-N10-2'), 'N10')
 
@@ -194,23 +195,4 @@ assert.equal(nodeKey('mermaid-1786630165204-task0'), null)   // journey
 // Edge ids embed node names — they must never be mistaken for nodes.
 assert.equal(nodeKey('mermaid-1786602232448-L_N1_N2_0'), null)
 
-// ── lookupHeading — id first, section number as fallback ─────────────────────
-{
-  const byKey = new Map([['auth', 'H_auth'], ['3', 'H_three'], ['N4', 'H_literalN4']])
-
-  // Explicit {#id} anchor wins.
-  assert.equal(lookupHeading(byKey, 'auth'), 'H_auth')
-
-  // House style: node `N3` finds `### 3. …` even though no heading says "N3".
-  // This is what keeps every pre-existing document working untouched.
-  assert.equal(lookupHeading(byKey, 'N3'), 'H_three')
-
-  // An exact key beats the numeric fallback.
-  assert.equal(lookupHeading(byKey, 'N4'), 'H_literalN4')
-
-  // Fail-soft both ways: unknown id, and a number nobody declared.
-  assert.equal(lookupHeading(byKey, 'nope'), undefined)
-  assert.equal(lookupHeading(byKey, 'N9'), undefined)
-}
-
-console.log('✓ pairing keys: 19 checks passed')
+console.log('✓ pairing keys: 14 checks passed')

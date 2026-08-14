@@ -1,12 +1,15 @@
 /**
  * explorerSync.ts — client-side node↔section linking for :::explorer.
  *
- * Pairs each mermaid node or subgraph with a detail heading — by the author's
- * own id when the heading declares one (`### AuthService {#auth}` ↔ `auth[…]`),
- * otherwise by leading section number (`### 3. Cache` ↔ `N3[…]`). Marks the
- * linked elements and scrolls to a section when one is clicked. Called from
+ * Pairs each mermaid node or subgraph with the detail heading that declares its
+ * id: `### AuthService {#auth}` ↔ `auth["AuthService"]`. Marks the linked
+ * elements and scrolls to a section when one is clicked. Called from
  * previewRuntime.runShared AFTER renderMermaid resolves — there is no SVG to
  * match against before that.
+ *
+ * The `{#id}` anchor is the only pairing rule. An earlier version also matched
+ * a leading section number (`### 3. Cache` ↔ `N3[…]`); that was removed so the
+ * pairing key is never entangled with the reader-visible label.
  *
  * Clicking is a *transient* action: scroll to the section, flash both ends of
  * the pair, then everything returns to normal. There is no persistent selected
@@ -36,12 +39,11 @@ import { getMermaidPanHandle } from './mermaidPanZoom'
  * `flowchart-step-2-0` yields `step-2`, not `step`.
  *
  * `erDiagram` also emits `entity-…`, but is deliberately excluded: mermaid
- * 11.15 rejects entity aliases (`N1["1. Name"]` is a parse error), so the box
- * would be labelled with the raw id and the reader would never see the name
- * the pairing is built on. Every other type (sequenceDiagram, C4Context,
- * timeline, journey, gitGraph, mermaid's own mindmap) drops the author's id
- * entirely and numbers its elements positionally, which would silently
- * mispair the moment anything is reordered.
+ * 11.15 rejects entity aliases (`auth["Auth"]` is a parse error), so the box
+ * could only ever be labelled with the raw id. Every other type
+ * (sequenceDiagram, C4Context, timeline, journey, gitGraph, mermaid's own
+ * mindmap) drops the author's id entirely and numbers its elements
+ * positionally, which would silently mispair the moment anything is reordered.
  */
 export const RE_NODE_ID = /(?:flowchart|state|classId)-(.+)-\d+$/
 
@@ -52,12 +54,6 @@ export const RE_NODE_ID = /(?:flowchart|state|classId)-(.+)-\d+$/
  * `subgraph boot[...]` renders as `mermaid-1786681998933-boot`.
  */
 export const RE_CLUSTER_ID = /^mermaid-\d+-(.+)$/
-
-/** Fallback pairing: a heading whose text starts `3.` keys on `"3"`. */
-const RE_HEADING_NUM = /^\s*(\d+)\s*\./
-
-/** A node id of the house-style `N3` form, so it can also match heading `3.`. */
-const RE_NUMBERED_ID = /^N(\d+)$/
 
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
@@ -127,7 +123,7 @@ export function setupExplorers(root: HTMLElement): void {
     pin.querySelectorAll<SVGGElement>('g.node, g.cluster').forEach(g => {
       const key = elementKey(g)
       if (key === null) return
-      const heading = lookupHeading(byKey, key)
+      const heading = byKey.get(key)
       if (!heading) return // fail-soft: node with no section stays unmarked
       markLinked(g)
       heading.classList.add('em-explorer__section--linked')
@@ -152,16 +148,14 @@ export function setupExplorers(root: HTMLElement): void {
 // ─── Keys ─────────────────────────────────────────────────────────────────────
 
 /**
- * A heading's pairing key: an explicit `{#id}` anchor if the author wrote one,
- * otherwise the leading section number. `data-em-key` is stamped server-side by
- * explorer.ts — a `data-` attribute rather than a real DOM `id`, so an anchor
- * here can never collide with the slugs em_toc allocates to top-level headings.
+ * A heading's pairing key: the `{#id}` anchor, or null when it declares none.
+ *
+ * `data-em-key` is stamped server-side by explorer.ts — a `data-` attribute
+ * rather than a real DOM `id`, so an anchor here can never collide with the
+ * slugs em_toc allocates to top-level headings.
  */
 function headingKey(h: HTMLElement): string | null {
-  const explicit = h.dataset['emKey']
-  if (explicit) return explicit
-  const m = (h.textContent ?? '').match(RE_HEADING_NUM)
-  return m ? m[1] : null
+  return h.dataset['emKey'] ?? null
 }
 
 /** The author's id for a diagram node or subgraph, or null if it has none. */
@@ -169,20 +163,6 @@ function elementKey(g: SVGGElement): string | null {
   const isCluster = g.classList.contains('cluster')
   const m = g.id.match(isCluster ? RE_CLUSTER_ID : RE_NODE_ID)
   return m ? m[1] : null
-}
-
-/**
- * Match a diagram element to a heading, id first and number second.
- *
- * The fallback is what keeps every existing document working untouched: a
- * house-style `N3` node carries the key `"N3"`, which no heading declares, so
- * it retries as `"3"` and pairs with `### 3. Cache` exactly as before.
- */
-export function lookupHeading<T>(byKey: Map<string, T>, key: string): T | undefined {
-  const direct = byKey.get(key)
-  if (direct !== undefined) return direct
-  const numbered = key.match(RE_NUMBERED_ID)
-  return numbered ? byKey.get(numbered[1]) : undefined
 }
 
 // ─── Linked affordance ────────────────────────────────────────────────────────

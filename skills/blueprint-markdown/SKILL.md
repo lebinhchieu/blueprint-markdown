@@ -88,10 +88,10 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
-| `:::explorer` pairs by number **or** by `{#id}` | `N3["3. Cache"]` + `### 3. Cache`, or `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — id declared on the node but not the heading (box goes dead, no error) |
+| `:::explorer` pairs **only** by `{#id}` | `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — no anchor, so the box goes dead with no error |
 | `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
-| `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `N1 : 1. Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
-| `:::explorer` section headings must be top-level in the block | `### 3. Cache` | `### 3. Cache` wrapped in a nested `:::card` (drops out of the pairing) |
+| `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `idle : Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
+| `:::explorer` section headings must be top-level in the block | `### Cache {#cache}` | the same heading wrapped in a nested `:::card` (drops out of the pairing) |
 
 Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
 of the document.
@@ -225,55 +225,44 @@ renders unmarked, so an *unmarked* box means "nothing more to read". Links
 `graph`/`flowchart`, `stateDiagram-v2` and `classDiagram`; other types render pinned but never
 link.
 
-Pair a box to a heading either way:
+**Pairing — one rule.** A heading declares the mermaid node's own id with a `{#id}` anchor,
+which must be the **last** thing in the heading and is stripped from the rendered output.
+Subgraphs pair the same way.
 
-- **By number** (default) — mermaid id `N<k>` ↔ heading text starting `<k>.`, e.g.
-  `N3["3. Cache"]` ↔ `### 3. Cache`.
-- **By id** — heading anchor `{#id}` ↔ the mermaid node's own id, e.g. `auth["AuthService"]` ↔
-  `### AuthService {#auth}`. The anchor is stripped from the rendered heading. **Subgraphs can
-  only be paired this way** — `subgraph boot[…]` ↔ `### Config resolution {#boot}`.
 ````
 :::explorer
 ```mermaid
 graph TD
-  N1["1. AuthService ⚠"] --> N2["2. TokenStore"]
-  style N1 stroke-dasharray: 6 4
+  subgraph boot["Startup"]
+    auth["AuthService"] --> store["TokenStore"]
+  end
+  store --> cache["Cache"]
 ```
 
-### 1. AuthService — `src/auth/service.ts:44`
+### Startup {#boot}
+Body for the subgraph.
 
-Validates credentials and issues a 15-minute JWT. Three callers: the login route, the
-refresh worker, and `LegacyAuthAdapter`.
+### AuthService {#auth}
+Body for this node — any markdown: tables, code fences, nested directives, sub-headings.
 
-| Path | Rate limited | Notes |
-|------|--------------|-------|
-| `POST /login` | 5/min | |
-| `POST /refresh` | **no** | known gap |
+### TokenStore {#store}
+Body for this node.
 
-```ts
-if (req.grantType === 'refresh') return this.issue(user)  // skips the limiter
-```
-
-:::danger{title="Gotcha"}
-The refresh path bypasses rate limiting entirely.
-:::
-
-**Simplified:** one box, but refresh and revoke are separate flows.
-
-### 2. TokenStore — `src/auth/store.ts:12`
-Redis-backed. TTL is 15m, not configurable.
-
-:::warning{title="Not shown" icon=visibility_off}
-- Retry / backoff on token refresh
-:::
+### Cache {#cache}
+Body for this node.
 :::
 ````
+
 `{pin=left}` (default) or `{pin=top}`; `{width=45%}` sets the diagram column.
 
 **The detail pane is a full document.** Tables, code fences, nested callouts, sub-headings and
-images all work under a numbered heading — write sections as long as the subject needs. The one
-rule: the numbered headings themselves must be top-level inside the block, so never wrap one in
+images all work under a section heading — write sections as long as the subject needs. The one
+rule: the anchored headings themselves must be top-level inside the block, so never wrap one in
 a `:::card` or other directive — it drops out of the pairing.
+
+> **The examples above show syntax, not house style.** What goes in a heading and how a section
+> is written are the author's call — the examples are deliberately minimal so nothing about
+> their wording, ordering, or the kind of detail they include should be copied as a convention.
 
 ### Leaf blocks (::)
 

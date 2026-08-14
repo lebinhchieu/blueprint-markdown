@@ -312,40 +312,41 @@ Offload static assets. Shares invalidation logic with [[redis]].
 Pins a mermaid diagram beside its per-node detail sections. Clicking a box scrolls to that
 box's section, so you read the detail without losing sight of the picture.
 
+> **These examples demonstrate syntax only.** What a heading says, how long a section runs,
+> and what kind of detail it carries are the author's decisions. Nothing about the wording or
+> structure below is a convention to copy.
+
 ````
 :::explorer
 ```mermaid
 graph TD
-  N1["1. AuthService ⚠"] --> N2["2. TokenStore"]
-  style N1 stroke-dasharray: 6 4
+  subgraph boot["Startup"]
+    auth["AuthService"] --> store["TokenStore"]
+  end
+  store --> cache["Cache"]
+  style auth stroke-dasharray: 6 4
 ```
 
-### 1. AuthService — `src/auth/service.ts:44`
+### Startup {#boot}
+Body for the subgraph.
 
-Validates credentials and issues a 15-minute JWT. Three callers: the login route, the
-refresh worker, and `LegacyAuthAdapter`.
+### AuthService {#auth}
+Body for this node. Any markdown works here — paragraphs, tables, code fences, lists,
+sub-headings, nested directives:
 
-| Path | Rate limited | Notes |
-|------|--------------|-------|
-| `POST /login` | 5/min | |
-| `POST /refresh` | **no** | known gap |
+| Column | Column |
+|--------|--------|
+| value  | value  |
 
-```ts
-if (req.grantType === 'refresh') return this.issue(user)  // skips the limiter
-```
-
-:::danger{title="Gotcha"}
-The refresh path bypasses rate limiting entirely.
+:::warning{title="A nested directive"}
+Works inside a section.
 :::
 
-**Simplified:** one box, but refresh and revoke are separate flows.
+### TokenStore {#store}
+Body for this node.
 
-### 2. TokenStore — `src/auth/store.ts:12`
-Redis-backed. TTL is 15m, not configurable.
-
-:::warning{title="Not shown" icon=visibility_off}
-- Retry / backoff on token refresh
-:::
+### Cache {#cache}
+Body for this node.
 :::
 ````
 
@@ -359,47 +360,31 @@ pane, including nested directives such as the closing `Not shown` callout. Later
 fences are ordinary diagrams inside the detail pane.
 
 **Content** — the detail pane is a full document, not captions. Tables, code fences, nested
-directives, sub-headings (`####` and deeper), lists and images all work under a numbered
-heading; write each section as long as the subject needs. The only restriction is on the
-numbered headings themselves — see *Pairing* below.
+directives, sub-headings (`####` and deeper), lists and images all work under a section
+heading; write each section as long as the subject needs, in whatever style suits it. The only
+restriction is on the section headings themselves — see *Pairing* below.
 
-**Pairing** — two ways, and a diagram can mix them freely.
-
-*By number (default, house style).* Mermaid node id `N<k>` ↔ the detail heading whose text
-starts `<k>.`. Both halves are required: `N3["3. Cache"]` pairs with `### 3. Cache`. The number
-in the label is what the reader sees; the `N<k>` id is what does the linking.
-
-*By id.* Give the heading a `{#id}` anchor matching the mermaid node's own id. The anchor is
-stripped from the rendered heading — it never shows to the reader.
-
-````
-:::explorer
-```mermaid
-graph TD
-  subgraph boot["Config resolution"]
-    auth["AuthService"] --> store["TokenStore"]
-  end
-```
-
-### AuthService {#auth}
-### TokenStore {#store}
-### Config resolution {#boot}
-:::
-````
-
-Use ids when serial order carries no meaning, when a box's label shouldn't have to start with
-a number, or when renumbering would be painful — inserting a node between 2 and 3 otherwise
-means editing the id, the label and the heading for every later node, and every miss fails
-silently. **Subgraphs are targets only through an id** (`{#boot}` above); they have no number.
-
-Per supported diagram type the id goes in a different place. With number pairing the label
-must also carry the number:
+**Pairing** — one rule: the heading carries a `{#id}` anchor naming the mermaid node's own id.
 
 ```
-graph TD              N1["1. AuthService"]   or   auth["AuthService"]
-stateDiagram-v2       N1 : 1. AuthService    or   auth : AuthService
-classDiagram          class N1["1. AuthService"]
+graph TD              auth["AuthService"]     ↔   ### AuthService {#auth}
+stateDiagram-v2       auth : AuthService      ↔   ### AuthService {#auth}
+classDiagram          class auth["Auth"]      ↔   ### Auth {#auth}
+subgraph              subgraph boot["Boot"]   ↔   ### Boot {#boot}
 ```
+
+The anchor is stripped from the rendered heading — it never shows to the reader — which is
+what lets the box label and the heading text say whatever reads best, independently of the
+key that links them. Subgraphs pair exactly like nodes.
+
+Three ways this fails silently, all of them fail-soft — nothing errors, the box simply goes
+dead:
+
+| Mistake | Result |
+|---------|--------|
+| Heading has no `{#id}` | Its box is never linked and stays unmarked |
+| `{#id}` doesn't match any node id | Nothing pairs |
+| `{#id}` isn't the **last** thing in the heading | Treated as ordinary text and rendered literally |
 
 **Linked nodes are marked** with a dot, so an *unmarked* box reliably means "nothing more to
 read". A node with no matching heading, or a heading with no matching node, renders normally —
@@ -420,11 +405,11 @@ neither errors.
 
   | Type | Why not |
   |------|---------|
-  | `erDiagram` | Nodes *are* addressable, but mermaid 11.15 rejects entity aliases — `N1["1. Name"]` is a parse error — so the box would read `N1` and the reader would never see the number the pairing is built on |
+  | `erDiagram` | Entities *are* addressable, but mermaid 11.15 rejects aliases — `auth["Auth"]` is a parse error — so the box could only ever be labelled with the raw id |
   | `sequenceDiagram`, `C4Context`, `timeline`, `journey`, `gitGraph`, mermaid's own `mindmap` | The author's id never reaches the rendered SVG. Elements are numbered positionally (`actor0`, `node-0`, `task0`), so any matching would silently point at the wrong section as soon as the diagram is reordered |
 
-  Declaring `N<k>` in an unsupported type is harmless — the diagram pins and the sections
-  read normally, they just aren't clickable.
+  Writing `{#id}` anchors in an unsupported type is harmless — the diagram pins and the
+  sections read normally, they just aren't clickable.
 - **Section headings must be top-level inside the block.** A heading wrapped in a nested
   directive stops being a link target, silently.
 - **Node fill and border can't be restyled by the renderer.** `classDef` and `style` are
