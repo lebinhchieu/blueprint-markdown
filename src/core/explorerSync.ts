@@ -260,12 +260,10 @@ function revealNode(inst: Instance, g: SVGGElement): void {
 
   const vb = viewport.getBoundingClientRect()
   const nb = g.getBoundingClientRect()
-  const margin = 12
-  const inside =
-    nb.left >= vb.left + margin &&
-    nb.right <= vb.right - margin &&
-    nb.top >= vb.top + margin &&
-    nb.bottom <= vb.bottom - margin
+  // No margin: at the fit transform, an edge node sits flush with the
+  // viewport border (that's what "fit" means), so requiring breathing room
+  // here rejected an already-visible node as "outside" and panned anyway.
+  const inside = nb.left >= vb.left && nb.right <= vb.right && nb.top >= vb.top && nb.bottom <= vb.bottom
   if (inside) return
 
   getMermaidPanHandle(panel)?.panBy(
