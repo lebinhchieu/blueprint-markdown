@@ -93,6 +93,103 @@ let pinObserver: ResizeObserver | null = null
  *  previous click's cleanup. */
 const flashTimers = new WeakMap<Element, number>()
 
+// ─── Reader-time pin/width controls ───────────────────────────────────────────
+
+type PinSide = 'left' | 'top'
+
+interface PinOverride {
+  pin: PinSide
+  width: string
+}
+
+/**
+ * A reader's pin/width choice, keyed by the `.em-explorer` element — mirrors
+ * mermaidPanZoom.ts's `panHandles` WeakMap. The element itself survives
+ * morphdom across an unrelated doc edit (the directive's server output is
+ * unchanged), but the toolbar button DOM does not: enhanceMermaidZoom tears
+ * down and rebuilds the whole mermaid panel on every render pass, explorer
+ * buttons included. So only the *choice* needs to survive; buildControls()
+ * below rebuilds the buttons fresh every time setupExplorers runs and
+ * restores this choice onto them.
+ */
+const overrides = new WeakMap<HTMLElement, PinOverride>()
+
+const WIDTH_PRESETS: { label: string; value: string; title: string }[] = [
+  { label: 'S', value: '30%', title: 'Narrow diagram (30%)' },
+  { label: 'M', value: '45%', title: 'Balanced (45%)' },
+  { label: 'L', value: '60%', title: 'Wide diagram (60%)' },
+]
+
+function applyOverride(el: HTMLElement, override: PinOverride): void {
+  el.dataset.pin = override.pin
+  el.style.setProperty('--em-explorer-pin-width', override.width)
+}
+
+/**
+ * Appends a pin-toggle and three width-preset buttons to the pin's own
+ * mermaid toolbar (built by enhanceMermaidZoom, so this always runs after
+ * that toolbar exists — see previewRuntime.runShared). Skipped when there's
+ * no toolbar to attach to (a mermaid parse error renders no controls).
+ */
+function buildExplorerControls(el: HTMLElement, pin: HTMLElement): void {
+  const bar = pin.querySelector<HTMLElement>('.em-mermaid__controls')
+  if (!bar) return
+
+  const doc = el.ownerDocument
+
+  const pinBtn = doc.createElement('button')
+  pinBtn.type = 'button'
+  pinBtn.className = 'em-mermaid__btn em-explorer__pin-toggle'
+
+  const widthBtns = WIDTH_PRESETS.map(preset => {
+    const btn = doc.createElement('button')
+    btn.type = 'button'
+    btn.className = 'em-mermaid__btn em-explorer__width-preset'
+    btn.textContent = preset.label
+    btn.title = preset.title
+    btn.setAttribute('aria-label', preset.title)
+    return { preset, btn }
+  })
+
+  // Reflects el's current pin/width onto the buttons — called on build and
+  // after every click, since clicking alone (no doc edit) never re-triggers
+  // setupExplorers.
+  const refresh = () => {
+    const pinSide: PinSide = el.dataset.pin === 'top' ? 'top' : 'left'
+    const width = el.style.getPropertyValue('--em-explorer-pin-width').trim() || '45%'
+    pinBtn.textContent = pinSide === 'top' ? '⬓' : '⬒'
+    pinBtn.title = pinSide === 'top' ? 'Pin diagram to the left' : 'Pin diagram to the top'
+    pinBtn.setAttribute('aria-label', pinBtn.title)
+    widthBtns.forEach(({ preset, btn }) => btn.classList.toggle('em-mermaid__btn--active', preset.value === width))
+  }
+
+  const setOverride = (next: PinOverride) => {
+    overrides.set(el, next)
+    applyOverride(el, next)
+    refresh()
+    // The grid change resizes the pin box, which the ResizeObserver would
+    // eventually catch too — scheduling directly avoids waiting a frame.
+    scheduleLayout()
+  }
+
+  pinBtn.addEventListener('click', () => {
+    const pinSide: PinSide = el.dataset.pin === 'top' ? 'top' : 'left'
+    const width = el.style.getPropertyValue('--em-explorer-pin-width').trim() || '45%'
+    setOverride({ pin: pinSide === 'top' ? 'left' : 'top', width })
+  })
+  bar.appendChild(pinBtn)
+
+  widthBtns.forEach(({ preset, btn }) => {
+    btn.addEventListener('click', () => {
+      const pinSide: PinSide = el.dataset.pin === 'top' ? 'top' : 'left'
+      setOverride({ pin: pinSide, width: preset.value })
+    })
+    bar.appendChild(btn)
+  })
+
+  refresh()
+}
+
 // ─── Public ───────────────────────────────────────────────────────────────────
 
 export function setupExplorers(root: HTMLElement): void {
@@ -104,6 +201,12 @@ export function setupExplorers(root: HTMLElement): void {
     const pin = el.querySelector<HTMLElement>('.em-explorer__pin')
     const detail = el.querySelector<HTMLElement>('.em-explorer__detail')
     if (!pin || !detail) return
+
+    // Restore a reader's pin/width choice before anything below measures the
+    // pin's box, and before the pin/width buttons are rebuilt onto it.
+    const override = overrides.get(el)
+    if (override) applyOverride(el, override)
+    buildExplorerControls(el, pin)
 
     // Detail headings are direct children: privateMd.render() emits them at
     // the top level of the pane. A heading wrapped in a nested directive is

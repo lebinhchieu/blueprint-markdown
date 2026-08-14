@@ -166,6 +166,14 @@
   color: var(--text-base);
 }
 
+/* Marks the explorer pin/width-preset button matching the current runtime
+ * choice — explorerSync.ts toggles this, not a CSS :checked, since there's no
+ * underlying <input>. */
+.em-mermaid__btn--active {
+  background: var(--c-primary-bg);
+  color: var(--c-primary);
+}
+
 .em-mermaid-modal {
   position: fixed;
   inset: 0;
@@ -1609,6 +1617,23 @@ kbd {
 
 @media (max-width: 900px) {
   .em-explorer { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* Pin-toggle and width-preset buttons (explorerSync.ts) are reader
+ * convenience for the side-by-side layout — narrow screens always stack
+ * single-column regardless of data-pin (rule above), so neither button would
+ * do anything there. */
+@media (max-width: 900px) {
+  .em-explorer__pin-toggle,
+  .em-explorer__width-preset {
+    display: none;
+  }
+}
+
+/* Width only matters when the pin sits beside the detail pane — pin=top is
+ * already a single stacked column, so its width presets have no effect. */
+.em-explorer[data-pin="top"] .em-explorer__width-preset {
+  display: none;
 }
 
 /* A stacked diagram taller than 60% of the viewport would cover the text it
