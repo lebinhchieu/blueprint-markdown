@@ -126,6 +126,12 @@ function ensureDeactivateListener(doc: Document): void {
     },
     true,
   )
+  doc.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && activeZoomGate) {
+      activeZoomGate.setActive(false)
+      activeZoomGate = null
+    }
+  })
 }
 
 /**
