@@ -1,10 +1,12 @@
 /**
  * explorerSync.ts — client-side node↔section linking for :::explorer.
  *
- * Pairs each mermaid node whose id ends `<kind>-N<k>-<n>` with the detail
- * heading whose text starts `<k>.`, marks the linked nodes, and scrolls to a
- * section when its node is clicked. Called from previewRuntime.runShared AFTER
- * renderMermaid resolves — there is no SVG to match against before that.
+ * Pairs each mermaid node or subgraph with a detail heading — by the author's
+ * own id when the heading declares one (`### AuthService {#auth}` ↔ `auth[…]`),
+ * otherwise by leading section number (`### 3. Cache` ↔ `N3[…]`). Marks the
+ * linked elements and scrolls to a section when one is clicked. Called from
+ * previewRuntime.runShared AFTER renderMermaid resolves — there is no SVG to
+ * match against before that.
  *
  * Clicking is a *transient* action: scroll to the section, flash both ends of
  * the pair, then everything returns to normal. There is no persistent selected
@@ -23,23 +25,40 @@
 import { getMermaidPanHandle } from './mermaidPanZoom'
 
 /**
- * Node id → section number. The prefix differs per diagram type but the shape
- * is identical, and all three render the node as `g.node` with a usable bbox:
+ * Node id → the author's own id. The type prefix differs but the shape is
+ * identical, and all three render the node as `g.node` with a usable bbox:
  *
- *   graph / flowchart   mermaid-<ts>-flowchart-N1-0
- *   stateDiagram-v2     mermaid-<ts>-state-N1-0
- *   classDiagram        mermaid-<ts>-classId-N1-0
+ *   graph / flowchart   mermaid-<ts>-flowchart-auth-0
+ *   stateDiagram-v2     mermaid-<ts>-state-auth-0
+ *   classDiagram        mermaid-<ts>-classId-auth-0
  *
- * `erDiagram` also emits `entity-N1-0`, but is deliberately excluded: mermaid
+ * The capture is greedy so an id that itself ends in digits survives:
+ * `flowchart-step-2-0` yields `step-2`, not `step`.
+ *
+ * `erDiagram` also emits `entity-…`, but is deliberately excluded: mermaid
  * 11.15 rejects entity aliases (`N1["1. Name"]` is a parse error), so the box
- * would be labelled `N1` and the reader would never see the number the
- * pairing is built on. Every other type (sequenceDiagram, C4Context, timeline,
- * journey, gitGraph, mermaid's own mindmap) drops the author's id entirely and
- * numbers its elements positionally, which would silently mispair the moment
- * anything is reordered.
+ * would be labelled with the raw id and the reader would never see the name
+ * the pairing is built on. Every other type (sequenceDiagram, C4Context,
+ * timeline, journey, gitGraph, mermaid's own mindmap) drops the author's id
+ * entirely and numbers its elements positionally, which would silently
+ * mispair the moment anything is reordered.
  */
-export const RE_NODE_ID = /(?:flowchart|state|classId)-N(\d+)-\d+$/
+export const RE_NODE_ID = /(?:flowchart|state|classId)-(.+)-\d+$/
+
+/**
+ * Subgraphs are `g.cluster`, and their id is a different shape: the author's
+ * id carries no type prefix and no numeric suffix, just the per-render
+ * `mermaid-<ts>-` stamp. Probed against mermaid 11.15 —
+ * `subgraph boot[...]` renders as `mermaid-1786681998933-boot`.
+ */
+export const RE_CLUSTER_ID = /^mermaid-\d+-(.+)$/
+
+/** Fallback pairing: a heading whose text starts `3.` keys on `"3"`. */
 const RE_HEADING_NUM = /^\s*(\d+)\s*\./
+
+/** A node id of the house-style `N3` form, so it can also match heading `3.`. */
+const RE_NUMBERED_ID = /^N(\d+)$/
+
 const SVG_NS = 'http://www.w3.org/2000/svg'
 
 /**
@@ -52,7 +71,8 @@ const STACKED_STICKY_MAX = 0.6
 const FLASH_MS = 1400
 
 interface Pair {
-  n: number
+  /** The author's node id, or the section number when pairing by number. */
+  key: string
   g: SVGGElement
   heading: HTMLElement
 }
@@ -92,28 +112,26 @@ export function setupExplorers(root: HTMLElement): void {
     // Detail headings are direct children: privateMd.render() emits them at
     // the top level of the pane. A heading wrapped in a nested directive is
     // deliberately not a link target.
-    const byNum = new Map<number, HTMLElement>()
+    const byKey = new Map<string, HTMLElement>()
     detail
       .querySelectorAll<HTMLElement>(
         ':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6',
       )
       .forEach(h => {
-        const m = (h.textContent ?? '').match(RE_HEADING_NUM)
-        if (!m) return
-        const n = parseInt(m[1], 10)
-        if (!byNum.has(n)) byNum.set(n, h) // first wins on duplicates
+        const key = headingKey(h)
+        if (key && !byKey.has(key)) byKey.set(key, h) // first wins on duplicates
       })
 
+    // Subgraphs are targets too: `g.cluster` alongside `g.node`.
     const pairs: Pair[] = []
-    pin.querySelectorAll<SVGGElement>('g.node').forEach(g => {
-      const m = g.id.match(RE_NODE_ID)
-      if (!m) return
-      const n = parseInt(m[1], 10)
-      const heading = byNum.get(n)
+    pin.querySelectorAll<SVGGElement>('g.node, g.cluster').forEach(g => {
+      const key = elementKey(g)
+      if (key === null) return
+      const heading = lookupHeading(byKey, key)
       if (!heading) return // fail-soft: node with no section stays unmarked
       markLinked(g)
       heading.classList.add('em-explorer__section--linked')
-      pairs.push({ n, g, heading })
+      pairs.push({ key, g, heading })
     })
 
     if (pairs.length === 0) return // unsupported diagram type, or no matches
@@ -129,6 +147,42 @@ export function setupExplorers(root: HTMLElement): void {
   }
 
   layout()
+}
+
+// ─── Keys ─────────────────────────────────────────────────────────────────────
+
+/**
+ * A heading's pairing key: an explicit `{#id}` anchor if the author wrote one,
+ * otherwise the leading section number. `data-em-key` is stamped server-side by
+ * explorer.ts — a `data-` attribute rather than a real DOM `id`, so an anchor
+ * here can never collide with the slugs em_toc allocates to top-level headings.
+ */
+function headingKey(h: HTMLElement): string | null {
+  const explicit = h.dataset['emKey']
+  if (explicit) return explicit
+  const m = (h.textContent ?? '').match(RE_HEADING_NUM)
+  return m ? m[1] : null
+}
+
+/** The author's id for a diagram node or subgraph, or null if it has none. */
+function elementKey(g: SVGGElement): string | null {
+  const isCluster = g.classList.contains('cluster')
+  const m = g.id.match(isCluster ? RE_CLUSTER_ID : RE_NODE_ID)
+  return m ? m[1] : null
+}
+
+/**
+ * Match a diagram element to a heading, id first and number second.
+ *
+ * The fallback is what keeps every existing document working untouched: a
+ * house-style `N3` node carries the key `"N3"`, which no heading declares, so
+ * it retries as `"3"` and pairs with `### 3. Cache` exactly as before.
+ */
+export function lookupHeading<T>(byKey: Map<string, T>, key: string): T | undefined {
+  const direct = byKey.get(key)
+  if (direct !== undefined) return direct
+  const numbered = key.match(RE_NUMBERED_ID)
+  return numbered ? byKey.get(numbered[1]) : undefined
 }
 
 // ─── Linked affordance ────────────────────────────────────────────────────────
@@ -189,7 +243,10 @@ function onClick(e: MouseEvent): void {
   // code.file-ref — without this the copy gesture would pan the diagram instead.
   if (!target || target.closest('a, code.file-ref[data-copy]')) return
 
-  const g = target.closest?.('g.node')
+  // `g.node` first: a node drawn on top of a subgraph should win over the
+  // cluster behind it. mermaid renders them as siblings, not nested, so
+  // `closest` alone wouldn't decide this.
+  const g = target.closest?.('g.node') ?? target.closest?.('g.cluster')
   if (g) {
     onNodeClick(g)
     return

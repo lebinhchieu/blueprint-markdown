@@ -90,6 +90,46 @@ function closeIndex(lines: string[], open: number, marker: string): number {
  *  markdown source inject arbitrary declarations. */
 const RE_WIDTH = /^\d+(\.\d+)?(%|px|rem|em|ch|vw)$/
 
+/**
+ * One heading element. The lazy body stops at the first matching close tag,
+ * and headings cannot nest, so each match is bounded to a single heading.
+ *
+ * Matching the anchor in the same pass — `…\{#(id)\}\s*</h\1>` — looks
+ * equivalent and is not: on a heading with no trailing anchor the body would
+ * run straight past its own close tag and swallow later headings, stamping
+ * their id onto the wrong element. Bound the heading first, test the anchor
+ * second.
+ */
+const RE_HEADING = /<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/g
+
+/** A `{#id}` at the very end of a heading's content, and nowhere else. */
+const RE_TRAILING_ANCHOR = /^([\s\S]*?)\s*\{#([A-Za-z][\w-]*)\}\s*$/
+
+/**
+ * Move a heading's trailing `{#id}` into `data-em-key` and drop it from the
+ * visible text.
+ *
+ * Nothing else in the pipeline reads this anchor: markdown-it-attrs is
+ * deliberately not installed (it would double-parse our directive `{}` attrs),
+ * and the em_toc rule only ever sees top-level headings — directive-internal
+ * ones are rendered by the private markdown-it instance and never enter the
+ * outer token stream. Without this pass the braces simply render as literal
+ * text in the heading.
+ *
+ * Operating on our own just-generated HTML rather than the markdown source
+ * keeps the id off the `renderChildren` path, so no other directive is
+ * affected. The `\s*</h\2>` tail is what pins the match to a *trailing*
+ * anchor, so a `{#…}` written mid-heading is left alone as ordinary text.
+ */
+export function extractHeadingKeys(html: string): string {
+  return html.replace(RE_HEADING, (whole, level: string, attrs: string, inner: string) => {
+    const anchor = inner.match(RE_TRAILING_ANCHOR)
+    if (!anchor) return whole
+    // The id charset excludes quotes, so it is safe in an attribute as-is.
+    return `<h${level}${attrs} data-em-key="${anchor[2]}">${anchor[1]}</h${level}>`
+  })
+}
+
 export const explorerDirectives: Record<string, DirectiveSpec> = {
   explorer: {
     forms: ['container'],
@@ -103,7 +143,7 @@ export const explorerDirectives: Record<string, DirectiveSpec> = {
       // Render each half through a synthetic node — renderChildren only ever
       // reads `children`, so this needs no change to renderer.ts or RenderCtx.
       const pinHtml = ctx.renderChildren({ ...node, children: pin })
-      const detailHtml = ctx.renderChildren({ ...node, children: detail })
+      const detailHtml = extractHeadingKeys(ctx.renderChildren({ ...node, children: detail }))
 
       return (
         `<div class="em-explorer" data-pin="${pinSide}" style="--em-explorer-pin-width:${width}">` +

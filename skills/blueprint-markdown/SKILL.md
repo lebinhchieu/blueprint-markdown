@@ -88,7 +88,8 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
-| `:::explorer` pairs mermaid id `N<k>` with heading `<k>.` | `N3["3. Cache"]` + `### 3. Cache` | `C1["Cache"]` + `### Cache` (box goes dead, no error) |
+| `:::explorer` pairs by number **or** by `{#id}` | `N3["3. Cache"]` + `### 3. Cache`, or `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — id declared on the node but not the heading (box goes dead, no error) |
+| `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
 | `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `N1 : 1. Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
 | `:::explorer` section headings must be top-level in the block | `### 3. Cache` | `### 3. Cache` wrapped in a nested `:::card` (drops out of the pairing) |
 
@@ -218,11 +219,19 @@ body draws a dashed cross-link to that node.
 `{type}` to group nodes by color (otherwise depth→color)
 
 **Explorer** — pins a mermaid diagram beside its detail sections. The first `mermaid` fence
-pins; everything after it scrolls in the detail pane. Mermaid id `N<k>` pairs with the heading
-whose text starts `<k>.` — clicking a box scrolls to its section and keeps both highlighted.
-A box with no matching heading renders unmarked, so an *unmarked* box means "nothing more to
-read". Links `graph`/`flowchart` (`N1["1. Name"]`), `stateDiagram-v2` (`N1 : 1. Name`) and
-`classDiagram` (`class N1["1. Name"]`); other types render pinned but never link.
+pins; everything after it scrolls in the detail pane. Clicking a box scrolls to its section and
+flashes both; clicking a section brings its box into view. A box with no matching heading
+renders unmarked, so an *unmarked* box means "nothing more to read". Links
+`graph`/`flowchart`, `stateDiagram-v2` and `classDiagram`; other types render pinned but never
+link.
+
+Pair a box to a heading either way:
+
+- **By number** (default) — mermaid id `N<k>` ↔ heading text starting `<k>.`, e.g.
+  `N3["3. Cache"]` ↔ `### 3. Cache`.
+- **By id** — heading anchor `{#id}` ↔ the mermaid node's own id, e.g. `auth["AuthService"]` ↔
+  `### AuthService {#auth}`. The anchor is stripped from the rendered heading. **Subgraphs can
+  only be paired this way** — `subgraph boot[…]` ↔ `### Config resolution {#boot}`.
 ````
 :::explorer
 ```mermaid
@@ -232,7 +241,22 @@ graph TD
 ```
 
 ### 1. AuthService — `src/auth/service.ts:44`
-Validates creds, issues JWT.
+
+Validates credentials and issues a 15-minute JWT. Three callers: the login route, the
+refresh worker, and `LegacyAuthAdapter`.
+
+| Path | Rate limited | Notes |
+|------|--------------|-------|
+| `POST /login` | 5/min | |
+| `POST /refresh` | **no** | known gap |
+
+```ts
+if (req.grantType === 'refresh') return this.issue(user)  // skips the limiter
+```
+
+:::danger{title="Gotcha"}
+The refresh path bypasses rate limiting entirely.
+:::
 
 **Simplified:** one box, but refresh and revoke are separate flows.
 
@@ -244,8 +268,12 @@ Redis-backed. TTL is 15m, not configurable.
 :::
 :::
 ````
-`{pin=left}` (default) or `{pin=top}`; `{width=45%}` sets the diagram column. Section headings
-must be top-level inside the block — one wrapped in a nested directive drops out of the pairing.
+`{pin=left}` (default) or `{pin=top}`; `{width=45%}` sets the diagram column.
+
+**The detail pane is a full document.** Tables, code fences, nested callouts, sub-headings and
+images all work under a numbered heading — write sections as long as the subject needs. The one
+rule: the numbered headings themselves must be top-level inside the block, so never wrap one in
+a `:::card` or other directive — it drops out of the pairing.
 
 ### Leaf blocks (::)
 
@@ -276,7 +304,7 @@ AI note: :ai[Double-check this assumption next time]
 | Mark / highlight | `==text==` |
 | Code + line highlight | ` ```js {1,3-5} title="app.js" ` |
 | Mermaid diagram | ` ```mermaid ` |
-| Heading anchor | `## Title {#anchor}` |
+| Heading anchor | `### Title {#anchor}` — **only inside `:::explorer`**, where it sets the pairing key. Elsewhere `markdown-it-attrs` is not installed, so the braces render as literal text; ordinary heading ids are slugified from the heading text automatically |
 
 ---
 

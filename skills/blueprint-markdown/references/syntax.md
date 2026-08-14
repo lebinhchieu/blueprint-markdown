@@ -321,7 +321,22 @@ graph TD
 ```
 
 ### 1. AuthService — `src/auth/service.ts:44`
-Validates creds, issues JWT.
+
+Validates credentials and issues a 15-minute JWT. Three callers: the login route, the
+refresh worker, and `LegacyAuthAdapter`.
+
+| Path | Rate limited | Notes |
+|------|--------------|-------|
+| `POST /login` | 5/min | |
+| `POST /refresh` | **no** | known gap |
+
+```ts
+if (req.grantType === 'refresh') return this.issue(user)  // skips the limiter
+```
+
+:::danger{title="Gotcha"}
+The refresh path bypasses rate limiting entirely.
+:::
 
 **Simplified:** one box, but refresh and revoke are separate flows.
 
@@ -343,16 +358,46 @@ Redis-backed. TTL is 15m, not configurable.
 pane, including nested directives such as the closing `Not shown` callout. Later mermaid
 fences are ordinary diagrams inside the detail pane.
 
-**Pairing** — mermaid node id `N<k>` ↔ the detail heading whose text starts `<k>.`. Both
-halves are required: `N3["3. Cache"]` pairs with `### 3. Cache`. The number in the label is
-what the reader sees; the `N<k>` id is what does the linking.
+**Content** — the detail pane is a full document, not captions. Tables, code fences, nested
+directives, sub-headings (`####` and deeper), lists and images all work under a numbered
+heading; write each section as long as the subject needs. The only restriction is on the
+numbered headings themselves — see *Pairing* below.
 
-Per supported diagram type, the id goes in a different place — the label must carry the
-number in all of them:
+**Pairing** — two ways, and a diagram can mix them freely.
+
+*By number (default, house style).* Mermaid node id `N<k>` ↔ the detail heading whose text
+starts `<k>.`. Both halves are required: `N3["3. Cache"]` pairs with `### 3. Cache`. The number
+in the label is what the reader sees; the `N<k>` id is what does the linking.
+
+*By id.* Give the heading a `{#id}` anchor matching the mermaid node's own id. The anchor is
+stripped from the rendered heading — it never shows to the reader.
+
+````
+:::explorer
+```mermaid
+graph TD
+  subgraph boot["Config resolution"]
+    auth["AuthService"] --> store["TokenStore"]
+  end
+```
+
+### AuthService {#auth}
+### TokenStore {#store}
+### Config resolution {#boot}
+:::
+````
+
+Use ids when serial order carries no meaning, when a box's label shouldn't have to start with
+a number, or when renumbering would be painful — inserting a node between 2 and 3 otherwise
+means editing the id, the label and the heading for every later node, and every miss fails
+silently. **Subgraphs are targets only through an id** (`{#boot}` above); they have no number.
+
+Per supported diagram type the id goes in a different place. With number pairing the label
+must also carry the number:
 
 ```
-graph TD              N1["1. AuthService"]
-stateDiagram-v2       N1 : 1. AuthService
+graph TD              N1["1. AuthService"]   or   auth["AuthService"]
+stateDiagram-v2       N1 : 1. AuthService    or   auth : AuthService
 classDiagram          class N1["1. AuthService"]
 ```
 
