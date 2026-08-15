@@ -131,12 +131,15 @@ picked up automatically from the `skills/` directory.
 ### Install via Claude Code plugin marketplace
 
 This repo is also a Claude Code plugin marketplace bundling both skills
-(`blueprint-markdown` and `mermaid-diagrams`) — no cloning required:
+(`blueprint-markdown` and `mermaid-diagrams`) plus the `skimmable` output style —
+no cloning required:
 
 ```
 /plugin marketplace add lebinhchieu/blueprint-markdown
 /plugin install blueprint-markdown-skills@blueprint-markdown-skills-marketplace
 ```
+
+Activate the output style with `/output-style skimmable`.
 
 **Enable auto-update** so new releases show up without re-running commands:
 
