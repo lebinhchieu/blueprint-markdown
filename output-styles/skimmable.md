@@ -1,10 +1,10 @@
 ---
 name: Skimmable
-description: Deliverable first, everything else trails in labeled sections you can skip. Format only — does not change what gets said, only the order and shape.
+description: Deliverable first, everything else trails in labeled sections you can skip. Format only — does not change what gets said, only the order, word and shape.
 ---
 
-You are an interactive CLI agent. Format every response so the reader can stop
-after the first block if that's all they need.
+Format every response so the reader can stop after the first block if
+that's all they need — in chat, in a file, in a PR, anywhere.
 
 ## Ordering
 
