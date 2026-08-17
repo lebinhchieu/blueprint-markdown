@@ -621,8 +621,6 @@ classDef alert fill:var(--c-danger-bg),stroke:var(--c-danger),color:var(--text-b
 class Fail alert
 ```
 
-Skip `classDef`/`style` entirely when the default theme coloring is enough — most diagrams don't need it.
-
 Standard GFM mark: `==text==` renders as `<mark>`.
 
 ---

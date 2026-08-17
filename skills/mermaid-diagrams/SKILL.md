@@ -76,8 +76,9 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 > subgraph's own `rankdir` when no edge crosses its boundary; any external edge flips it
 > back to the parent direction, silently. Only isolated groups (e.g. a legend) can use it.
 
-- Group with `subgraph` — the main lever on legibility (not aspect ratio). If `classDef`
-  declares groups the graph doesn't have as subgraphs, promote them.
+- Group with `subgraph` — the main lever on legibility (not aspect ratio), for real
+  grouping, not just a visual box. If `classDef` declares groups the graph doesn't have as
+  subgraphs, promote them.
 - Cap ~15-20 nodes (plain) or ~10-12 (`:::explorer`, since each node needs a detail
   section). Watch edge density (40 edges on 14 nodes is a hairball) and fan-in (8+
   incoming edges needs its own subgraph, not more arrows).
@@ -88,9 +89,11 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 - Cap ~5-6 outgoing edges per node — more means it's doing too much or needs a subgraph.
 - For `:::explorer`, pick `pin` and direction together: `{pin=left}` is narrow (needs a
   tall shape), `{pin=top}` is wide (needs a short one).
-- Color: set `color:` explicitly in `classDef` (renderer defaults break in dark themes).
-  Vary lightness, not just hue, for colorblind-safe fills. `classDef` for 2+ nodes
-  sharing a category, `style` only for a genuine one-off.
+- Color: give every node that shares a role with another a `classDef` color — any diagram,
+  not only `:::explorer`; the default theme coloring being fine is not a reason to skip it
+  once a category exists. Set `color:` explicitly (renderer defaults break in dark themes).
+  Vary lightness, not just hue, for colorblind-safe fills. `classDef` for 2+ nodes sharing a
+  category, `style` only for a genuine one-off.
 - `sequenceDiagram`, `erDiagram`, and other non-flowchart types skip all of the above —
   see §2a.
 
@@ -126,12 +129,15 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
   `#quot;` for a literal `"`, use `<br/>` for line breaks. Outside quotes: never name a
   node `end` (terminates the parser), never start an id with `o`/`x` (parsed as an edge
   modifier).
-- Node labels: short noun phrases (`Auth Service`), no undefined abbreviations. Prefer
-  a description short enough to stand alone — someone skimming just the
-  labels, not the whole diagram, should still get the point.
-- Edge labels: verb phrases (`writes to`, `validates`), not nouns. Prefer
-  giving every arrow one — an unlabeled edge leaves the relationship to guesswork.
-- Prefer keeping edge labels short; if one genuinely needs more words,
+- Node labels: short noun phrases (`Auth Service`), no undefined abbreviations, short
+  enough to stand alone — someone skimming just the labels, not the whole diagram, should
+  still get the point.
+- Node subtitle: when the title alone doesn't convey the node's role, add a short second
+  line inside the same label (`svc_auth["Auth Service<br/><i>issues JWTs</i>"]`) — a few
+  words, not a sentence.
+- Edge labels: verb phrases (`writes to`, `validates`), not nouns — give every arrow one;
+  an unlabeled edge leaves the relationship to guesswork.
+- Keep edge labels short; if one genuinely needs more words,
   break it across lines with `<br/>`.
 - Stay consistent — don't call the same relationship "calls" in one place and "invokes"
   elsewhere in the same diagram.
