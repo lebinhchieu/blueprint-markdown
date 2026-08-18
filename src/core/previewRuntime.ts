@@ -2,17 +2,14 @@
  * previewRuntime.ts — Shared browser runtime for the VS Code preview and the
  * exported HTML artifact.
  *
- * Mermaid and cytoscape are accepted as parameters (never imported here) so
- * this module can be bundled without pulling in the heavy libraries.
- * - preview.ts      passes its statically-bundled instances.
- * - exportClient.ts passes window.mermaid / window.cytoscape (loaded from CDN), or undefined.
+ * Mermaid is accepted as a parameter (never imported here) so this module can
+ * be bundled without pulling in the heavy library.
+ * - preview.ts      passes its statically-bundled instance.
+ * - exportClient.ts passes window.mermaid (loaded from CDN), or undefined.
  */
 
 import { hydrate } from './hydrate'
 import { setupToc } from './toc'
-import { createMinimalMarkdownIt } from './markdownitBrowser'
-import { mountMindmap, type CytoscapeLib, type CytoscapeDagreLib, type MindmapHandle } from './mindmap/mountMindmap'
-import type { MindmapGraph } from './mindmap/parseMindmap'
 import { enhanceMermaidZoom } from './mermaidPanZoom'
 import { setupExplorers } from './explorerSync'
 
@@ -33,17 +30,6 @@ export function applyTheme(root: HTMLElement): string {
   const theme = marker?.getAttribute('data-em-theme') || root.getAttribute('data-em-theme') || 'light'
   root.setAttribute('data-em-theme', theme)
   return theme
-}
-
-/**
- * Read blueprintMarkdown.mindmapHeight off the same marker and expose it as
- * a CSS custom property so `.em-mindmap`'s height picks it up (components.css
- * falls back to 480px when the marker or attribute is absent).
- */
-export function applyMindmapHeight(root: HTMLElement): void {
-  const marker = root.ownerDocument.querySelector<HTMLElement>('.em-theme-config')
-  const height = marker?.getAttribute('data-em-mindmap-height')
-  if (height) root.style.setProperty('--em-mindmap-height', `${height}px`)
 }
 
 /** Returns true when the hex/rgb colour resolves to a dark background.
@@ -200,73 +186,6 @@ export async function renderMermaid(
   enhanceMermaidZoom(blocks)
 }
 
-// ─── Mindmap ──────────────────────────────────────────────────────────────────
-
-/**
- * Live instances keyed by their placeholder element, so an unchanged mindmap
- * survives a morphdom pass. VS Code's preview re-derives the whole DOM from
- * source on every edit — the directive always renders an *empty* `.em-mindmap`
- * div, so morphdom wipes the canvas/drawer children we injected on the last
- * pass. If `data-graph` and the active theme are unchanged we just re-append
- * the still-live nodes (same cytoscape instance — pan/zoom/collapse/drawer
- * state all survive) instead of rebuilding from scratch. A theme switch
- * changes the key (colors are baked into node/edge data at mount time) so it
- * forces a remount that picks up the new theme's colors.
- */
-interface MindmapInstance {
-  key: string
-  handle: MindmapHandle
-  canvas: HTMLElement
-  drawer: HTMLElement
-}
-
-const mindmapInstances = new WeakMap<HTMLElement, MindmapInstance>()
-let mindmapMd: ReturnType<typeof createMinimalMarkdownIt> | null = null
-
-export function mountMindmaps(
-  root: HTMLElement,
-  theme: string,
-  cytoscape: CytoscapeLib | undefined,
-  cytoscapeDagre: CytoscapeDagreLib | undefined,
-): void {
-  if (!cytoscape || !cytoscapeDagre) return
-  const placeholders = root.querySelectorAll<HTMLElement>('.em-mindmap')
-  if (placeholders.length === 0) return
-  if (!mindmapMd) mindmapMd = createMinimalMarkdownIt()
-
-  placeholders.forEach(el => {
-    const graphData = el.dataset.graph
-    if (!graphData) return
-    const raw = `${theme}\n${graphData}`
-
-    const existing = mindmapInstances.get(el)
-    if (existing && existing.key === raw) {
-      if (!el.contains(existing.canvas)) {
-        el.appendChild(existing.canvas)
-        el.appendChild(existing.drawer)
-      }
-      return
-    }
-    existing?.handle.destroy()
-
-    let graph: MindmapGraph
-    try {
-      graph = JSON.parse(graphData)
-    } catch {
-      return // malformed data-graph — fail soft, leave the placeholder empty
-    }
-
-    const handle = mountMindmap(cytoscape, cytoscapeDagre, el, graph, {
-      renderBody: bodyMd => mindmapMd!.render(bodyMd),
-    })
-    const canvas = el.querySelector<HTMLElement>('.em-mindmap__canvas')
-    const drawer = el.querySelector<HTMLElement>('.em-mindmap__drawer')
-    if (canvas && drawer) {
-      mindmapInstances.set(el, { key: raw, handle, canvas, drawer })
-    }
-  })
-}
-
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
 
 /**
@@ -274,19 +193,13 @@ export function mountMindmaps(
  * HTML artifact.  Does NOT remove VS Code built-in styles — that's the
  * responsibility of the calling entry point (preview.ts only).
  */
-export function runShared(
-  mermaid: MermaidApi | undefined,
-  cytoscape?: CytoscapeLib,
-  cytoscapeDagre?: CytoscapeDagreLib,
-): void {
+export function runShared(mermaid: MermaidApi | undefined): void {
   const root = document.body
   root.classList.add('md-output')
   const theme = applyTheme(root)
-  applyMindmapHeight(root)
   hydrate(root)
   setupToc(root)
   // renderMermaid is async — called unchained, setupExplorers would run before
   // any SVG exists and match nothing.
   if (mermaid) void renderMermaid(root, theme, mermaid).then(() => setupExplorers(root))
-  mountMindmaps(root, theme, cytoscape, cytoscapeDagre)
 }

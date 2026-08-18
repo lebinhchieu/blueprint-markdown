@@ -3,8 +3,8 @@ name: blueprint-markdown
 description: >
   Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
   any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
-  timeline, progress, chip, icon, mindmap, …), "write it nicely / make it pretty / use cards /
-  add callouts", or "turn this into a mind map / node graph".
+  timeline, progress, chip, icon, …), "write it nicely / make it pretty / use cards /
+  add callouts".
   Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
 ---
 
@@ -82,7 +82,6 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | `::` is `progress` only | `::progress{…}` | `:::progress{…}` |
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
-| `:::mindmap` body is headings, not directives | `# Heading` / `## Heading` inside | `:::card` nested inside `:::mindmap` (silently dropped — see below) |
 | `:::explorer` pairs **only** by `{#id}` | `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — no anchor, so the box goes dead with no error |
 | `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
 | `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `idle : Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
@@ -193,25 +192,6 @@ The API accepts up to 1000 requests per minute.
 :::
 :::
 ```
-
-**Mindmap** — turns headings into an interactive node graph. Heading level = tree depth;
-everything below a heading up to the next one is that node's detail-drawer content. The
-body is **plain markdown headings, not nested directives** — don't put `:::card` etc. inside.
-```
-:::mindmap
-# Database latency > 2s {type=context}
-Dashboards spin on every load.
-
-## Add Redis cache {#redis type=action}
-Cache hot queries; TTL 60s.
-
-## Add CDN {type=action}
-Shares invalidation logic with [[redis]].
-:::
-```
-`{#id}` (optional) sets a stable id (else slugified from the heading text); `[[id]]` anywhere in a
-body draws a dashed cross-link to that node.
-`{type}` to group nodes by color (otherwise depth→color)
 
 **Explorer** — pins a mermaid diagram beside its detail sections. The first `mermaid` fence
 pins; everything after it scrolls in the detail pane. Clicking a box scrolls to its section and

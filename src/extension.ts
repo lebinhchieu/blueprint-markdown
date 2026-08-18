@@ -5,10 +5,9 @@
  * built-in Markdown preview first opens.  All heavy lifting is in
  * markdownItPlugin.ts.
  *
- * Also registers listeners so that changing blueprintMarkdown.theme or
- * blueprintMarkdown.mindmapHeight (or VS Code's own active theme when the
- * theme setting is "auto") forces the preview to re-render via the public
- * markdown.preview.refresh command.
+ * Also registers listeners so that changing blueprintMarkdown.theme
+ * (or VS Code's own active theme when the theme setting is "auto") forces
+ * the preview to re-render via the public markdown.preview.refresh command.
  */
 
 import * as vscode from 'vscode'
@@ -217,12 +216,11 @@ export function activate(context: vscode.ExtensionContext) {
     }),
   )
 
-  // Re-render when the user changes the theme or mindmap height setting.
+  // Re-render when the user changes the theme or toc setting.
   context.subscriptions.push(
     vscode.workspace.onDidChangeConfiguration(e => {
       if (
         e.affectsConfiguration('blueprintMarkdown.theme') ||
-        e.affectsConfiguration('blueprintMarkdown.mindmapHeight') ||
         e.affectsConfiguration('blueprintMarkdown.toc')
       ) {
         refresh()

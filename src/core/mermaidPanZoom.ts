@@ -125,8 +125,7 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
 
 /**
  * Only one inline diagram's wheel-zoom is "activated" (click-to-enable) at a
- * time — mirrors mountMindmap.ts's userZoomingEnabled(false)-until-clicked
- * gate, so scrolling the page past a diagram doesn't hijack the wheel.
+ * time, so scrolling the page past a diagram doesn't hijack the wheel.
  * A single document-level listener (installed once) deactivates the current
  * one on any click outside it.
  */

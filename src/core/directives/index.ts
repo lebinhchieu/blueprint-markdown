@@ -19,7 +19,6 @@ import { stepsDirectives } from './steps'
 import { progressDirectives } from './progress'
 import { inlineWidgetDirectives } from './inline-widgets'
 import { revisionDirectives } from './revision'
-import { mindmapDirectives } from './mindmap'
 import { explorerDirectives } from './explorer'
 
 export type Registry = Record<string, DirectiveSpec>
@@ -37,7 +36,6 @@ export function buildRegistry(overrides?: Record<string, DirectiveSpec>): Regist
     ...progressDirectives,
     ...inlineWidgetDirectives,
     ...revisionDirectives,
-    ...mindmapDirectives,
     ...explorerDirectives,
   }
   if (overrides) {

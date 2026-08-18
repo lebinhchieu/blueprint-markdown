@@ -51,13 +51,6 @@ function resolveTheme(): string {
     : 'light'
 }
 
-/** Read blueprintMarkdown.mindmapHeight from workspace config. */
-function resolveMindmapHeight(): number {
-  return vscode.workspace
-    .getConfiguration('blueprintMarkdown')
-    .get<number>('mindmapHeight', 480)
-}
-
 /** Read blueprintMarkdown.toc from workspace config: 'off' | 'h2' | 'h3'. */
 function resolveToc(): string {
   return vscode.workspace
@@ -234,25 +227,20 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
 
   // ── Theme marker ──
   //
-  // A core rule that prepends a hidden <div data-em-theme="light|dark"
-  // data-em-mindmap-height="480"> to the rendered output. preview.js reads
-  // these values and stamps them on <body> so em-theme.css/hljs.css can key
-  // off `body[data-em-theme="dark"]` and the mindmap canvas height picks up
-  // the configured value via a CSS custom property.
+  // A core rule that prepends a hidden <div data-em-theme="light|dark"> to the
+  // rendered output. preview.js reads this value and stamps it on <body> so
+  // em-theme.css/hljs.css can key off `body[data-em-theme="dark"]`.
   //
-  // This runs on the OUTER md only (never privateMd) and calls resolveTheme()/
-  // resolveMindmapHeight() fresh on every render so config changes are picked
-  // up immediately after markdown.preview.refresh fires.
+  // This runs on the OUTER md only (never privateMd) and calls resolveTheme()
+  // fresh on every render so config changes are picked up immediately after
+  // markdown.preview.refresh fires.
   md.core.ruler.push('em_theme_marker', (state: StateCore) => {
     // Skip nested renderInline() calls — inlineMode=true there — so the <div>
     // is never injected inside button/tooltip/chip anchor text.
     if (state.inlineMode) return false
     const theme = resolveTheme()
-    const mindmapHeight = resolveMindmapHeight()
     const token = new state.Token('html_block', '', 0)
-    token.content =
-      `<div class="em-theme-config" data-em-theme="${theme}" ` +
-      `data-em-mindmap-height="${mindmapHeight}" hidden></div>\n`
+    token.content = `<div class="em-theme-config" data-em-theme="${theme}" hidden></div>\n`
     state.tokens.unshift(token)
     return false   // non-terminating; let other core rules run
   })

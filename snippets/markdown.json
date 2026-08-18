@@ -193,19 +193,6 @@
     ],
     "description": "Revision block with previous version"
   },
-  "Blueprint: mindmap": {
-    "prefix": "bp-mindmap",
-    "body": [
-      ":::mindmap",
-      "# ${1:Root node} {type=${2:context}}",
-      "$3",
-      "",
-      "## ${4:Child node} {#${5:id} type=${6:action}}",
-      "$0",
-      ":::"
-    ],
-    "description": "Heading-tree mind map"
-  },
   "Blueprint: progress": {
     "prefix": "bp-progress",
     "body": [

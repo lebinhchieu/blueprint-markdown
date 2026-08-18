@@ -5,7 +5,7 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, mindmap, explorer
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer
 4. [Leaf blocks (::)](#leaf-blocks)
    - progress
 5. [Inline (: )](#inline)
@@ -274,37 +274,6 @@ The API accepts up to 1000 requests per minute.
 
 For word-level change emphasis, use `==highlight==` inside the current or previous block.
 
----
-
-### `:::mindmap`
-
-```
-:::mindmap
-# Database latency > 2s {type=context}
-Dashboards spin on every load. p95 is 2.4s.
-
-## Add Redis cache {#redis type=action}
-Cache hot queries; TTL 60s.
-```js
-client.setex(key, 60, val)
-```
-
-### Warm cache on deploy {type=verify}
-- [ ] Prefetch top 100 queries
-- [ ] Alert if hit-rate < 80%
-
-## Add CDN {type=action}
-Offload static assets. Shares invalidation logic with [[redis]].
-:::
-```
-| Attr | Values | Default | Notes |
-|------|--------|---------|-------|
-| `#id` | identifier | slugified heading text | Needed only when the heading is a `[[link]]` target |
-| `type` | any string, e.g. `risk`, `owner-frontend` | none | Groups nodes by color — see below |
-
-**Heading level** — tree depth.
-**Coloring** — nodes with the same `type` always get the same color, assigned from a 6-color theme palette in the order distinct `type` values first appear (repeats if there are more than 6 types). Nodes with no `type` are colored by heading level instead (`#` = 1st palette color, `##` = 2nd, …).
-**Cross-links** — `[[id]]` anywhere in a node's body
 ---
 
 ### `:::explorer`

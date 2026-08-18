@@ -4,8 +4,7 @@
  * Same setup as createMarkdownIt() in markdownit.ts, minus
  * installInlineCodeRenderer (needs Node's fs/path and the vscode API, so it
  * can only run in the extension host). Use this wherever markdown must be
- * rendered client-side — e.g. the mindmap detail drawer, rendered on demand
- * when a node is clicked (see src/core/mindmap/mountMindmap.ts).
+ * rendered client-side.
  */
 
 import MarkdownIt from 'markdown-it'
@@ -34,10 +33,8 @@ export function createBrowserMarkdownIt(options?: Record<string, unknown>): Mark
  * which pulls in all of highlight.js (~1 MB) for syntax coloring. Code
  * fences fall back to markdown-it's own default (plain <pre><code>, no
  * highlighting). Use this for small, on-demand client-side snippets where
- * that cost isn't worth paying, e.g. the mindmap detail drawer — rendered
- * on demand when a node is clicked (see src/core/mindmap/mountMindmap.ts).
- * Bundled into both dist/preview.js and dist/export-client.js, so keeping it
- * hljs-free matters for both.
+ * that cost isn't worth paying. Bundled into both dist/preview.js and
+ * dist/export-client.js, so keeping it hljs-free matters for both.
  */
 export function createMinimalMarkdownIt(options?: Record<string, unknown>): MarkdownIt {
   const md = new MarkdownIt({

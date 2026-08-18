@@ -4,19 +4,17 @@
  * VS Code injects this as a nonce'd <script> into the preview webview on
  * first load only (since VS Code 1.63 preview scripts are not re-executed on
  * content change — instead a 'vscode.markdown.updateContent' event fires).
- * The CSP forbids dynamic import(), so mermaid and cytoscape are bundled statically.
+ * The CSP forbids dynamic import(), so mermaid is bundled statically.
  *
  * Responsibilities:
  *   - Remove VS Code's built-in markdown/highlight styles that compete with ours.
  *   - Delegate everything else to previewRuntime.runShared().
  *
- * The mermaid theming, mindmap mounting, tab/accordion hydration, and theme-marker
- * logic live in src/core/previewRuntime.ts and are shared with the exported HTML artifact.
+ * The mermaid theming, tab/accordion hydration, and theme-marker logic live in
+ * src/core/previewRuntime.ts and are shared with the exported HTML artifact.
  */
 
 import mermaid from 'mermaid'
-import cytoscape from 'cytoscape'
-import cytoscapeDagre from 'cytoscape-dagre'
 import { runShared } from './core/previewRuntime'
 import './core/commentInsert'
 
@@ -36,7 +34,7 @@ function removeBuiltinStyles(): void {
 
 function run(): void {
   removeBuiltinStyles()
-  runShared(mermaid, cytoscape, cytoscapeDagre)
+  runShared(mermaid)
 }
 
 // Initial run on first load.

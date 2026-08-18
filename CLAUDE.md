@@ -26,21 +26,13 @@ code --install-extension blueprint-markdown-chieu-<version>.vsix
 # reload, then exercise the feature in a normal window (not the Extension Dev Host)
 ```
 
-**Mouse handlers: two components, opposite conventions.** `core/mermaidPanZoom.ts`
-and `core/mindmap/mountMindmap.ts` disagree on every button, so a fix verified on
-one proves nothing about the other:
-
-|              | mermaid                             | mindmap                       |
-|--------------|-------------------------------------|-------------------------------|
-| pan          | right-drag (`e.button !== 2` bails) | left-drag (Cytoscape default) |
-| reset / fit  | double *right*-click, 400 ms        | `dbltap` (left)               |
-| right-click  | `contextmenu` suppressed            | collapse/expand subtree       |
-
-Each button is a separate code path and a screenshot proves nothing about any of
-them — switching mermaid pan to right-drag silently broke left-drag text selection
-(Jul 2026, three corrections in one sitting). Changing a mouse handler means
-driving *every* button on that element: left drag, right drag, double-click each,
-plus the resting cursor.
+**Mouse handlers: drive every button.** `core/mermaidPanZoom.ts` wires pan (right-drag,
+`e.button !== 2` bails), reset/fit (double *right*-click, 400 ms), and right-click
+(`contextmenu` suppressed) as separate code paths — a fix verified on one button
+proves nothing about the others. Switching mermaid pan to right-drag silently broke
+left-drag text selection (Jul 2026, three corrections in one sitting). Changing a
+mouse handler means driving *every* button on that element: left drag, right drag,
+double-click each, plus the resting cursor.
 
 The preview webview isn't reachable by Playwright, but the **exported HTML is** —
 it loads the same runtime. Run `blueprintMarkdown.exportHtml`, serve the file, and
@@ -61,18 +53,16 @@ src/core/
   parser.ts                 ← source text → ASTNode[] (generic, no registry import)
   renderer.ts               ← ASTNode[] → HTML string (delegates to registry)
   directives/index.ts       ← assembles directive registry from individual files
-  directives/*.ts           ← one file per component (card, callout, tabs, steps, mindmap…)
+  directives/*.ts           ← one file per component (card, callout, tabs, steps…)
   attrs.ts                  ← parses {key=value .class #id flag} attr strings
   colors.ts                 ← resolves color tokens (primary/success/…) to CSS values
   inline.ts                 ← installs :name[text]{attrs} inline rule
   fence.ts                  ← custom code fence renderer (hljs, line-highlight, title)
   inline-code.ts            ← inline-code renderer (file refs as links)
   hydrate.ts                ← browser-side tab/accordion hydration
-  previewRuntime.ts         ← shared browser runtime (theme, mermaid SVG cache, mindmap mount)
+  previewRuntime.ts         ← shared browser runtime (theme, mermaid SVG cache)
   markdownit.ts             ← factory for the extension-host markdown-it instance
   markdownitBrowser.ts      ← browser-safe markdown-it factories (no vscode/fs deps)
-  mindmap/parseMindmap.ts   ← heading-tree markdown → {nodes, edges} graph (pure, no DOM)
-  mindmap/mountMindmap.ts   ← Cytoscape+dagre mount, client-side only
 ```
 
 ### Two markdown-it instances
@@ -124,25 +114,25 @@ nested/indented directive, not only a top-level one.
 
 Fenced code blocks (```` ``` … ``` ````) are opaque to the parser — lines inside them are never classified as directives.
 
-### Client-rendered directives (mermaid, mindmap)
+### Client-rendered directives (mermaid)
 
-Two directives don't render their final output server-side — they emit an empty, sized
-placeholder and a browser-side runtime fills it in after DOM insert (`renderMermaid` /
-`mountMindmaps` in `previewRuntime.ts`). Both follow the same shape:
+Mermaid doesn't render its final output server-side — it emits an empty, sized
+placeholder and a browser-side runtime fills it in after DOM insert (`renderMermaid`
+in `previewRuntime.ts`). This is the pattern to follow for any future
+client-rendered directive:
 
 1. **Heavy library injected as a parameter, never imported by `previewRuntime.ts` itself** —
    `preview.ts` passes its statically-bundled instance; `exportClient.ts` passes
    `window.<lib>` (loaded from a CDN `<script>` that `exportHtml.ts` injects only when the
-   doc actually uses that directive) or `undefined`. This keeps `dist/export-client.js`
-   small — see `mountMindmap.ts`'s `CytoscapeLib`/`CytoscapeDagreLib` types for the pattern.
+   doc actually uses that directive) or `undefined`. This keeps `dist/export-client.js` small.
 2. **Survive VS Code's morphdom.** The built-in preview re-derives the whole DOM from
    source on every edit; since the server-rendered placeholder is always empty, morphdom
    wipes any children the runtime injected on the previous pass. Mermaid re-renders from a
-   `theme+source → SVG` cache (cheap, but a visible flicker). Mindmap instead keeps the live
-   Cytoscape instance in a `WeakMap<HTMLElement, …>` keyed by the placeholder element and,
-   when `data-graph` is unchanged, just re-appends the still-live canvas/drawer nodes —
-   preserving pan/zoom/collapse/drawer state instead of rebuilding.
-3. Client-side markdown rendering (mindmap's detail drawer) uses
+   `theme+source → SVG` cache (cheap, but a visible flicker) — a directive with mutable
+   client-side state (pan/zoom/collapse/…) would need something sturdier, e.g. keeping the
+   live instance in a `WeakMap<HTMLElement, …>` keyed by the placeholder element and
+   re-appending its still-live nodes when the source data is unchanged, instead of rebuilding.
+3. Client-side markdown rendering (for on-demand snippets rendered in the browser) should use
    `createMinimalMarkdownIt()` from `markdownitBrowser.ts`, **not** `installFenceRenderer` —
    that pulls in all of highlight.js (~1 MB), which is fine for the extension host but not
    for a bundle that ships to a webview or an exported HTML file.
