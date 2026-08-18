@@ -1,9 +1,6 @@
 ---
 name: blueprint-markdown
 description: >
-  Load BEFORE writing any blueprint-markdown directive — never author :::/::/:name[]
-  syntax from memory. The parser fails silently (a stray space or wrong colon count
-  renders as plain text, no error), so guessing means a broken doc and a redo.
   Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
   any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
   timeline, progress, chip, icon, mindmap, …), "write it nicely / make it pretty / use cards /
@@ -14,8 +11,6 @@ description: >
 The blueprint-markdown viewer extends CommonMark with one grammar covering every rich
 component. That grammar has exactly three forms. Everything else in this skill is either
 the component catalog or the authoring judgment about when to use enhanced syntax vs plain.
-
-> **Author directives only with this skill open — never from recall.**
 
 ---
 
@@ -312,6 +307,11 @@ would, use the plain version.
 comparison layout; a simple list of items is right for a simple list.
 
 **Color tokens** — `primary success warning danger info gray low`. Full palette, aliases, and hex syntax in `references/syntax.md`.
+
+**Skimmable structure.** Organize the whole document so a reader can stop after the first
+section if that's all they need: lead each section with its answer, put caveats/rationale
+after under a labeled sub-heading, use bullets or a table over a paragraph, and bold only the
+one load-bearing phrase per line. See `output-styles/skimmable.md`.
 
 ---
 
