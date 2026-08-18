@@ -17,6 +17,9 @@
 import type MarkdownIt from 'markdown-it'
 import type Token from 'markdown-it/lib/token.mjs'
 import hljs from 'highlight.js'
+import { hljsDefineVue } from './hljsVueLanguage'
+
+hljs.registerLanguage('vue', hljsDefineVue)
 
 // ─── Info string parsing ──────────────────────────────────────────────────
 
