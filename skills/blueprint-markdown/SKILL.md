@@ -242,9 +242,10 @@ a `:::card` or other directive — it drops out of the pairing.
 > their wording, ordering, or the kind of detail they include should be copied as a convention.
 
 **Legend** — declares a color→meaning legend for a mermaid diagram (or any content), rendered
-as a panel toggled by a button in the diagram's own toolbar rather than inline text. Filters
-its `::legend-item` children out of the normal render flow; everything else (the fence) renders
-unchanged.
+as a panel in the diagram's top-left corner, shown expanded by default; click it to collapse to
+a small button, click again to expand. Row layout for a wide chart, column for a tall one.
+Filters its `::legend-item` children out of the normal render flow; everything else (the fence)
+renders unchanged.
 
 ````
 :::legend

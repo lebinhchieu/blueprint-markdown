@@ -398,9 +398,11 @@ neither errors.
 
 ### `:::legend`
 
-Declares a color→meaning legend for a mermaid diagram (or any content). Renders as a panel
-toggled by a button added to the diagram's own toolbar — not inline text. `::legend-item`
-children are pulled out before the rest renders normally, so the diagram itself is untouched.
+Declares a color→meaning legend for a mermaid diagram (or any content). Renders as a panel in
+the diagram's top-left corner, shown expanded by default — click it to collapse to a small
+button, click again to expand. Row layout for a wide/horizontal chart, column for a
+tall/vertical one, decided from the diagram's own aspect ratio. `::legend-item` children are
+pulled out before the rest renders normally, so the diagram itself is untouched.
 
 ````
 :::legend

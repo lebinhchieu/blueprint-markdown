@@ -169,10 +169,10 @@ flowchart TD
 :::
 ````
 
-It renders as a panel toggled by a button in the diagram's own toolbar, not as inline text
-under the diagram — so it costs no reading space until the reader asks for it. This is a
-`blueprint-markdown` directive, not mermaid syntax; see that skill's `:::legend` entry for the
-full attribute reference.
+It renders as a panel in the diagram's top-left corner, shown expanded by default — click to
+collapse it to a small button, click again to expand — laid out in a row for a wide chart or a
+column for a tall one. This is a `blueprint-markdown` directive, not mermaid syntax; see that
+skill's `:::legend` entry for the full attribute reference.
 
 Skip it when color is purely decorative (a single accent, no second category to confuse it
 with) — a legend for one color explains nothing.

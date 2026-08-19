@@ -60,7 +60,6 @@ interface Controls {
   reset: HTMLElement
   expand?: HTMLElement
   grow?: HTMLElement
-  legend?: HTMLElement
   help: HTMLElement
 }
 
@@ -87,14 +86,16 @@ export function getMermaidPanHandle(el: HTMLElement): MermaidPanHandle | undefin
 }
 
 /**
- * Open/closed choice for a diagram's legend panel, keyed by the `.mermaid`
- * element — same idiom as `panHandles` above, relied on for the same reason:
- * previewRuntime.ts re-reads `el.textContent` from that exact node on every
- * pass, so it survives morphdom even though its children get rebuilt.
+ * Collapsed/expanded choice for a diagram's legend panel, keyed by the
+ * `.mermaid` element — same idiom as `panHandles` above, relied on for the
+ * same reason: previewRuntime.ts re-reads `el.textContent` from that exact
+ * node on every pass, so it survives morphdom even though its children get
+ * rebuilt. The panel is its own click target (not a toolbar button), so this
+ * defaults to false — shown expanded, per its "on by default" design.
  */
-const legendOpen = new WeakMap<HTMLElement, boolean>()
+const legendCollapsed = new WeakMap<HTMLElement, boolean>()
 
-function buildControls(doc: Document, withExpand: boolean, withLegend: boolean): Controls {
+function buildControls(doc: Document, withExpand: boolean): Controls {
   const bar = doc.createElement('div')
   bar.className = 'em-mermaid__controls'
 
@@ -115,7 +116,6 @@ function buildControls(doc: Document, withExpand: boolean, withLegend: boolean):
   const zoomIn = makeButton('+', 'zoom-in', 'Zoom in')
   const grow = withExpand ? makeButton('⇕', 'grow', 'Grow to full height (f)') : undefined
   const expand = withExpand ? makeButton('⤢', 'expand', 'Expand') : undefined
-  const legend = withLegend ? makeButton('▤', 'legend', 'Toggle legend') : undefined
   // ponytail: guide is a native title tooltip (hover), same mechanism every
   // other button already uses — no popover component needed for one block of text.
   const help = makeButton(
@@ -130,7 +130,7 @@ function buildControls(doc: Document, withExpand: boolean, withLegend: boolean):
     ].join('\n'),
   )
 
-  return { bar, zoomIn, zoomOut, reset, expand, grow, legend, help }
+  return { bar, zoomIn, zoomOut, reset, expand, grow, help }
 }
 
 /**
@@ -295,7 +295,7 @@ function openModal(doc: Document, svg: SVGElement, originalStage: HTMLElement, c
   const panel = doc.createElement('div')
   panel.className = 'em-mermaid-modal__panel'
 
-  const controls = buildControls(doc, false, false)
+  const controls = buildControls(doc, false)
   const closeBtn = doc.createElement('button')
   closeBtn.type = 'button'
   closeBtn.className = 'em-mermaid-modal__close'
@@ -384,21 +384,29 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
     viewport.appendChild(stage)
     el.appendChild(viewport)
 
-    const controls = buildControls(doc, true, !!legendPanel)
+    const controls = buildControls(doc, true)
     el.appendChild(controls.bar)
 
-    // Restore the open/closed choice from the previous render pass (this
-    // whole function reruns on every doc edit, cache hit or miss — see the
-    // file doc comment), then let clicks flip it going forward.
-    if (legendPanel && controls.legend) {
-      const wasOpen = legendOpen.get(el) ?? false
-      legendPanel.hidden = !wasOpen
-      controls.legend.classList.toggle('em-mermaid__btn--active', wasOpen)
-      controls.legend.addEventListener('click', () => {
-        const nextOpen = legendPanel.hidden
-        legendPanel.hidden = !nextOpen
-        controls.legend!.classList.toggle('em-mermaid__btn--active', nextOpen)
-        legendOpen.set(el, nextOpen)
+    // Legend layout follows the diagram's own shape: a wide/horizontal chart
+    // gets a horizontal (row) legend, a tall/vertical one gets a vertical
+    // (column) legend — same content.w/h already computed above for sizing
+    // the svg, so no separate direction lookup (e.g. parsing `graph LR` out
+    // of the source) is needed.
+    if (legendPanel) {
+      // Row (default CSS layout) for a wide/horizontal chart, column for a
+      // tall/vertical one.
+      legendPanel.classList.toggle('em-mermaid__legend--col', content.h > content.w)
+
+      // Panel is its own click target — shown expanded by default, click
+      // collapses it to a small button, click again re-expands. Restore the
+      // choice from the previous render pass (this whole function reruns on
+      // every doc edit, cache hit or miss — see the file doc comment).
+      const collapsed = legendCollapsed.get(el) ?? false
+      legendPanel.classList.toggle('em-mermaid__legend--collapsed', collapsed)
+      legendPanel.addEventListener('click', () => {
+        const next = !legendPanel.classList.contains('em-mermaid__legend--collapsed')
+        legendPanel.classList.toggle('em-mermaid__legend--collapsed', next)
+        legendCollapsed.set(el, next)
       })
     }
 

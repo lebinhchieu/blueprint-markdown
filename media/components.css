@@ -226,20 +226,22 @@
   color: var(--text-base);
 }
 
-/* Mermaid legend panel (:::legend directive, toggled by the toolbar button
- * mermaidPanZoom.ts adds when a diagram has one). Swatches reuse .hex-swatch
- * below rather than a second copy of the same three rules. The panel is a
- * *sibling* of .mermaid, not a child (legend.ts keeps it out of the div whose
- * textContent previewRuntime.ts reads as the diagram source), so its
- * position:absolute needs .em-legend-wrap itself to anchor to, not .mermaid. */
+/* Mermaid legend panel (:::legend directive). Shown expanded by default in
+ * the diagram's top-left corner; click it to collapse to a small button,
+ * click again to expand (mermaidPanZoom.ts toggles --collapsed). Swatches
+ * reuse .hex-swatch below rather than a second copy of the same three rules.
+ * The panel is a *sibling* of .mermaid, not a child (legend.ts keeps it out
+ * of the div whose textContent previewRuntime.ts reads as the diagram
+ * source), so its position:absolute needs .em-legend-wrap itself to anchor
+ * to, not .mermaid. */
 .em-legend-wrap {
   position: relative;
 }
 
 .em-mermaid__legend {
   position: absolute;
-  top: calc(var(--sp-xs) + 2em);
-  right: var(--sp-xs);
+  top: var(--sp-xs);
+  left: var(--sp-xs);
   max-width: calc(100% - 2 * var(--sp-xs));
   display: flex;
   flex-wrap: wrap;
@@ -249,10 +251,43 @@
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
+  cursor: pointer;
 }
 
-.em-mermaid__legend[hidden] {
+.em-mermaid__legend:hover {
+  border-color: var(--c-primary);
+}
+
+/* Horizontal chart (wide) → legend reads left-to-right; vertical chart
+ * (tall) → legend reads top-to-bottom — mermaidPanZoom.ts picks one of
+ * these from the diagram's own aspect ratio. */
+.em-mermaid__legend--col {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+}
+
+/* Collapsed: shrinks to a single small button showing a legend glyph via
+ * ::before — no extra DOM element needed for the two states. */
+.em-mermaid__legend--collapsed {
+  width: 1.6em;
+  height: 1.6em;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Targets .em-mermaid__legend-item by name, not `> *` — a same-specificity
+ * `display` rule on that class later in the sheet would otherwise win on
+ * source order alone and silently un-hide it. */
+.em-mermaid__legend--collapsed > .em-mermaid__legend-item {
   display: none;
+}
+
+.em-mermaid__legend--collapsed::before {
+  content: '▤';
+  color: var(--text-muted);
+  line-height: 1;
 }
 
 .em-mermaid__legend-item {

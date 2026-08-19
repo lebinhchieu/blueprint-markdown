@@ -2,8 +2,10 @@
  * legend.ts — :::legend and ::legend-item directives.
  *
  * Wraps a mermaid diagram (or any content) and declares a color→meaning legend
- * for it, rendered as a toggleable panel inside the mermaid viewer's toolbar
- * (see enhanceMermaidZoom in mermaidPanZoom.ts).
+ * for it, rendered as a panel in the diagram's top-left corner, shown expanded
+ * by default — click it to collapse to a small button, click again to expand
+ * (see enhanceMermaidZoom in mermaidPanZoom.ts). Layout (row vs column) is
+ * decided client-side from the diagram's own aspect ratio.
  *
  * :::legend
  * ```mermaid
@@ -54,7 +56,7 @@ export const legendDirectives: Record<string, DirectiveSpec> = {
       const itemsHtml = items.map(item => legendItemHtml(item, ctx)).join('')
       return (
         `<div class="em-legend-wrap">${contentHtml}` +
-        `<div class="em-mermaid__legend" hidden>${itemsHtml}</div></div>`
+        `<div class="em-mermaid__legend">${itemsHtml}</div></div>`
       )
     },
   },
