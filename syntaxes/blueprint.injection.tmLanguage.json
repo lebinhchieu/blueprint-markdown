@@ -94,7 +94,7 @@
     },
     "directive-open-known": {
       "comment": "Container open with a known directive name",
-      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step|revision|previous|explorer)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step|revision|previous|explorer|legend)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"
@@ -144,7 +144,7 @@
     },
     "directive-leaf-known": {
       "comment": "Leaf directive with a known name (e.g. ::progress)",
-      "match": "^\\s*(::)(progress)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "match": "^\\s*(::)(progress|legend-item)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"

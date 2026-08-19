@@ -226,6 +226,41 @@
   color: var(--text-base);
 }
 
+/* Mermaid legend panel (:::legend directive, toggled by the toolbar button
+ * mermaidPanZoom.ts adds when a diagram has one). Swatches reuse .hex-swatch
+ * below rather than a second copy of the same three rules. The panel is a
+ * *sibling* of .mermaid, not a child (legend.ts keeps it out of the div whose
+ * textContent previewRuntime.ts reads as the diagram source), so its
+ * position:absolute needs .em-legend-wrap itself to anchor to, not .mermaid. */
+.em-legend-wrap {
+  position: relative;
+}
+
+.em-mermaid__legend {
+  position: absolute;
+  top: calc(var(--sp-xs) + 2em);
+  right: var(--sp-xs);
+  max-width: calc(100% - 2 * var(--sp-xs));
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-xs) var(--sp-sm);
+  padding: var(--sp-xs) var(--sp-sm);
+  background: var(--bg-overlay);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.em-mermaid__legend[hidden] {
+  display: none;
+}
+
+.em-mermaid__legend-item {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
 /* ─── Hex color swatch ─────────────────────────────────────────────────── */
 
 .hex-swatch {

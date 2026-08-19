@@ -5,9 +5,9 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer, legend
 4. [Leaf blocks (::)](#leaf-blocks)
-   - progress
+   - progress, legend-item
 5. [Inline (: )](#inline)
    - chip, icon, color, kbd, button, tooltip, rating, comment, ai
 6. [Fenced code extensions](#fenced-code)
@@ -396,6 +396,34 @@ neither errors.
 
 ---
 
+### `:::legend`
+
+Declares a color→meaning legend for a mermaid diagram (or any content). Renders as a panel
+toggled by a button added to the diagram's own toolbar — not inline text. `::legend-item`
+children are pulled out before the rest renders normally, so the diagram itself is untouched.
+
+````
+:::legend
+::legend-item{color=primary label="Entry point"}
+::legend-item{color=success label="Terminal state"}
+```mermaid
+graph TD
+  A[Start]:::primary --> B[Done]:::success
+  classDef primary stroke:var(--c-primary),fill:var(--c-primary),color:var(--text-base)
+  classDef success stroke:var(--c-success),fill:var(--c-success),color:var(--text-base)
+```
+:::
+````
+
+**No items, no panel** — a `:::legend` with no `::legend-item` children renders its content
+unchanged, fail-soft.
+
+**One diagram per block** — `:::legend` is meant to pair with a single diagram; the legend
+button and panel attach to whichever `.mermaid` element is its child, the same one-diagram
+assumption `:::explorer` makes.
+
+---
+
 ## Leaf blocks (::) {#leaf-blocks}
 
 ### `::progress`
@@ -411,6 +439,20 @@ A labeled progress bar.
 | `value` | integer or bare value | `0` |
 | `max` | integer | `100` |
 | `color` | color token | `primary` |
+| `label` | string | — |
+
+### `::legend-item`
+
+One entry in a `:::legend` panel — a color swatch plus a label. Rendered standalone (outside
+`:::legend`) as a plain inline swatch+label, fail-soft.
+
+```
+::legend-item{color=success label="Terminal state"}
+```
+
+| Attr | Values | Default |
+|------|--------|---------|
+| `color` | color token or hex | `gray` |
 | `label` | string | — |
 
 ---
@@ -589,6 +631,10 @@ is active:
 classDef alert fill:var(--c-danger-bg),stroke:var(--c-danger),color:var(--text-base)
 class Fail alert
 ```
+
+**Explain what a color means** by wrapping the diagram in [`:::legend`](#containers) with one
+`::legend-item` per `classDef` — see the [mermaid-diagrams skill](../../mermaid-diagrams/SKILL.md)
+for when to add one.
 
 Standard GFM mark: `==text==` renders as `<mark>`.
 

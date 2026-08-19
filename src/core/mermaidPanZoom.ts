@@ -60,6 +60,7 @@ interface Controls {
   reset: HTMLElement
   expand?: HTMLElement
   grow?: HTMLElement
+  legend?: HTMLElement
   help: HTMLElement
 }
 
@@ -85,7 +86,15 @@ export function getMermaidPanHandle(el: HTMLElement): MermaidPanHandle | undefin
   return panHandles.get(el)
 }
 
-function buildControls(doc: Document, withExpand: boolean): Controls {
+/**
+ * Open/closed choice for a diagram's legend panel, keyed by the `.mermaid`
+ * element — same idiom as `panHandles` above, relied on for the same reason:
+ * previewRuntime.ts re-reads `el.textContent` from that exact node on every
+ * pass, so it survives morphdom even though its children get rebuilt.
+ */
+const legendOpen = new WeakMap<HTMLElement, boolean>()
+
+function buildControls(doc: Document, withExpand: boolean, withLegend: boolean): Controls {
   const bar = doc.createElement('div')
   bar.className = 'em-mermaid__controls'
 
@@ -106,6 +115,7 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
   const zoomIn = makeButton('+', 'zoom-in', 'Zoom in')
   const grow = withExpand ? makeButton('⇕', 'grow', 'Grow to full height (f)') : undefined
   const expand = withExpand ? makeButton('⤢', 'expand', 'Expand') : undefined
+  const legend = withLegend ? makeButton('▤', 'legend', 'Toggle legend') : undefined
   // ponytail: guide is a native title tooltip (hover), same mechanism every
   // other button already uses — no popover component needed for one block of text.
   const help = makeButton(
@@ -120,7 +130,7 @@ function buildControls(doc: Document, withExpand: boolean): Controls {
     ].join('\n'),
   )
 
-  return { bar, zoomIn, zoomOut, reset, expand, grow, help }
+  return { bar, zoomIn, zoomOut, reset, expand, grow, legend, help }
 }
 
 /**
@@ -285,7 +295,7 @@ function openModal(doc: Document, svg: SVGElement, originalStage: HTMLElement, c
   const panel = doc.createElement('div')
   panel.className = 'em-mermaid-modal__panel'
 
-  const controls = buildControls(doc, false)
+  const controls = buildControls(doc, false, false)
   const closeBtn = doc.createElement('button')
   closeBtn.type = 'button'
   closeBtn.className = 'em-mermaid-modal__close'
@@ -345,6 +355,13 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
 
     const doc = el.ownerDocument
 
+    // A paired legend panel, if this diagram sits inside a :::legend-rendered
+    // wrapper (see legend.ts) — sibling only, never a child of `el`, since
+    // previewRuntime.ts reads `el`'s own textContent as the diagram source.
+    const legendPanel = el.parentElement?.classList.contains('em-legend-wrap')
+      ? el.parentElement.querySelector<HTMLElement>(':scope > .em-mermaid__legend')
+      : null
+
     // Pin the svg to its own natural pixel size (from mermaid's viewBox) so
     // pan/zoom transforms have an unambiguous, crisp base to scale from —
     // mermaid's own responsive width:100%/max-width would otherwise resolve
@@ -367,8 +384,23 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
     viewport.appendChild(stage)
     el.appendChild(viewport)
 
-    const controls = buildControls(doc, true)
+    const controls = buildControls(doc, true, !!legendPanel)
     el.appendChild(controls.bar)
+
+    // Restore the open/closed choice from the previous render pass (this
+    // whole function reruns on every doc edit, cache hit or miss — see the
+    // file doc comment), then let clicks flip it going forward.
+    if (legendPanel && controls.legend) {
+      const wasOpen = legendOpen.get(el) ?? false
+      legendPanel.hidden = !wasOpen
+      controls.legend.classList.toggle('em-mermaid__btn--active', wasOpen)
+      controls.legend.addEventListener('click', () => {
+        const nextOpen = legendPanel.hidden
+        legendPanel.hidden = !nextOpen
+        controls.legend!.classList.toggle('em-mermaid__btn--active', nextOpen)
+        legendOpen.set(el, nextOpen)
+      })
+    }
 
     // Default panel height: fit the diagram's own aspect ratio at the
     // panel's current width, so the first render needs no zoom/pan to read.

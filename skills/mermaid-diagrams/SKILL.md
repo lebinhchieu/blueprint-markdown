@@ -74,7 +74,9 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 
 > **Don't fix a shape with `direction` inside a subgraph** — mermaid only honors a
 > subgraph's own `rankdir` when no edge crosses its boundary; any external edge flips it
-> back to the parent direction, silently. Only isolated groups (e.g. a legend) can use it.
+> back to the parent direction, silently. Only isolated groups (nothing crossing in or out)
+> can use it — for a color key specifically, use `:::legend` (§4) instead of an isolated
+> subgraph; it doesn't take up graph layout space at all.
 
 - Group with `subgraph` — the main lever on legibility (not aspect ratio), for real
   grouping, not just a visual box. If `classDef` declares groups the graph doesn't have as
@@ -93,7 +95,7 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
   not only `:::explorer`; the default theme coloring being fine is not a reason to skip it
   once a category exists. Set `color:` explicitly (renderer defaults break in dark themes).
   Vary lightness, not just hue, for colorblind-safe fills. `classDef` for 2+ nodes sharing a
-  category, `style` only for a genuine one-off.
+  category, `style` only for a genuine one-off. Add a legend for it — see §4.
 - `sequenceDiagram`, `erDiagram`, and other non-flowchart types skip all of the above —
   see §2a.
 
@@ -144,3 +146,33 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 - Short, stable ids (`svc_auth`) with the readable text in the label
   (`svc_auth["Auth Service"]`). In `:::explorer`, the id is also the pairing key —
   renaming it breaks its detail link unless the `{#id}` anchor changes too.
+
+## 4. Legend
+
+**Every `classDef`/`style` color needs a legend entry** — a reader can't distinguish "styled
+for emphasis" from "styled because it's a failure state" without one. Wrap the diagram in
+`:::legend` and add one `::legend-item{color=... label="..."}` per `classDef`, using the exact
+same color token the `classDef` itself resolves to (never a different token, or the legend
+and the diagram drift apart):
+
+````
+:::legend
+```mermaid
+flowchart TD
+  auth["Auth Service"]:::svc
+  cache["Cache"]:::infra
+  classDef svc fill:var(--c-primary),color:var(--text-base)
+  classDef infra fill:var(--c-gray),color:var(--text-base)
+```
+::legend-item{color=primary label="Service"}
+::legend-item{color=gray label="Infrastructure"}
+:::
+````
+
+It renders as a panel toggled by a button in the diagram's own toolbar, not as inline text
+under the diagram — so it costs no reading space until the reader asks for it. This is a
+`blueprint-markdown` directive, not mermaid syntax; see that skill's `:::legend` entry for the
+full attribute reference.
+
+Skip it when color is purely decorative (a single accent, no second category to confuse it
+with) — a legend for one color explains nothing.

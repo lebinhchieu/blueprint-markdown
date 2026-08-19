@@ -89,7 +89,11 @@ function onTocClick(e: Event): void {
 function onRailEnter(e: Event): void {
   const target = e.target as Element | null
   // Only act when entering the .em-toc nav itself (not every child mouseenter).
-  if (!target?.classList.contains('em-toc')) return
+  // target can be a non-Element (e.g. Document) — removing the element under
+  // the cursor (mermaid's expand-modal close does this) fires a mouseenter
+  // whose target has no classList, so this needs its own `?.`, not just the
+  // one on `target`.
+  if (!target?.classList?.contains('em-toc')) return
   requestAnimationFrame(scrollActiveIntoView)
 }
 

@@ -72,6 +72,22 @@ function svgCacheSet(key: string, value: string): void {
   svgCache.set(key, value)
 }
 
+/**
+ * Resolve `var(--x)` to its computed literal value before handing the source
+ * to mermaid. Confirmed by hand: mermaid's own classDef/style grammar doesn't
+ * accept parentheses in a style value at all — `fill:var(--c-primary)` renders
+ * mermaid's own error diagram even with securityLevel:'loose', while
+ * `fill:#c05a28` parses fine. This keeps the documented `var(--c-primary)`
+ * authoring syntax (see blueprint-markdown's syntax.md) working by feeding
+ * mermaid something its grammar actually accepts, instead of asking authors
+ * to hardcode theme-specific hex values.
+ * ponytail: no fallback-value `var(--x, #fff)` support — nothing in this repo
+ * writes one; add if that syntax shows up in a diagram.
+ */
+function resolveCssVars(source: string, v: (name: string) => string): string {
+  return source.replace(/var\(\s*(--[\w-]+)\s*\)/g, (whole, name) => v(name) || whole)
+}
+
 export async function renderMermaid(
   root: HTMLElement,
   theme: string,
@@ -80,13 +96,21 @@ export async function renderMermaid(
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
 
+  // Needed up front, not just for themeVariables below — resolveCssVars uses
+  // it to turn a diagram's own `var(--x)` into a literal value mermaid can
+  // parse, so the cache key (computed per block right after) reflects the
+  // resolved text.
+  const css = getComputedStyle(root.ownerDocument.body)
+  const v = (name: string) => css.getPropertyValue(name).trim()
+
   // Classify each block as a cache hit or miss.
   const pending: Array<{ el: HTMLElement; key: string }> = []
 
   blocks.forEach(el => {
     // After morphdom, the block contains the raw source text (HTML-escaped by
     // fence.ts). textContent gives the decoded string that mermaid can parse.
-    const source = (el.textContent ?? '').trim()
+    const rawSource = (el.textContent ?? '').trim()
+    const source = resolveCssVars(rawSource, v)
     const key = `${theme}\n${source}`
     const cached = svgCache.get(key)
     if (cached !== undefined) {
@@ -106,9 +130,6 @@ export async function renderMermaid(
     enhanceMermaidZoom(blocks)
     return
   }
-
-  const css = getComputedStyle(root.ownerDocument.body)
-  const v = (name: string) => css.getPropertyValue(name).trim()
 
   const isDark = isDarkColor(v('--bg-base'), theme !== 'light')
 
