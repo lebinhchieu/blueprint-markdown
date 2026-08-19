@@ -141,6 +141,13 @@ no cloning required:
 
 Activate the output style with `/output-style skimmable`.
 
+This marketplace also carries the `evidence-skill` plugin (verification/evidence reports),
+installable the same way — independently of `blueprint-markdown-skills`:
+
+```
+/plugin install evidence-skill@blueprint-markdown-skills-marketplace
+```
+
 **Enable auto-update** so new releases show up without re-running commands:
 
 - `/plugin` → **Marketplaces** tab → select `blueprint-markdown-skills-marketplace` from the list to open its detail view → **Enable auto-update**.

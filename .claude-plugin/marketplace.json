@@ -6,6 +6,11 @@
       "name": "blueprint-markdown-skills",
       "source": ".",
       "description": "blueprint-markdown and mermaid-diagrams skills"
+    },
+    {
+      "name": "evidence-skill",
+      "source": "./plugins/evidence",
+      "description": "Durable evidence/verification reports for checked cases"
     }
   ]
 }
