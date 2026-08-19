@@ -28,8 +28,8 @@ say so in chat.
    | Type | How to verify | Evidence captured |
    |------|----------------|--------------------|
    | UI | Drive `playwright-cli` (see that skill) | `snapshot`/`screenshot` file |
-   | API | Run the request | status + response body |
-   | DB | Use whatever query tool the project already has (psql/prisma/ORM script) — discover it, don't assume one | query output |
+   | API | Run the request | method + full URL (including querystring, so it's copy-pasteable to retry) + params table (flat query/form params) or a pretty-printed JSON fence (when the request body is JSON) + pretty-printed JSON response — never a raw curl string |
+   | DB | Use whatever query tool the project already has (psql/prisma/ORM script) — discover it, don't assume one | query + result rows as a markdown table |
    | CLI/build | Run the command | exit code + stdout/stderr |
    | File/artifact | Read the file | content excerpt or diff |
    | Other | Whatever's given | free-text description + raw output |
@@ -47,13 +47,26 @@ skill for syntax) — use its `validate.mjs` after writing to catch unclosed dir
 outlives this session and needs to read cleanly on its own:
 - **Progress bar + summary table lead the file.** The overall verdict is the deliverable —
   a reader should be able to stop there if that's all they need.
-- **Per case:** the verdict callout (`:::success`/`:::danger`) comes first, `**What was
-  checked:**` is one bolded-label line, then the evidence, then `**Notes:**` — only when
-  there's an actual caveat. Omit the `Notes:` line otherwise; don't pad with filler.
+- **Per case:** a standalone `:::details{open}` block — no `:::accordion` wrapper, cases stay
+  independently open so a reviewer can compare several at once. The verdict is a
+  `:chip[PASS]{success}`/`:chip[FAIL]{danger}` in the `title=` itself, not a callout box.
+  Body: `**What was checked:**` is one bolded-label line, then the evidence, then
+  `**Notes:**` — only when there's an actual caveat. Omit the `Notes:` line otherwise; don't
+  pad with filler.
 - Case descriptions are one line each. Comparisons across cases live in the summary table,
   never restated as prose.
-- Screenshots use plain `![]()` (renders everywhere); API/DB/CLI output goes in fenced code
-  blocks with `title=`.
+- Screenshots use plain `![]()` (renders everywhere). CLI output goes in a fenced code block
+  with `title=`.
+- **API evidence:** method + full URL (including querystring — copy-pasteable to retry
+  manually) as inline code. Flat query/form params go in a table; a JSON request body gets
+  its own ```` ```json title="Request payload" ```` fence instead (a table doesn't fit nested
+  JSON). Response is always a ```` ```json title="Response (<status>)" ```` fence,
+  pretty-printed — never one-line stringified JSON, never a raw `curl ...` command.
+- **DB evidence:** query as inline code, result rows as a markdown table — not a fenced code
+  block.
+- **Coverage gaps:** if any case was skipped, blocked, pending, or out of scope, add a
+  `:::warning{title="Not covered"}` callout right after the summary table listing each with a
+  one-line reason. Omit entirely when every listed case was actually tested.
 
 ## Output layout
 
@@ -82,3 +95,10 @@ versioning.
 - Leaving an empty `**Notes:**` line on a PASS case — omit it, that's filler.
 - Putting per-case detail before the summary table — the table is the deliverable, it goes
   first.
+- Dumping a raw `curl ...` command instead of showing method/full URL/params/response clearly.
+- Pasting a stringified JSON blob instead of pretty-printing it in a `json` fence.
+- Putting DB query output in a code block instead of a result table.
+- Wrapping cases in `:::accordion` + per-case `:::success`/`:::danger` — use standalone
+  `:::details{open}` with the verdict chip in the title so multiple cases stay open at once.
+- Silently dropping a case that couldn't be tested instead of flagging it in the "Not
+  covered" callout.
