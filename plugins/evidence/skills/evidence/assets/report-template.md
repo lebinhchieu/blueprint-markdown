@@ -11,7 +11,7 @@
 - <case/scenario> — <reason: blocked by X, out of scope, environment unavailable, …>
 :::
 
-:::details{title="Case 1 — <case name>  :chip[PASS]{success}" open}
+:::details{title="Case 1 — <case name>  :chip[PASS]{success}" toc=h2 open}
 **What was checked:** <one line>
 
 **Request:** `<METHOD> <full URL, including querystring>`
@@ -20,15 +20,14 @@
 |-------|-------|
 | <name> | <value> |
 
-<!-- if the body is JSON instead of flat params, replace the table above with a
-     ```json title="Request payload"``` fence instead -->
+<!-- if the body is JSON instead of flat params, replace the table above with a json-fenced `title="Request payload"` block instead -->
 
 ```json title="Response (<status>)"
 <pretty-printed JSON>
 ```
 :::
 
-:::details{title="Case 2 — <case name>  :chip[FAIL]{danger}" open}
+:::details{title="Case 2 — <case name>  :chip[FAIL]{danger}" toc=h2 open}
 **What was checked:** <one line>
 
 **Query:** `<SQL or ORM call>`

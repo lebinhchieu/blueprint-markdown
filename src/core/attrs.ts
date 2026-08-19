@@ -122,6 +122,17 @@ export function parseAttrs(raw: string): Attrs {
 }
 
 /**
+ * Resolve a `toc=h1|h2|h3` attribute to that tag name, or `undefined` if
+ * absent or any other value — directives with a `title` attr use this to
+ * render their title as a real heading (feeding the TOC rail and the actual
+ * document outline) instead of their default span/div/summary wrapper.
+ */
+export function tocHeadingTag(attrs: Attrs): string | undefined {
+  const v = attrs.named['toc']
+  return v === 'h1' || v === 'h2' || v === 'h3' ? v : undefined
+}
+
+/**
  * Extract the attribute string from a directive line.
  * Returns the content of the first `{…}` block, or an empty string.
  *

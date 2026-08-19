@@ -11,6 +11,7 @@
  */
 
 import type { DirectiveSpec } from '../types'
+import { tocHeadingTag } from '../attrs'
 
 export const cardDirectives: Record<string, DirectiveSpec> = {
   card: {
@@ -20,13 +21,14 @@ export const cardDirectives: Record<string, DirectiveSpec> = {
       const icon  = node.attrs.named['icon']
       const id    = node.attrs.id ? ` id="${ctx.esc(node.attrs.id)}"` : ''
       const cls   = node.attrs.classes.length ? ` ${node.attrs.classes.join(' ')}` : ''
+      const titleTag = tocHeadingTag(node.attrs) ?? 'span'
 
       const iconHtml = icon
         ? `<span class="material-symbols-outlined card__icon">${ctx.esc(icon)}</span>`
         : ''
 
       const headerHtml = title || icon
-        ? `<div class="card__header">${iconHtml}${title ? `<span class="card__title">${ctx.renderInline(title)}</span>` : ''}</div>`
+        ? `<div class="card__header">${iconHtml}${title ? `<${titleTag} class="card__title">${ctx.renderInline(title)}</${titleTag}>` : ''}</div>`
         : ''
 
       const body = ctx.renderChildren(node)

@@ -64,6 +64,7 @@ Body markdown.
 |------|--------|---------|-------|
 | `title` | string | — | Header text; omit for no header |
 | `icon` | Material Symbols name | — | Shown next to title |
+| `toc` | `h1` \| `h2` \| `h3` | — | Render `title` as a real heading (same look) — feeds the TOC rail + document outline. Other values ignored. |
 
 ### `:::cards`
 
@@ -115,6 +116,11 @@ Content.
 | `type` | color token or any string | `info` |
 | `title` | string | — |
 | `icon` | Material Symbols name | auto from type |
+| `toc` | `h1` \| `h2` \| `h3` | — |
+
+`toc` also applies to the named types above (they all alias to `:::callout`): render
+`title` as a real heading (same look) — feeds the TOC rail + document outline. Other
+values ignored.
 
 ---
 
@@ -132,6 +138,10 @@ Hidden content.
 |------|--------|---------|
 | `title` | string | "Details" |
 | `open` | flag | false |
+| `toc` | `h1` \| `h2` \| `h3` | — |
+
+`toc` renders `title` as a real heading inside the summary bar (same look) — feeds the TOC
+rail + document outline. Other values ignored.
 
 ---
 
@@ -248,6 +258,11 @@ Edit `config.json`.
 | Attr | Values | Default |
 |------|--------|---------|
 | `title` | string | — |
+| `toc` | `h1` \| `h2` \| `h3` | — |
+
+`toc` renders `title` as a real heading (same look) — feeds the TOC rail + document
+outline. Other values ignored. Not supported on `:::tab` (its title is a hidden-panel
+button label, not a place a heading belongs).
 
 ---
 

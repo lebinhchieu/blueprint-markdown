@@ -47,12 +47,13 @@ skill for syntax) — use its `validate.mjs` after writing to catch unclosed dir
 outlives this session and needs to read cleanly on its own:
 - **Progress bar + summary table lead the file.** The overall verdict is the deliverable —
   a reader should be able to stop there if that's all they need.
-- **Per case:** a standalone `:::details{open}` block — no `:::accordion` wrapper, cases stay
-  independently open so a reviewer can compare several at once. The verdict is a
+- **Per case:** a standalone `:::details{toc=h2 open}` block — no `:::accordion` wrapper,
+  cases stay independently open so a reviewer can compare several at once. The verdict is a
   `:chip[PASS]{success}`/`:chip[FAIL]{danger}` in the `title=` itself, not a callout box.
-  Body: `**What was checked:**` is one bolded-label line, then the evidence, then
-  `**Notes:**` — only when there's an actual caveat. Omit the `Notes:` line otherwise; don't
-  pad with filler.
+  `toc=h2` renders that title as a real heading (same look) so each case gets an entry in the
+  preview's TOC rail. Body: `**What was checked:**` is one bolded-label line, then the
+  evidence, then `**Notes:**` — only when there's an actual caveat. Omit the `Notes:` line
+  otherwise; don't pad with filler.
 - Case descriptions are one line each. Comparisons across cases live in the summary table,
   never restated as prose.
 - Screenshots use plain `![]()` (renders everywhere). CLI output goes in a fenced code block

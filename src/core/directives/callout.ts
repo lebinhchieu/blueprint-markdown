@@ -15,6 +15,7 @@
 
 import type { DirectiveSpec } from '../types'
 import { canonicalRole } from '../colors'
+import { tocHeadingTag } from '../attrs'
 
 /** Default icon for each callout type */
 const TYPE_ICONS: Record<string, string> = {
@@ -41,8 +42,9 @@ function calloutRender(
     : ''
 
   if (title) {
+    const titleTag = tocHeadingTag(node.attrs) ?? 'span'
     const titleHtml =
-      `<div class="callout__header">${iconHtml}<span class="callout__title">${ctx.renderInline(title)}</span></div>`
+      `<div class="callout__header">${iconHtml}<${titleTag} class="callout__title">${ctx.renderInline(title)}</${titleTag}></div>`
     return `<div class="callout callout--${ctx.esc(role)}">${titleHtml}<div class="callout__body">${body}</div></div>`
   }
 

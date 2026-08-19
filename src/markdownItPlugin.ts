@@ -24,6 +24,7 @@ import type StateCore from 'markdown-it/lib/rules_core/state_core.mjs'
 import markdownItMark from 'markdown-it-mark'
 import markdownItTaskLists from 'markdown-it-task-lists'
 import { parseBlocks } from './core/parser'
+import { parseAttrs } from './core/attrs'
 import { buildRegistry } from './core/directives/index'
 import { createMarkdownIt } from './core/markdownit'
 import { installInlineRule, installHexColorRule } from './core/inline'
@@ -283,12 +284,20 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
         if (found.length === 0) continue
         const stamps: TocHeadingStamp[] = []
         for (const h of found) {
-          const base = h.explicitId ?? slugify(h.text) ?? `section-${entries.length + 1}`
+          // h.text is raw markdown — a plain `#` heading's own text, or a
+          // toc= directive's title= (which routinely has a :chip[...]{...}
+          // baked in). Parse it inline so the rail label/slug match what a
+          // real heading_open/inline pair would produce (plain text only,
+          // via inlineText below), not the raw source with directive syntax
+          // leaking through.
+          const inlineTok = state.md.parseInline(h.text, state.env)[0]
+          const cleanText = inlineTok ? inlineText(inlineTok) || h.text : h.text
+          const base = h.explicitId ?? slugify(cleanText) ?? `section-${entries.length + 1}`
           const count = (slugCount.get(base) ?? 0) + 1
           slugCount.set(base, count)
           const id = count === 1 ? base : `${base}-${count}`
           stamps.push({ id, idx: entries.length, level: h.level })
-          entries.push({ level: h.level, id, text: h.text })
+          entries.push({ level: h.level, id, text: cleanText })
         }
         tok.meta = { tocHeadings: stamps }
         continue
@@ -381,12 +390,20 @@ type TocHeadingStamp = { id: string; idx: number; level: number }
  *  imported since this file already mirrors parser.ts's regexes locally. */
 const RE_TRAILING_ANCHOR = /^([\s\S]*?)\s*\{#([A-Za-z][\w-]*)\}\s*$/
 
+/** `toc=` attribute value → heading level. Anything else (h4+, garbage) is ignored. */
+const TOC_LEVELS: Record<string, number> = { h1: 1, h2: 2, h3: 3 }
+
 /**
- * Scan a directive's raw (unparsed) content for ATX headings (`### Text`),
- * skipping fenced code regions so a code sample showing directive syntax
- * never counts. `:::name` / `::name` lines don't interfere — heading
- * detection is a plain per-line regex, so nested containers need no special
- * handling; their heading lines are just more lines in this same content.
+ * Scan a directive's raw (unparsed) content for two things that both make the
+ * TOC rail: ATX headings (`### Text`), and a directive's own opening line
+ * (`:::name{... toc=h2 title="..." ...}`) — the latter is how a `card`/
+ * `callout`/`details`/`step` title becomes a real heading (see those
+ * directives' renderers). Skips fenced code regions so a code sample showing
+ * either syntax never counts. `:::name`/`::name` lines don't interfere with
+ * heading detection and vice versa — both are plain per-line regexes, so
+ * nested containers need no special handling; a directive's own opening line
+ * is just line 0 of its own content, and a nested directive's line is just
+ * another line inside its parent's content.
  */
 function collectDirectiveHeadings(
   content: string,
@@ -410,16 +427,24 @@ function collectDirectiveHeadings(
     }
 
     const headingMatch = line.match(/^ {0,3}(#{1,6})\s+(.+?)\s*#*\s*$/)
-    if (!headingMatch) continue
+    if (headingMatch) {
+      const level = headingMatch[1].length
+      const raw = headingMatch[2].trim()
+      const anchor = raw.match(RE_TRAILING_ANCHOR)
+      results.push(
+        anchor
+          ? { level, text: anchor[1].trim(), explicitId: anchor[2] }
+          : { level, text: raw },
+      )
+      continue
+    }
 
-    const level = headingMatch[1].length
-    const raw = headingMatch[2].trim()
-    const anchor = raw.match(RE_TRAILING_ANCHOR)
-    results.push(
-      anchor
-        ? { level, text: anchor[1].trim(), explicitId: anchor[2] }
-        : { level, text: raw },
-    )
+    const directiveMatch = line.match(RE_OPEN) ?? line.match(RE_LEAF)
+    if (!directiveMatch) continue
+    const attrs = parseAttrs(directiveMatch[2] ?? '')
+    const level = TOC_LEVELS[attrs.named['toc'] ?? '']
+    const title = attrs.named['title']
+    if (level && title) results.push({ level, text: title })
   }
 
   return results

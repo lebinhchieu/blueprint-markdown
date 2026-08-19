@@ -771,6 +771,30 @@ details[open] > .details__summary::before {
 
 .step__body > :last-child { margin-bottom: 0; }
 
+/* ─── toc= real-heading titles ──────────────────────────────────────────── */
+/* card/callout/step/details titles render as real <h1-h3> tags when their
+ * `toc=` attribute is set (see card.ts/callout.ts/steps.ts/disclosure.ts),
+ * so the TOC rail and the actual document outline pick them up. These
+ * overrides cancel `.md-output h1,h2,h3`'s heavy heading look (base.css)
+ * so the title still reads as the plain span/div/summary text it replaces.
+ * The `:is(h1,h2,h3)` + class combo is needed to out-specificity
+ * `.md-output h2` (class+type) — a bare `.card__title` alone can't beat it
+ * regardless of source order. */
+.md-output :is(h1, h2, h3).card__title,
+.md-output :is(h1, h2, h3).callout__title,
+.md-output :is(h1, h2, h3).step__title,
+.md-output :is(h1, h2, h3).details__title {
+  margin: 0;
+  font-family: inherit;
+  line-height: inherit;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+.md-output :is(h1, h2, h3).card__title    { font-weight: 600; font-size: var(--font-size-base); }
+.md-output :is(h1, h2, h3).callout__title { font-weight: 600; font-size: inherit; }
+.md-output :is(h1, h2, h3).step__title    { font-weight: 600; font-size: inherit; }
+.md-output :is(h1, h2, h3).details__title { font-weight: 500; font-size: inherit; }
+
 /* ─── Progress ──────────────────────────────────────────────────────────── */
 
 .progress {

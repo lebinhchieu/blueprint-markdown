@@ -182,6 +182,17 @@ Drag the file onto `viewer.html`.
 :::
 ```
 
+**Title as a real heading** — `toc=h1|h2|h3` on `card`, `callout` (+ its named types),
+`details`, or `step` renders that title as a real heading tag (looks identical to the
+default) so it feeds the TOC rail (`blueprintMarkdown.toc`) *and* the document
+outline/screen-reader heading navigation, not just the rail. Any other `toc=` value is
+ignored. Not supported on `tab` (its title is a hidden-panel button label).
+```
+:::details{title="Case 1" toc=h2 open}
+Shows up in the TOC as a real h2, same look as a plain title.
+:::
+```
+
 **Revision** — flag a changed passage without altering how the current content looks
 ```
 :::revision{note="Tightened the rate limit" date="2026-06-26"}

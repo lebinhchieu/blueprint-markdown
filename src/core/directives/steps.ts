@@ -14,6 +14,7 @@
  */
 
 import type { DirectiveSpec } from '../types'
+import { tocHeadingTag } from '../attrs'
 
 export const stepsDirectives: Record<string, DirectiveSpec> = {
   steps: {
@@ -28,8 +29,9 @@ export const stepsDirectives: Record<string, DirectiveSpec> = {
     forms: ['container'],
     render(node, ctx) {
       const title = node.attrs.named['title']
+      const titleTag = tocHeadingTag(node.attrs) ?? 'div'
       const titleHtml = title
-        ? `<div class="step__title">${ctx.renderInline(title)}</div>`
+        ? `<${titleTag} class="step__title">${ctx.renderInline(title)}</${titleTag}>`
         : ''
       const body = ctx.renderChildren(node)
       return `<div class="step">${titleHtml}<div class="step__body">${body}</div></div>`

@@ -5,6 +5,12 @@
  *   content
  * :::
  *
+ * `toc=h1|h2|h3` renders the title as a real heading (feeds the TOC rail and
+ * the document outline) instead of plain summary text:
+ * :::details{title="Case 1" toc=h2}
+ *   …
+ * :::
+ *
  * :::accordion
  *   :::details{title="A"} … :::
  *   :::details{title="B"} … :::
@@ -12,6 +18,7 @@
  */
 
 import type { DirectiveSpec, ASTNode } from '../types'
+import { tocHeadingTag } from '../attrs'
 
 /** Returns true if any descendant directive node is named `revision`. */
 function hasRevisionDescendant(children: ASTNode[] | undefined): boolean {
@@ -39,6 +46,10 @@ export const disclosureDirectives: Record<string, DirectiveSpec> = {
 
       const openAttr = isOpen ? ' open' : ''
       const body     = ctx.renderChildren(node)
+      const tocTag   = tocHeadingTag(node.attrs)
+      const titleHtml = tocTag
+        ? `<${tocTag} class="details__title">${ctx.renderInline(title)}</${tocTag}>`
+        : ctx.renderInline(title)
 
       // Signal that a revision is nested inside — visible even when collapsed.
       const revBadge = hasRevisionDescendant(node.children)
@@ -47,7 +58,7 @@ export const disclosureDirectives: Record<string, DirectiveSpec> = {
 
       return (
         `<details class="details"${openAttr}>` +
-        `<summary class="details__summary">${ctx.renderInline(title)}${revBadge}</summary>` +
+        `<summary class="details__summary">${titleHtml}${revBadge}</summary>` +
         `<div class="details__body">${body}</div></details>`
       )
     },
