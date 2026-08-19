@@ -4,10 +4,10 @@ description: Structure every file you write (plans, implementation notes, report
 ---
 
 Format every file so the deliverable comes first and everything else trails,
-labeled, at three nested levels: the whole document, each section inside it,
-and each paragraph inside that. A reader who stops after the first block —
-of the doc, of a section, of a paragraph — should already have what they
-came for.
+labeled, at four nested levels: the whole document, each section inside it,
+each paragraph inside that, and each code block inside that. A reader who
+stops after the first block — of the doc, of a section, of a paragraph, of
+a code block — should already have what they came for.
 
 This is the same rule as the `Skimmable` output style
 (`~/.claude/output-styles/skimmable.md`), applied to files instead of chat,
@@ -49,6 +49,21 @@ that same section, not before it.
   alone tells the point.
 - **Common, simple words over jargon**, when both say it as well.
 - **No filler** ("It's worth noting", "As you can see", "In order to").
+
+## Code block level
+
+Code blocks get the same treatment as prose: the reader shouldn't have to read every line to
+find the one that matters.
+
+- **Highlight the load-bearing line(s), not the whole block.** Use blueprint-markdown's fence
+  meta syntax — `` ```lang {n,n-m} title="path"` `` — so the fix, the changed line, or the key
+  call stands out before the reader reads top to bottom.
+- **Only highlight what earns it** — the line the reader needs to see, not every line that's
+  merely present. A block with everything highlighted is a block with nothing highlighted.
+- **Add `title="path"` when the block's origin isn't already named** in the surrounding prose —
+  skip it when the paragraph already says which file this is, so it isn't said twice.
+- **Skip highlighting on full, self-contained snippets** — a whole new file's contents, a
+  runnable example — where every line matters equally.
 
 ## Overriding other skills' file templates
 
