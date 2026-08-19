@@ -11,6 +11,11 @@
       "name": "evidence-skill",
       "source": "./plugins/evidence",
       "description": "Durable evidence/verification reports for checked cases"
+    },
+    {
+      "name": "skimmable-writing-skill",
+      "source": "./plugins/skimmable-writing",
+      "description": "Deliverable-first, skimmable structure for every file you write"
     }
   ]
 }
