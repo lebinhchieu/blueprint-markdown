@@ -59,6 +59,9 @@ const REGISTRY = {
   previous:  ['container'],
   // explorer.ts — first mermaid fence pins, everything after it is the detail pane
   explorer:  ['container'],
+  // legend.ts — wraps a diagram + ::legend-item children into a toggleable legend panel
+  legend:      ['container'],
+  'legend-item': ['leaf'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],
@@ -75,7 +78,7 @@ const REGISTRY = {
 // Colon count is the grammar:
 //   :::name{attrs} = container OPEN   (closes with :::)
 //   :::            = container CLOSE
-//   ::name{attrs}  = leaf block (progress only)
+//   ::name{attrs}  = leaf block (progress, legend-item)
 //   :name[…]{…}    = inline — stays in text runs, NOT classified here
 
 const RE_CLOSE = /^\s*:::\s*$/

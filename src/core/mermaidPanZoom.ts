@@ -85,6 +85,16 @@ export function getMermaidPanHandle(el: HTMLElement): MermaidPanHandle | undefin
   return panHandles.get(el)
 }
 
+/**
+ * Collapsed/expanded choice for a diagram's legend panel, keyed by the
+ * `.mermaid` element — same idiom as `panHandles` above, relied on for the
+ * same reason: previewRuntime.ts re-reads `el.textContent` from that exact
+ * node on every pass, so it survives morphdom even though its children get
+ * rebuilt. The panel is its own click target (not a toolbar button), so this
+ * defaults to false — shown expanded, per its "on by default" design.
+ */
+const legendCollapsed = new WeakMap<HTMLElement, boolean>()
+
 function buildControls(doc: Document, withExpand: boolean): Controls {
   const bar = doc.createElement('div')
   bar.className = 'em-mermaid__controls'
@@ -345,6 +355,13 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
 
     const doc = el.ownerDocument
 
+    // A paired legend panel, if this diagram sits inside a :::legend-rendered
+    // wrapper (see legend.ts) — sibling only, never a child of `el`, since
+    // previewRuntime.ts reads `el`'s own textContent as the diagram source.
+    const legendPanel = el.parentElement?.classList.contains('em-legend-wrap')
+      ? el.parentElement.querySelector<HTMLElement>(':scope > .em-mermaid__legend')
+      : null
+
     // Pin the svg to its own natural pixel size (from mermaid's viewBox) so
     // pan/zoom transforms have an unambiguous, crisp base to scale from —
     // mermaid's own responsive width:100%/max-width would otherwise resolve
@@ -369,6 +386,29 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
 
     const controls = buildControls(doc, true)
     el.appendChild(controls.bar)
+
+    // Legend layout follows the diagram's own shape: a wide/horizontal chart
+    // gets a horizontal (row) legend, a tall/vertical one gets a vertical
+    // (column) legend — same content.w/h already computed above for sizing
+    // the svg, so no separate direction lookup (e.g. parsing `graph LR` out
+    // of the source) is needed.
+    if (legendPanel) {
+      // Row (default CSS layout) for a wide/horizontal chart, column for a
+      // tall/vertical one.
+      legendPanel.classList.toggle('em-mermaid__legend--col', content.h > content.w)
+
+      // Panel is its own click target — shown expanded by default, click
+      // collapses it to a small button, click again re-expands. Restore the
+      // choice from the previous render pass (this whole function reruns on
+      // every doc edit, cache hit or miss — see the file doc comment).
+      const collapsed = legendCollapsed.get(el) ?? false
+      legendPanel.classList.toggle('em-mermaid__legend--collapsed', collapsed)
+      legendPanel.addEventListener('click', () => {
+        const next = !legendPanel.classList.contains('em-mermaid__legend--collapsed')
+        legendPanel.classList.toggle('em-mermaid__legend--collapsed', next)
+        legendCollapsed.set(el, next)
+      })
+    }
 
     // Default panel height: fit the diagram's own aspect ratio at the
     // panel's current width, so the first render needs no zoom/pan to read.

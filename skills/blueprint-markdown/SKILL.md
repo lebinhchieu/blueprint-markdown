@@ -39,7 +39,7 @@ directive when the directive doesn't add meaningfully to the reading experience.
 All custom components use the same grammar. Learn these three forms and you know every feature.
 
 > **Colon count *is* the grammar.** `:::` = container block, and it opens **and closes** with `:::`.
-> `::` = leaf block, used by **`progress` only**. `:` = inline. When in doubt, it's `:::`.
+> `::` = leaf block, used by **`progress` and `legend-item`**. `:` = inline. When in doubt, it's `:::`.
 
 ### 1. Container block (open with `:::`, close with `:::`)
 ```
@@ -48,7 +48,7 @@ Body **markdown** — any nested content, including other directives.
 :::
 ```
 
-### 2. Leaf block (`::`, single-line — only `progress`)
+### 2. Leaf block (`::`, single-line — `progress` and `legend-item`)
 ```
 ::name{attrs}
 ```
@@ -79,7 +79,7 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Multi-word values must be quoted | `title="Two words"` | `title=Two words` |
 | Bare-word order matters (first = primary) | `{danger open}` → color=danger | `{open danger}` → color lost |
 | Blocks open AND close with `:::` | `:::callout{…}` … `:::` | `::callout{…}` … `::` |
-| `::` is `progress` only | `::progress{…}` | `:::progress{…}` |
+| `::` is leaf-only (`progress`, `legend-item`) | `::progress{…}` | `:::progress{…}` |
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::explorer` pairs **only** by `{#id}` | `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — no anchor, so the box goes dead with no error |
@@ -241,10 +241,33 @@ a `:::card` or other directive — it drops out of the pairing.
 > is written are the author's call — the examples are deliberately minimal so nothing about
 > their wording, ordering, or the kind of detail they include should be copied as a convention.
 
+**Legend** — declares a color→meaning legend for a mermaid diagram (or any content), rendered
+as a panel in the diagram's top-left corner, shown expanded by default; click it to collapse to
+a small button, click again to expand. Row layout for a wide chart, column for a tall one.
+Filters its `::legend-item` children out of the normal render flow; everything else (the fence)
+renders unchanged.
+
+````
+:::legend
+::legend-item{color=primary label="Entry point"}
+::legend-item{color=success label="Terminal state"}
+```mermaid
+graph TD
+  A[Start]:::primary --> B[Done]:::success
+  classDef primary fill:var(--c-primary),color:var(--text-base)
+  classDef success fill:var(--c-success),color:var(--text-base)
+```
+:::
+````
+
+`color` accepts the same tokens as everything else (`primary/success/warning/danger/info/gray/…`)
+or a hex value.
+
 ### Leaf blocks (::)
 
 ```
 ::progress{value=70 max=100 color=primary label="Build coverage"}
+::legend-item{color=success label="Terminal state"}
 ```
 
 ### Inline elements (:)
