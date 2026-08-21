@@ -37,6 +37,19 @@ say so in chat.
 3. **Capture a verdict** — PASS or FAIL — per case, from the evidence gathered.
 4. **Write the report** using `assets/report-template.md` as the skeleton, filled with the
    real cases (format below).
+5. **Stamp run metadata** — read the existing `report.md` first, if present:
+   - Get the real current timestamp via `date` (never guess/hallucinate a date).
+   - Report level: new run number = previous report's run number + 1 (or `1` if no prior
+     file). `Created` stays whatever the first-ever report recorded; `Last run` is always
+     this new run number + the current timestamp.
+   - Per case, match by exact case-description text against the previous report:
+     - Matched **and** actually (re-)verified this session → keep `Created`, bump `Last run`
+       to the new report run number + current timestamp.
+     - Matched but **not** re-verified this session → keep both `Created` and `Last run`
+       exactly as they were.
+     - No match (new case, or reworded) → both `Created` and `Last run` = the new report run
+       number + current timestamp.
+   - No prior `report.md` → report and every case start at `Run 1`, timestamped now.
 
 ## Report format
 
@@ -68,6 +81,11 @@ outlives this session and needs to read cleanly on its own:
 - **Coverage gaps:** if any case was skipped, blocked, pending, or out of scope, add a
   `:::warning{title="Not covered"}` callout right after the summary table listing each with a
   one-line reason. Omit entirely when every listed case was actually tested.
+- **Run stamp:** one caption line, `_Created: Run <N> · Last run: Run <N> — <date time>_`,
+  right after the progress bar (report level) and as the first line inside each case's
+  `:::details` body (per case, tracked independently — see the workflow step above). The
+  summary table also gets `Created`/`Last run` columns with the same per-case values, so the
+  staleness signal is visible without opening any case.
 
 ## Output layout
 
@@ -103,3 +121,6 @@ versioning.
   `:::details{open}` with the verdict chip in the title so multiple cases stay open at once.
 - Silently dropping a case that couldn't be tested instead of flagging it in the "Not
   covered" callout.
+- Guessing the timestamp instead of running `date` for a real one.
+- Bumping a case's `Last run` when it wasn't actually re-verified this session — only
+  genuinely-checked cases get their stamp updated.

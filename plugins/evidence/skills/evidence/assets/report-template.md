@@ -2,16 +2,20 @@
 ::progress{value=<passed> max=<total> color=success label="Cases passed"}
 :::
 
-| Case | Type | Verdict |
-|------|------|---------|
-| <case name> | API | :chip[PASS]{success} |
-| <case name> | DB | :chip[FAIL]{danger} |
+_Created: Run <N> · Last run: Run <N> — <date time>_
+
+| Case | Type | Verdict | Created | Last run |
+|------|------|---------|---------|----------|
+| <case name> | API | :chip[PASS]{success} | Run <N> | Run <N> — <date time> |
+| <case name> | DB | :chip[FAIL]{danger} | Run <N> | Run <N> — <date time> |
 
 :::warning{title="Not covered"}
 - <case/scenario> — <reason: blocked by X, out of scope, environment unavailable, …>
 :::
 
 :::details{title="Case 1 — <case name>  :chip[PASS]{success}" toc=h2 open}
+_Created: Run <N> · Last run: Run <N> — <date time>_
+
 **What was checked:** <one line>
 
 **Request:** `<METHOD> <full URL, including querystring>`
@@ -28,6 +32,8 @@
 :::
 
 :::details{title="Case 2 — <case name>  :chip[FAIL]{danger}" toc=h2 open}
+_Created: Run <N> · Last run: Run <N> — <date time>_
+
 **What was checked:** <one line>
 
 **Query:** `<SQL or ORM call>`
