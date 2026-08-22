@@ -61,6 +61,10 @@ src/core/
   inline-code.ts            ← inline-code renderer (file refs as links)
   hydrate.ts                ← browser-side tab/accordion hydration
   previewRuntime.ts         ← shared browser runtime (theme, mermaid SVG cache)
+  mermaidPanZoom.ts         ← mermaid pan/zoom/reset/fullscreen (hand-rolled, no lib)
+  explorerSync.ts           ← pairs mermaid nodes to :::explorer detail sections, click-to-scroll
+  toc.ts                    ← TOC reading rail + scroll-spy (preview and exported HTML)
+  commentInsert.ts          ← webview right-click → inserts :comment/:ai directives into source
   markdownit.ts             ← factory for the extension-host markdown-it instance
   markdownitBrowser.ts      ← browser-safe markdown-it factories (no vscode/fs deps)
 ```
@@ -73,10 +77,11 @@ src/core/
 
 1. Copies font woff2 files from `node_modules/@fontsource*` to `media/fonts/`
 2. Downloads `material-symbols-outlined.woff2` from CDN on first build
-3. Writes `media/fonts.css` (assembled `@font-face` declarations)
-4. Writes `media/hljs.css` (scoped atom-one-light/dark themes)
+3. Writes `media/fonts.css` (assembled `@font-face` declarations) and `media/hljs.css` (scoped atom-one-light/dark themes)
+4. Regenerates `media/em-theme.css` by concatenating `media/themes/*.css` in a fixed order — **never hand-edit `em-theme.css`**, it's overwritten every build
 5. Transpiles the directive registry to a temp CJS module, reads all known names, and regenerates `syntaxes/blueprint.injection.tmLanguage.json`
-6. Runs three parallel esbuild bundles: `extension.js`, `preview.js`, `export-client.js`
+6. Assembles minified per-theme CSS for the HTML export feature: `dist/export-styles-<theme>.css` per theme, plus a combined `dist/export-styles.css`
+7. Runs three parallel esbuild bundles: `extension.js`, `preview.js`, `export-client.js`
 
 ### Adding a new directive
 
@@ -101,8 +106,12 @@ nested/indented directive, not only a top-level one.
 
 ### Adding a new theme
 
-1. Add CSS custom-property overrides for the new theme name in `media/em-theme.css` and/or `media/tokens.css` (scoped to `body[data-em-theme="your-name"]`)
-2. Add the name to the `blueprintMarkdown.theme` enum (and its `enumDescriptions`) in `package.json`
+`media/tokens.css` is the contract (every variable `components.css` reads); `media/em-theme.css` is generated from `media/themes/*.css` — don't edit it by hand.
+
+1. Add `media/themes/your-name.css` with CSS custom-property overrides scoped to `body[data-em-theme="your-name"]`
+2. Add the name to `THEME_ORDER` in `esbuild.mjs` (em-theme.css assembly) and to the `THEMES` array (export-styles assembly)
+3. Add the name to the `blueprintMarkdown.theme` enum (and its `enumDescriptions`) in `package.json`
+4. `npm run build` regenerates `media/em-theme.css` and `dist/export-styles-*.css`
 
 ### Directive syntax summary
 
@@ -140,3 +149,7 @@ client-rendered directive:
 ### Theme injection
 
 On every render, the `em_theme_marker` core rule in `markdownItPlugin.ts` prepends a hidden `<div class="em-theme-config" data-em-theme="…">` to the output. `previewRuntime.applyTheme()` reads this marker and stamps `body[data-em-theme]`, which drives `em-theme.css` and `hljs.css` selector scoping.
+
+## Docs maintenance
+
+Don't touch `README.md`, `CHANGELOG.md`, or this file while a feature/fix is in progress — finish and verify the code change first. Once it's done, ask whether any of those need updating; don't update them unprompted. Keep whatever gets added lean: a one-line CHANGELOG entry, a targeted section edit — not a rewrite, not restating what the diff already makes obvious.

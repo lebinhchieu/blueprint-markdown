@@ -7,7 +7,8 @@
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/ChieuLe.blueprint-markdown-chieu?color=007ACC)](https://marketplace.visualstudio.com/items?itemName=ChieuLe.blueprint-markdown-chieu)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-![Hero](media/readme/hero.png)
+![Preview](media/readme/preview.png)
+
 ---
 
 ## Why Blueprint Markdown?
@@ -35,19 +36,6 @@ Blueprint Markdown is two complementary pieces:
 ## How It Works
 
 ![How It Works](media/readme/howitworks.png)
-<!-- ```
-flowchart TD
-    A["You ask Claude for rich docs, plans, or reports"]
-    B["Claude writes\ncompact ::: directives\n(not HTML)"]
-    C["VS Code extension renders a\nbeautiful themed preview"]
-    D["You read, verify, and enjoy the output"]
-    E["Export to portable .html\nand share or publish"]
-
-    A -- >|"blueprint-markdown skill auto-triggers"| B
-    B -- >|"open .md in VS Code → Ctrl+Shift+V"| C
-    C -- > D
-    C -- >|"Command Palette → Export to HTML"| E
-``` -->
 
 No extra commands. No HTML to wade through. The directives are human-readable
 even in the raw `.md` file.
@@ -65,7 +53,7 @@ Five steps from zero to a beautiful themed preview:
    https://github.com/lebinhchieu/blueprint-markdown/tree/master/skills/blueprint-markdown
    ```
 
-   The agent fetches and installs it. Reload the session afterward. ([details](#1-the-skill--ai-agent-integration))
+   The agent fetches and installs it. Reload the session afterward. ([details](#the-skill--ai-agent-integration))
 
 2. **Install the extension** from the VS Code Marketplace:
 
@@ -73,17 +61,17 @@ Five steps from zero to a beautiful themed preview:
    code --install-extension ChieuLe.blueprint-markdown-chieu
    ```
 
-   ([details](#2-the-extension--preview-renderer))
+   ([details](#the-extension--preview-renderer))
 
 3. **Disable the conflicting built-in** — Extensions (`Ctrl+Shift+X`) → search `@builtin mermaid` → **Markdown Mermaid features** → **Disable** → Reload Window. ([why](#known-conflict--vscodemermaid-markdown-features))
 
 4. **Ask your AI to write with Blueprint Markdown** — e.g. *"Write the release notes using the blueprint-markdown skill."* The skill emits `:::` directives instead of HTML.
 
-5. **Preview & pick a theme** — open the `.md` file → `Ctrl+Shift+V`, then `Ctrl+,` → search `blueprintMarkdown` to choose from [10 themes](#3-beautiful-themes). Enjoy.
+5. **Preview & pick a theme** — open the `.md` file → `Ctrl+Shift+V`, then `Ctrl+,` → search `blueprintMarkdown` to choose from [10 themes](#themes). Enjoy.
 
 ---
 
-## 1. The Skill — AI Agent Integration
+## The Skill — AI Agent Integration
 
 The `blueprint-markdown` skill lives in `skills/blueprint-markdown/`. It teaches
 your AI coding agent to **author** the directive syntax automatically.
@@ -95,71 +83,39 @@ your AI coding agent to **author** the directive syntax automatically.
 - Falls back to plain CommonMark for non-Blueprint contexts (GitHub, Slack, Notion).
 - Loads the full attribute reference (`references/syntax.md`) on demand for precise output.
 
-### Install the skill
+### Install
 
-**Quick setup — paste this into your AI coding agent** (Claude Code, Cursor, Copilot, Codex, Gemini, etc.):
+**Quick setup — paste this into your AI coding agent:**
 
 ```
 Set up the blueprint-markdown skill from
 https://github.com/lebinhchieu/blueprint-markdown/tree/master/skills/blueprint-markdown
 ```
 
-The agent will fetch the skill and install it in the right place for itself. Reload the session afterward.
-
-**Manual install — if you already cloned this repo:**
-
-**Global — available in every project:**
+**Manual — if you already cloned this repo:**
 
 ```bash
-# From the repo root (symlink, no duplication):
+# Global — available in every project (symlink, no duplication):
 ln -s "$PWD/skills/blueprint-markdown" ~/.claude/skills/blueprint-markdown
 
-# Or copy if you prefer no symlink:
-cp -r skills/blueprint-markdown ~/.claude/skills/
+# Project-scoped — this repo only:
+mkdir -p .claude/skills && cp -r skills/blueprint-markdown .claude/skills/
 ```
 
-**Project-scoped — this repo only:**
+Restart Claude Code (or reload the session) after placing the skill.
 
-```bash
-mkdir -p .claude/skills
-cp -r skills/blueprint-markdown .claude/skills/
-```
-
-Restart Claude Code (or reload the session) after placing the skill. It will be
-picked up automatically from the `skills/` directory.
-
-### Install via Claude Code plugin marketplace
-
-This repo is also a Claude Code plugin marketplace bundling both skills
-(`blueprint-markdown` and `mermaid-diagrams`) plus the `skimmable` output style —
-no cloning required:
+**Via the Claude Code plugin marketplace** — this repo also bundles both skills
+(`blueprint-markdown`, `mermaid-diagrams`) and the `skimmable` output style as an
+installable marketplace, no cloning required:
 
 ```
 /plugin marketplace add lebinhchieu/blueprint-markdown
 /plugin install blueprint-markdown-skills@blueprint-markdown-skills-marketplace
 ```
 
-Activate the output style with `/output-style skimmable`.
-
-This marketplace also carries the `evidence-skill` plugin (verification/evidence reports),
-installable the same way — independently of `blueprint-markdown-skills`:
-
-```
-/plugin install evidence-skill@blueprint-markdown-skills-marketplace
-```
-
-**Enable auto-update** so new releases show up without re-running commands:
-
-- `/plugin` → **Marketplaces** tab → select `blueprint-markdown-skills-marketplace` from the list to open its detail view → **Enable auto-update**.
-- Claude Code then checks for updates after each session start (up to a 10-minute delay) and updates the plugin on disk automatically. You'll see a prompt to run `/reload-plugins` once it does.
-- No CLI flag for this — it's only in the interactive `/plugin` panel, not `claude plugin marketplace update`.
-
-Without auto-update, upgrade manually:
-
-```
-/plugin marketplace update lebinhchieu/blueprint-markdown
-/plugin update blueprint-markdown-skills@blueprint-markdown-skills-marketplace
-```
+Enable auto-update from `/plugin` → **Marketplaces** →
+`blueprint-markdown-skills-marketplace` → **Enable auto-update**, or update
+manually with `/plugin marketplace update lebinhchieu/blueprint-markdown`.
 
 ### Skill files
 
@@ -171,7 +127,7 @@ Without auto-update, upgrade manually:
 
 ---
 
-## 2. The Extension — Preview Renderer
+## The Extension — Preview Renderer
 
 The VS Code extension renders the `:::` directives produced by the skill.
 It hooks VS Code's **built-in Markdown preview** — no new panels, no extra commands.
@@ -186,14 +142,9 @@ code --install-extension ChieuLe.blueprint-markdown-chieu
 
 Or: **Extensions** (`Ctrl+Shift+X`) → search **Blueprint Markdown** → Install.
 
-**From VSIX:**
-
-```bash
-code --install-extension blueprint-markdown-chieu-0.1.6.vsix
-```
-
-Download from [Releases](https://github.com/lebinhchieu/blueprint-markdown/releases),
-or via the Extensions panel: **⋯ → Install from VSIX…**
+**From VSIX:** download the latest from
+[Releases](https://github.com/lebinhchieu/blueprint-markdown/releases), then
+**Extensions panel → ⋯ → Install from VSIX…**.
 
 **Build from source:**
 
@@ -218,7 +169,6 @@ Open any `.md` file → **`Ctrl+Shift+V`** (Markdown: Open Preview to the Side).
 
 Quick test:
 
-
 ```markdown
 :::tip
 Blueprint Markdown is working!
@@ -227,7 +177,22 @@ Blueprint Markdown is working!
 
 ---
 
-## 3. Export to HTML
+## Features
+
+Beyond the directive components below, the extension adds:
+
+- **Mermaid pan/zoom** — drag to pan, scroll/buttons to zoom, double-right-click to reset, one click to expand fullscreen.
+- **`:::explorer`** — pins a mermaid diagram beside scrollable detail sections; clicking a diagram node scrolls to (and flashes) its matching `{#id}` section, and back.
+- **`:::legend`** — a collapsible color-key panel for a diagram or any content block.
+- **`:::revision` / `:::previous`** — flags a changed passage with a hover note and a click-to-reveal panel showing the prior text. Handy for tracked-change style docs.
+- **TOC reading rail** — a scroll-spy table of contents down the side of the preview and exported HTML. Controlled by `blueprintMarkdown.toc` (`off` / `h2` / `h3`, default `h3`). Add `toc=h1|h2|h3` to a `card`, `callout`, `details`, or `step` to promote its title to a real heading that feeds the rail.
+- **Heading shortcuts** — `Ctrl+1`…`Ctrl+6` sets the heading level of the current line while editing a Markdown file.
+- **Review comments** — right-click a line in the preview to add a comment or an AI note; it's inserted inline at that line in the source.
+- **32 snippets** (`bp-card`, `bp-callout`, `bp-tabs`, …) — one per directive, in `snippets/markdown.json`.
+
+---
+
+## Export to HTML
 
 **Command:** `Blueprint Markdown: Export to HTML` (Command Palette `Ctrl+Shift+P`)
 
@@ -241,7 +206,7 @@ Converts the active `.md` file into a portable `.html` file that anyone can open
 
 ---
 
-## 4. Beautiful Themes
+## Themes
 
 Reviewing AI output shouldn't feel like reading a wall of text. Choose a theme that
 suits your mood — switch any time, preview refreshes instantly.
@@ -268,14 +233,9 @@ suits your mood — switch any time, preview refreshes instantly.
   "blueprintMarkdown.theme": "aurora"
   ```
 
-<!-- SCREENSHOT: theme grid showing all 10 palettes side by side.
-     Save as media/screenshots/theme-grid.png, then uncomment:
-![All 10 themes](media/screenshots/theme-grid.png)
--->
-
 ---
 
-## 4. Syntax Quick Reference
+## Syntax Quick Reference
 
 Three directive forms — colon count is the grammar.
 
@@ -303,7 +263,7 @@ No HTML boilerplate.
 
 ### Leaf `::` (single line)
 
-Used **only** by `progress`.
+Used by `progress` and `legend-item`.
 
 ```markdown
 ::progress{value=80 max=100 color=primary label="Completion"}
@@ -327,7 +287,10 @@ Status: :chip[Stable]{success}  Shortcut: :kbd[Ctrl+Shift+V]  Priority: :rating{
 | Navigation | `:::tabs` `:::tab` |
 | Steps | `:::steps` `:::step` |
 | Progress | `::progress` |
-| Inline | `:chip` `:icon` `:color` `:kbd` `:button` `:tooltip` `:rating` |
+| Revision | `:::revision` `:::previous` |
+| Explorer | `:::explorer` |
+| Legend | `:::legend` `::legend-item` |
+| Inline | `:chip` `:icon` `:color` `:kbd` `:button` `:tooltip` `:rating` `:comment` `:ai` |
 
 ### Color tokens
 
