@@ -322,11 +322,6 @@ comparison layout; a simple list of items is right for a simple list.
 
 **Color tokens** — `primary success warning danger info gray low`. Full palette, aliases, and hex syntax in `references/syntax.md`.
 
-**Skimmable structure.** Organize the whole document so a reader can stop after the first
-section if that's all they need: lead each section with its answer, put caveats/rationale
-after under a labeled sub-heading, use bullets or a table over a paragraph, and bold only the
-one load-bearing phrase per line. See `output-styles/skimmable.md`.
-
 ---
 
 ## Validation

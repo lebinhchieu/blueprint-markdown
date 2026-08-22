@@ -55,9 +55,11 @@ that same section, not before it.
 Code blocks get the same treatment as prose: the reader shouldn't have to read every line to
 find the one that matters.
 
-- **Highlight the load-bearing line(s), not the whole block.** Use blueprint-markdown's fence
-  meta syntax — `` ```lang {n,n-m} title="path"` `` — so the fix, the changed line, or the key
-  call stands out before the reader reads top to bottom.
+- **Highlight the load-bearing line(s), not the whole block.** If the target renders
+  blueprint-markdown, use its fence meta syntax — `` ```lang {n,n-m} title="path"` `` — so
+  the fix or key call stands out before the reader reads top to bottom. Elsewhere, name the
+  line that matters in the prose next to the block instead — plain CommonMark has no
+  line-highlight syntax.
 - **Only highlight what earns it** — the line the reader needs to see, not every line that's
   merely present. A block with everything highlighted is a block with nothing highlighted.
 - **Add `title="path"` when the block's origin isn't already named** in the surrounding prose —
@@ -73,8 +75,8 @@ if a file needs `:::` component blocks, a specific frontmatter schema, or a
 particular file name, keep following that skill for those mechanics.
 
 **Plan Mode plans are the explicit case.** `blueprint-markdown` still owns
-how a plan file is written (`:::explorer` blocks, `{#id}` anchors, callouts,
-steps components) — but the plan's *content* must be skimmable-first:
+how a plan file is written (its component syntax) — but the plan's *content*
+must be skimmable-first:
 
 - Open the plan file with the one-line goal and the decision, not a restated
   summary of the request.
