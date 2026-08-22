@@ -196,7 +196,7 @@ async function setHeadingLevel(level: number): Promise<void> {
     for (const lineNum of lineNumbers) {
       const line = editor.document.lineAt(lineNum)
       const text = line.text.replace(/^ {0,3}#{1,6}\s+/, '')
-      editBuilder.replace(line.range, text ? `${'#'.repeat(level)} ${text}` : '#'.repeat(level))
+      editBuilder.replace(line.range, `${'#'.repeat(level)} ${text}`)
     }
   })
 }
