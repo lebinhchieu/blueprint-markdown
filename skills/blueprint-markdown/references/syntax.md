@@ -426,8 +426,8 @@ pulled out before the rest renders normally, so the diagram itself is untouched.
 ```mermaid
 graph TD
   A[Start]:::primary --> B[Done]:::success
-  classDef primary stroke:var(--c-primary),fill:var(--c-primary),color:var(--text-base)
-  classDef success stroke:var(--c-success),fill:var(--c-success),color:var(--text-base)
+  classDef primary fill:var(--c-primary-bg),stroke:var(--c-primary),color:var(--c-primary-text)
+  classDef success fill:var(--c-success-bg),stroke:var(--c-success),color:var(--c-success-text)
 ```
 :::
 ````
@@ -640,20 +640,26 @@ The enhanced renderer reads metadata after the language identifier in a code fen
 palette (background, text, borders) from the active theme; the only thing that can clash is
 a `classDef`/`style` override you add yourself with a literal hex. If a diagram needs to
 highlight specific nodes, use the same CSS variables as the [color tokens](#color-tokens)
-table (`var(--c-primary)`, `var(--c-danger-bg)`, `var(--text-base)`, `var(--border-color)`, …)
-instead — mermaid inlines the string as CSS, so `var()` resolves live against whichever theme
-is active:
+table — the full triad per role, not just the accent (`var(--c-primary)`,
+`var(--c-danger-bg)`, `var(--c-danger-text)`, `var(--border-color)`, …) — instead: mermaid
+inlines the string as CSS, so `var()` resolves live against whichever theme is active:
 
 ```
-classDef alert fill:var(--c-danger-bg),stroke:var(--c-danger),color:var(--text-base)
+classDef alert fill:var(--c-danger-bg),stroke:var(--c-danger),color:var(--c-danger-text)
 class Fail alert
 ```
 
-**Explain what a color means** by wrapping the diagram in [`:::legend`](#containers) with one
-`::legend-item` per `classDef` — see the [mermaid-diagrams skill](../../mermaid-diagrams/SKILL.md)
-for when to add one.
+The same `var()` resolution applies to `stroke-width`, `stroke-dasharray`, and `linkStyle`
+(edges, not just nodes) — any mermaid style property, not only `classDef`/`style`.
 
-Standard GFM mark: `==text==` renders as `<mark>`.
+**Every color needs a legend, no size exception** — wrap the diagram in
+[`:::legend`](#containers) with one `::legend-item` per `classDef`; see the
+[mermaid-diagrams skill](../../mermaid-diagrams/SKILL.md) §4 for the full rule.
+
+Standard GFM mark: `==text==` renders as `<mark>` — in surrounding prose only. Mermaid node
+labels (`["..."]`) don't run through this renderer at all; inside one, `==text==` renders as
+literal `==text==`. For bold/italic *inside* a label, use `<b>`/`<i>` directly in the quoted
+string — confirmed to render as real formatting under `securityLevel:'strict'`, not stripped.
 
 ---
 

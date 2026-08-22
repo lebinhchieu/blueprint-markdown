@@ -265,8 +265,8 @@ renders unchanged.
 ```mermaid
 graph TD
   A[Start]:::primary --> B[Done]:::success
-  classDef primary fill:var(--c-primary),color:var(--text-base)
-  classDef success fill:var(--c-success),color:var(--text-base)
+  classDef primary fill:var(--c-primary-bg),stroke:var(--c-primary),color:var(--c-primary-text)
+  classDef success fill:var(--c-success-bg),stroke:var(--c-success),color:var(--c-success-text)
 ```
 :::
 ````

@@ -42,13 +42,19 @@ var a = () => { () => {} }
 
 ### Mermaid diagram
 
+:::legend
 ```mermaid
 graph LR
-  A[Write .md file] --> B[Load in viewer]
-  B --> C{Parse directives}
-  C --> D[Render HTML]
-  C --> E[Apply CSS tokens]
+  A[Write .md file]:::parse --> B[Load in viewer]:::parse
+  B --> C{Parse directives}:::parse
+  C --> D[Render HTML]:::render
+  C --> E[Apply CSS tokens]:::render
+  classDef parse fill:var(--c-info-bg),stroke:var(--c-info),color:var(--c-info-text)
+  classDef render fill:var(--c-success-bg),stroke:var(--c-success),color:var(--c-success-text)
 ```
+::legend-item{color=info label="Parse-side"}
+::legend-item{color=success label="Render-side"}
+:::
 ---
 
 ## Cards

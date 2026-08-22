@@ -91,11 +91,19 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 - Cap ~5-6 outgoing edges per node — more means it's doing too much or needs a subgraph.
 - For `:::explorer`, pick `pin` and direction together: `{pin=left}` is narrow (needs a
   tall shape), `{pin=top}` is wide (needs a short one).
-- Color: give every node that shares a role with another a `classDef` color — any diagram,
-  not only `:::explorer`; the default theme coloring being fine is not a reason to skip it
-  once a category exists. Set `color:` explicitly (renderer defaults break in dark themes).
-  Vary lightness, not just hue, for colorblind-safe fills. `classDef` for 2+ nodes sharing a
-  category, `style` only for a genuine one-off. Add a legend for it — see §4.
+- **Color is the default, not an opt-in.** Once a diagram clears §0's bar, give it `classDef`
+  color — any diagram, not only `:::explorer`; the default theme coloring being fine is not a
+  reason to skip it. Use the shared token triad, never a solid saturated fill with no stroke:
+  `classDef role fill:var(--c-role-bg),stroke:var(--c-role),color:var(--c-role-text)` (see
+  blueprint-markdown's color tokens). Vary lightness, not just hue, for colorblind-safe fills.
+  `classDef` for 2+ nodes sharing a category, `style` only for a genuine one-off. **Every
+  color gets a legend, no size exception — see §4.**
+- Two more channels, independent of hue: `stroke-width:2px` for emphasis (the critical or
+  happy path), `stroke-dasharray:4 3` for state (planned/inactive vs. active) — both still
+  read in grayscale or under a colorblind palette.
+- Edges take color too, not just nodes: `linkStyle <n> stroke:var(--c-role),stroke-width:2px`
+  marks a specific edge (an error path, the one dependency that matters) — `<n>` is the
+  edge's 0-based position in source order.
 - `sequenceDiagram`, `erDiagram`, and other non-flowchart types skip all of the above —
   see §2a.
 
@@ -137,6 +145,11 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 - Node subtitle: when the title alone doesn't convey the node's role, add a short second
   line inside the same label (`svc_auth["Auth Service<br/><i>issues JWTs</i>"]`) — a few
   words, not a sentence.
+- `<b>text</b>` bolds part of a label the same way `<i>` above italicizes it — confirmed to
+  render as real bold under this codebase's `securityLevel:'strict'` config, not stripped or
+  shown literally. `==highlight==` does **not** work here — confirmed to render as literal
+  `==text==` inside a label; it only applies to surrounding prose (`:::explorer` detail
+  sections, `:::legend` captions, callout bodies), never inside `["..."]`.
 - Edge labels: verb phrases (`writes to`, `validates`), not nouns — give every arrow one;
   an unlabeled edge leaves the relationship to guesswork.
 - Keep edge labels short; if one genuinely needs more words,
@@ -149,11 +162,12 @@ labels. When the numbers disagree with what the diagram "sounds like" (a pipelin
 
 ## 4. Legend
 
-**Every `classDef`/`style` color needs a legend entry** — a reader can't distinguish "styled
-for emphasis" from "styled because it's a failure state" without one. Wrap the diagram in
-`:::legend` and add one `::legend-item{color=... label="..."}` per `classDef`, using the exact
-same color token the `classDef` itself resolves to (never a different token, or the legend
-and the diagram drift apart):
+**Every `classDef`/`style` color needs a legend entry, no size exception** — a reader can't
+distinguish "styled for emphasis" from "styled because it's a failure state" without one, and
+that's just as true for one colored node as for five. Wrap the diagram in `:::legend` and add
+one `::legend-item{color=... label="..."}` per `classDef`, using the exact same color token the
+`classDef` itself resolves to (never a different token, or the legend and the diagram drift
+apart):
 
 ````
 :::legend
@@ -161,8 +175,8 @@ and the diagram drift apart):
 flowchart TD
   auth["Auth Service"]:::svc
   cache["Cache"]:::infra
-  classDef svc fill:var(--c-primary),color:var(--text-base)
-  classDef infra fill:var(--c-gray),color:var(--text-base)
+  classDef svc fill:var(--c-primary-bg),stroke:var(--c-primary),color:var(--c-primary-text)
+  classDef infra fill:var(--c-gray-bg),stroke:var(--c-gray),color:var(--c-gray-text)
 ```
 ::legend-item{color=primary label="Service"}
 ::legend-item{color=gray label="Infrastructure"}
@@ -174,5 +188,6 @@ collapse it to a small button, click again to expand — laid out in a row for a
 column for a tall one. This is a `blueprint-markdown` directive, not mermaid syntax; see that
 skill's `:::legend` entry for the full attribute reference.
 
-Skip it when color is purely decorative (a single accent, no second category to confuse it
-with) — a legend for one color explains nothing.
+The only diagrams exempt are the ones that never get a `classDef` in the first place —
+`sequenceDiagram`, `erDiagram`, and the other types §2a already excludes from color. Nothing to
+color means nothing to legend; it isn't a size-based opt-out.
