@@ -183,6 +183,24 @@ async function editComment(arg: EditCommentArg): Promise<void> {
   await vscode.workspace.applyEdit(edit)
 }
 
+/**
+ * Ctrl+1..Ctrl+6 (see "keybindings" in package.json) — sets the current line(s) to an ATX
+ * heading of the given level, replacing any existing `#`-marker rather than toggling it off.
+ * `Set` of line numbers dedupes multi-cursor selections that land on the same line.
+ */
+async function setHeadingLevel(level: number): Promise<void> {
+  const editor = vscode.window.activeTextEditor
+  if (!editor) return
+  await editor.edit(editBuilder => {
+    const lineNumbers = new Set(editor.selections.map(s => s.active.line))
+    for (const lineNum of lineNumbers) {
+      const line = editor.document.lineAt(lineNum)
+      const text = line.text.replace(/^ {0,3}#{1,6}\s+/, '')
+      editBuilder.replace(line.range, text ? `${'#'.repeat(level)} ${text}` : '#'.repeat(level))
+    }
+  })
+}
+
 export function activate(context: vscode.ExtensionContext) {
   const refresh = () =>
     vscode.commands.executeCommand('markdown.preview.refresh')
@@ -201,6 +219,10 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push(
     vscode.commands.registerCommand('blueprintMarkdown.editComment', editComment),
+  )
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('blueprintMarkdown.setHeadingLevel', (arg: { level: number }) => setHeadingLevel(arg.level)),
   )
 
   // Clicking a file ref in the preview that didn't resolve on disk (see inline-code.ts's

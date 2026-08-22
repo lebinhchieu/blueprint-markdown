@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -83,6 +83,44 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "key": "ctrl+1",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 1 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      },
+      {
+        "key": "ctrl+2",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 2 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      },
+      {
+        "key": "ctrl+3",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 3 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      },
+      {
+        "key": "ctrl+4",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 4 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      },
+      {
+        "key": "ctrl+5",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 5 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      },
+      {
+        "key": "ctrl+6",
+        "command": "blueprintMarkdown.setHeadingLevel",
+        "args": { "level": 6 },
+        "when": "editorTextFocus && editorLangId == 'markdown'"
+      }
+    ],
     "grammars": [
       {
         "scopeName": "text.html.markdown.blueprint",
