@@ -6,10 +6,10 @@
 
 _Created: :chip[Run <N>]{<color>} · Last run: :chip[Run <N>]{<color>}_
 
-| Case | Type | Verdict | Created | Last run |
-|------|------|---------|---------|----------|
-| <case name> | API | :chip[PASS]{success} | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
-| <case name> | DB | :chip[FAIL]{danger} | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
+| Case | Type | Verdict | Test Coverage | Created | Last run |
+|------|------|---------|----------------|---------|----------|
+| <case name> | API | :chip[PASS]{success} | :chip[Full]{success} `<TestClass::testMethod>` | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
+| <case name> | DB | :chip[FAIL]{danger} | :chip[None]{gray} | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
 
 :::warning{title="Not covered"}
 - <case/scenario> — <reason: blocked by X, out of scope, environment unavailable, …>

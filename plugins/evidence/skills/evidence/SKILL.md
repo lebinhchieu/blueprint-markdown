@@ -34,7 +34,15 @@ say so in chat.
    | File/artifact | Read the file | content excerpt or diff |
    | Other | Whatever's given | free-text description + raw output |
 
-3. **Capture a verdict** — PASS or FAIL — per case, from the evidence gathered.
+3. **Capture a verdict** — PASS or FAIL — per case, from the evidence gathered. Also check
+   **test coverage**: search the project's existing test suite for a test that already covers
+   this case.
+   - **Full** — a test asserts exactly this behavior.
+   - **Partial** — a related test exists but misses part of it (an edge case, a branch).
+   - **None** — no existing automated test covers it.
+
+   Record the actual test name/path for Full or Partial; don't guess — grep the suite, don't
+   assume a test exists because the feature does.
 4. **Write the report** using `assets/report-template.md` as the skeleton, filled with the
    real cases (format below).
 5. **Stamp run metadata** — read the existing `report.md` first, if present:
@@ -87,6 +95,10 @@ phrase first, facts as bullets/tables, never a paragraph.
   never one-line stringified JSON, never a raw `curl ...` command.
 - **DB evidence:** query as inline code, result rows as a markdown table — not a fenced code
   block.
+- **Test Coverage column:** `:chip[Full]{success}`/`:chip[Partial]{warning}`/`:chip[None]{gray}`
+  — whether an *existing automated test* (not this report's own manual verification) already
+  covers the case. Full/Partial add the test name/path as inline code right after the chip;
+  None is chip-only.
 - **Coverage gaps:** any skipped/blocked/pending/out-of-scope case → a
   `:::warning{title="Not covered"}` callout right after the summary table, one line per case
   with a reason. Omit entirely when every listed case was actually tested.
@@ -155,3 +167,5 @@ one row per run (see the workflow step above).
   chip-only, no date.
 - Dropping a prior run's row when appending to `## Run log` — it's append-only, never
   overwritten.
+- Marking `Test Coverage` as `Full`/`Partial` without actually finding the test — grep the
+  suite first; assuming a test exists because the feature does is a guess, not evidence.
