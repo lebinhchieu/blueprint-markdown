@@ -856,6 +856,7 @@ details[open] > .details__summary::before {
   padding: 0.25em 0.6em;
   border-radius: var(--chip-radius);
   vertical-align: middle;
+  white-space: nowrap;
 }
 
 /* Soft variants */
