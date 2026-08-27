@@ -2,19 +2,27 @@
 ::progress{value=<passed> max=<total> color=success label="Cases passed"}
 :::
 
-_Created: Run <N> · Last run: Run <N> — <date time>_
+## Summary
+
+_Created: :chip[Run <N>]{<color>} · Last run: :chip[Run <N>]{<color>}_
 
 | Case | Type | Verdict | Created | Last run |
 |------|------|---------|---------|----------|
-| <case name> | API | :chip[PASS]{success} | Run <N> | Run <N> — <date time> |
-| <case name> | DB | :chip[FAIL]{danger} | Run <N> | Run <N> — <date time> |
+| <case name> | API | :chip[PASS]{success} | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
+| <case name> | DB | :chip[FAIL]{danger} | :chip[Run <N>]{<color>} | :chip[Run <N>]{<color>} |
 
 :::warning{title="Not covered"}
 - <case/scenario> — <reason: blocked by X, out of scope, environment unavailable, …>
 :::
 
+## Run log
+
+| Run | Date time | Description |
+|-----|-----------|--------------|
+| :chip[Run <N>]{<color>} | <date time> | <one line: what happened this run — e.g. "Initial run — created 2 cases" or "Re-verified Case 1 after fix"> |
+
 :::details{title="Case 1 — <case name>  :chip[PASS]{success}" toc=h2 open}
-_Created: Run <N> · Last run: Run <N> — <date time>_
+_Created: :chip[Run <N>]{<color>} · Last run: :chip[Run <N>]{<color>}_
 
 **What was checked:** <one line>
 
@@ -32,7 +40,7 @@ _Created: Run <N> · Last run: Run <N> — <date time>_
 :::
 
 :::details{title="Case 2 — <case name>  :chip[FAIL]{danger}" toc=h2 open}
-_Created: Run <N> · Last run: Run <N> — <date time>_
+_Created: :chip[Run <N>]{<color>} · Last run: :chip[Run <N>]{<color>}_
 
 **What was checked:** <one line>
 
