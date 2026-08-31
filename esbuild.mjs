@@ -541,17 +541,45 @@ const exportClientConfig = {
   sourcemap: false,   // inlined into exported HTML; source maps not useful there
 }
 
+// Standalone CLI preview server (Node/CJS) — `blueprint-preview <file.md>`, for editors with
+// no webview hook of their own (Zed today). Shares buildHtml.ts/installBlueprintMarkdown.ts
+// with the VS Code extension and "Export to HTML"; `vscode` is never imported on this path.
+const cliConfig = {
+  ...sharedConfig,
+  entryPoints: ['src/cli/preview.ts'],
+  platform: 'node',
+  format: 'cjs',
+  outfile: 'dist/blueprint-preview.js',
+  banner: { js: '#!/usr/bin/env node' },
+}
+
+// Browser-side script for the CLI preview (Browser/IIFE) — live reload + the right-click
+// comment menu. Separate from preview.js (VS Code webview) and export-client.js (frozen
+// export snapshot, which has no file to write comments back to).
+const cliClientConfig = {
+  ...sharedConfig,
+  entryPoints: ['src/cliClient.ts'],
+  platform: 'browser',
+  format: 'iife',
+  outfile: 'dist/cli-client.js',
+  sourcemap: false,
+}
+
 if (isWatch) {
   const extCtx          = await esbuild.context(extensionConfig)
   const previewCtx      = await esbuild.context(previewConfig)
   const exportClientCtx = await esbuild.context(exportClientConfig)
-  await Promise.all([extCtx.watch(), previewCtx.watch(), exportClientCtx.watch()])
+  const cliCtx          = await esbuild.context(cliConfig)
+  const cliClientCtx    = await esbuild.context(cliClientConfig)
+  await Promise.all([extCtx.watch(), previewCtx.watch(), exportClientCtx.watch(), cliCtx.watch(), cliClientCtx.watch()])
   console.log('Watching for changes...')
 } else {
   await Promise.all([
     esbuild.build(extensionConfig),
     esbuild.build(previewConfig),
     esbuild.build(exportClientConfig),
+    esbuild.build(cliConfig),
+    esbuild.build(cliClientConfig),
   ])
   console.log('Build complete.')
 }

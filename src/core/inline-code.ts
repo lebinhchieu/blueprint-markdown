@@ -13,14 +13,23 @@
  * what filters out false positives like `Node.js`, `v2.0`, `e.g`, etc.
  *
  * Usage: call installInlineCodeRenderer(md) after creating the markdown-it instance.
+ * The `vscode`-specific piece is just *where the list of workspace folders comes from* —
+ * everything else here (regex matching, fs.statSync, path math) is plain Node. Callers
+ * outside the extension host (the CLI, tests) simply omit `getWorkspaceFolders`, which
+ * limits resolution to doc-relative paths — no `vscode` import needed at all.
  */
 
-import * as vscode from 'vscode'
 import * as fs from 'fs'
 import * as path from 'path'
 import type MarkdownIt from 'markdown-it'
 import type Token from 'markdown-it/lib/token.mjs'
 import { hexSwatchHtml } from './colors'
+
+/** Structurally compatible with `vscode.Uri` — deliberately not importing `vscode` for this. */
+interface DocRef {
+  scheme: string
+  fsPath: string
+}
 
 // name.ext with optional :line or :line-range, no spaces.
 // Extension must start with a letter (filters v2.0, etc.) and be ≤8 chars.
@@ -45,7 +54,7 @@ const FIND_URI = 'vscode://ChieuLe.blueprint-markdown-chieu/find?q='
  * workspace folder.  Returns a forward-slash href relative to the doc folder
  * (which VS Code's preview resolves reliably), or undefined when not found.
  */
-function resolveHref(filePath: string, docUri: vscode.Uri | undefined): string | undefined {
+function resolveHref(filePath: string, docUri: DocRef | undefined, workspaceFolders: string[]): string | undefined {
   if (!docUri || docUri.scheme !== 'file') return undefined
 
   const isFile = (p: string): boolean => {
@@ -53,7 +62,7 @@ function resolveHref(filePath: string, docUri: vscode.Uri | undefined): string |
   }
 
   const docDir = path.dirname(docUri.fsPath)
-  const bases = [docDir, ...(vscode.workspace.workspaceFolders ?? []).map(f => f.uri.fsPath)]
+  const bases = [docDir, ...workspaceFolders]
 
   for (const base of bases) {
     const abs = path.resolve(base, filePath)
@@ -68,12 +77,15 @@ function resolveHref(filePath: string, docUri: vscode.Uri | undefined): string |
   return undefined
 }
 
-export function installInlineCodeRenderer(md: MarkdownIt): void {
+export function installInlineCodeRenderer(
+  md: MarkdownIt,
+  opts: { getWorkspaceFolders?: () => string[] } = {},
+): void {
   md.renderer.rules['code_inline'] = (
     tokens: Token[],
     idx: number,
     _options: unknown,
-    env: { currentDocument?: vscode.Uri },
+    env: { currentDocument?: DocRef },
   ): string => {
     const content = tokens[idx].content.trim()
     const esc = md.utils.escapeHtml(content)
@@ -86,7 +98,7 @@ export function installInlineCodeRenderer(md: MarkdownIt): void {
     if (match) {
       const filePath = match[1]
       const lineNum  = match[2]
-      const href = resolveHref(filePath, env?.currentDocument)
+      const href = resolveHref(filePath, env?.currentDocument, opts.getWorkspaceFolders?.() ?? [])
       if (href) {
         // Resolved — emit a clickable link VS Code will open.
         const escapedHref = md.utils.escapeHtml(href)

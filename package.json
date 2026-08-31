@@ -25,6 +25,9 @@
     "blueprint"
   ],
   "main": "./dist/extension.js",
+  "bin": {
+    "blueprint-preview": "./dist/blueprint-preview.js"
+  },
   "activationEvents": [
     "onUri"
   ],

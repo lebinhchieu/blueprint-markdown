@@ -206,6 +206,56 @@ Converts the active `.md` file into a portable `.html` file that anyone can open
 
 ---
 
+## Standalone Preview (CLI / other editors)
+
+No VS Code webview? `blueprint-preview` renders the same engine as a live, auto-reloading
+page in your browser — works from any editor that can run a shell command, Zed included.
+
+```bash
+npm link                      # from this repo, once — puts `blueprint-preview` on your PATH
+blueprint-preview doc.md      # opens a browser tab, live-reloads on every save
+```
+
+One server, many tabs: running it again on a different file reuses the same process and opens
+a second tab, instead of spawning a new server. Right-click any text (or an existing comment
+badge) in the preview for **Add Comment / Add AI Comment / Edit Comment** — it writes
+`:comment[...]`/`:ai[...]` straight into the `.md` file on disk, same as the VS Code command.
+
+Flags: `--theme=<name>` (see Themes below), `--toc=off|h2|h3`, `--port=<n>` (default `7337`), `--no-open`.
+
+### Zed
+
+Zed has no webview extension point, so there's no "Blueprint Markdown for Zed" preview pane —
+instead, bind the CLI to a Zed **task**. Add to `.zed/tasks.json`:
+
+```json
+[
+  {
+    "label": "Blueprint preview",
+    "command": "blueprint-preview",
+    "args": ["$ZED_FILE"],
+    "save": "current_file",
+    "reveal": "never",
+    "allow_concurrent_runs": true
+  }
+]
+```
+
+And a binding in `keymap.json`:
+
+```json
+{
+  "context": "Editor && extension==md",
+  "bindings": {
+    "ctrl-shift-m": ["task::Spawn", { "task_name": "Blueprint preview" }]
+  }
+}
+```
+
+`Ctrl+Shift+M` on any `.md` file now opens (or updates) its preview tab.
+
+---
+
 ## Themes
 
 Reviewing AI output shouldn't feel like reading a wall of text. Choose a theme that

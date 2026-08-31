@@ -14,6 +14,7 @@ import * as vscode from 'vscode'
 import type MarkdownIt from 'markdown-it'
 import { installBlueprintMarkdown } from './markdownItPlugin'
 import { exportToHtml } from './export/exportHtml'
+import { findInsertOffset, findReplaceRange } from './core/commentEdit'
 
 interface AddCommentArg {
   uri?: string
@@ -51,44 +52,14 @@ interface EditCommentArg {
  * which still swallows its whole span as one token), so `arg.selectedText` there is the code
  * span's full text and the match must be widened to its surrounding backticks so the comment
  * lands right after the closing backtick, not inside the span.
+ *
+ * The actual text-matching logic lives in src/core/commentEdit.ts (vscode-free, shared with
+ * the standalone CLI preview) — this function is just the VS Code shell around it: prompt,
+ * open the document, apply the resulting edit.
  */
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// Between two rendered words, the source can hold markdown syntax that renders as nothing
-// at all — not just whitespace. "the **Department**" renders as "the Department" with
-// emphasis markers sitting right where a plain \s+ join expects only a literal space; a link
-// like "click [here](url) now" hides brackets and a whole (url) segment the same way. Matches
-// zero or more of: whitespace, a single emphasis/strikethrough/code/bracket marker, or an
-// entire (…) run (a link's target) — so the word-to-word join tolerates any mix of these
-// instead of requiring literal whitespace only.
-const INLINE_SYNTAX_GAP = String.raw`(?:\s|[*_~\x60\[\]]|\([^)]*\))*`
-
-/**
- * Runs `pattern` (global) forward from `fromOffset`, taking the `nth` match found before
- * `windowEnd` — shared by addComment/editComment, both of which need to pick the same
- * occurrence in the source that the preview identified in the render (see commentInsert.ts's
- * "Selected/anchor text can repeat" comment for why `nth` exists at all). Falls back to the
- * last match found if the source has fewer matches than the render implied (rare — e.g. an
- * occurrence hidden in markdown syntax that doesn't render as visible text) instead of erroring.
- */
-function findNthMatch(text: string, pattern: RegExp, fromOffset: number, windowEnd: number, nth: number): RegExpExecArray | null {
-  pattern.lastIndex = fromOffset
-  let match: RegExpExecArray | null = null
-  for (let i = 0; i <= nth; i++) {
-    const next = pattern.exec(text)
-    if (!next || next.index > windowEnd) break
-    match = next
-  }
-  return match
-}
-
-/** ponytail: rendered length is a proxy for the source span's length, padded generously for
- *  markdown syntax overhead (**bold**, links, etc). Upgrade to an exact next-data-line bound
- *  if this padding heuristic misfires in practice. */
-const searchWindowEnd = (fromOffset: number, blockLength?: number) => fromOffset + Math.max((blockLength ?? 0) * 4, 200)
-
 async function addComment(arg: AddCommentArg, directiveName: 'comment' | 'ai' = 'comment'): Promise<void> {
-  if (!arg?.uri || !arg.selectedText) return
+  const selectedText = arg?.selectedText
+  if (!arg?.uri || !selectedText) return
 
   const note = await vscode.window.showInputBox({
     prompt: directiveName === 'ai' ? 'AI comment note' : 'Comment note',
@@ -99,33 +70,23 @@ async function addComment(arg: AddCommentArg, directiveName: 'comment' | 'ai' = 
 
   const uri = vscode.Uri.parse(arg.uri)
   const document = await vscode.workspace.openTextDocument(uri)
-  const line = Math.min(Math.max(arg.line ?? 0, 0), document.lineCount - 1)
-  const fromOffset = document.offsetAt(new vscode.Position(line, 0))
   const text = document.getText()
 
-  const words = arg.selectedText.trim().split(/\s+/).map(escapeRegExp)
-  const windowEnd = searchWindowEnd(fromOffset, arg.blockLength)
-  const findWithGap = (gap: string) => {
-    const body = words.join(gap)
-    const pattern = arg.inlineCode ? '`' + body + '`' : body
-    return findNthMatch(text, new RegExp(pattern, 'g'), fromOffset, windowEnd, arg.nth ?? 0)
-  }
-
-  // First try the curated gap (handles the common markdown constructs above); if that still
-  // doesn't find it — some other syntax not anticipated there, e.g. a footnote reference or
-  // HTML entity sitting between two words — fall back to an unrestricted (but still
-  // window-bounded, so still scoped to roughly this block) gap rather than giving up.
-  const match = findWithGap(INLINE_SYNTAX_GAP) ?? (words.length > 1 ? findWithGap('[\\s\\S]*?') : null)
-  if (!match) {
+  const insertOffset = findInsertOffset(text, arg.line ?? 0, {
+    selectedText,
+    inlineCode: arg.inlineCode,
+    nth: arg.nth,
+    blockLength: arg.blockLength,
+  })
+  if (insertOffset === null) {
     vscode.window.showWarningMessage(
       'Blueprint Markdown: could not locate the selected text — comment not inserted.',
     )
     return
   }
 
-  const insertAt = document.positionAt(match.index + match[0].length)
   const edit = new vscode.WorkspaceEdit()
-  edit.insert(uri, insertAt, ` :${directiveName}[${note}]`)
+  edit.insert(uri, document.positionAt(insertOffset), ` :${directiveName}[${note}]`)
   await vscode.workspace.applyEdit(edit)
 }
 
@@ -148,38 +109,38 @@ async function addComment(arg: AddCommentArg, directiveName: 'comment' | 'ai' = 
  * to `:comment[...]`.
  */
 async function editComment(arg: EditCommentArg): Promise<void> {
-  if (!arg?.uri || !arg.rawSource) return
-
-  const parsed = arg.rawSource.match(/^:(comment|ai)\[([\s\S]*)\](\{[\s\S]*\})?$/)
-  if (!parsed) return // rawSource always comes from a rendered :comment/:ai directive
-  const [, directiveName, currentNote, attrsPart = ''] = parsed
-
-  const note = await vscode.window.showInputBox({
-    prompt: 'Edit comment note',
-    value: currentNote,
-    validateInput: v => (v.includes(']') ? 'Note text cannot contain "]"' : undefined),
-  })
-  if (note === undefined || note === currentNote) return // Escape, or unchanged — no-op
+  const rawSource = arg?.rawSource
+  if (!arg?.uri || !rawSource) return
 
   const uri = vscode.Uri.parse(arg.uri)
   const document = await vscode.workspace.openTextDocument(uri)
-  const line = Math.min(Math.max(arg.line ?? 0, 0), document.lineCount - 1)
-  const fromOffset = document.offsetAt(new vscode.Position(line, 0))
   const text = document.getText()
 
-  const re = new RegExp(escapeRegExp(arg.rawSource), 'g')
-  const windowEnd = searchWindowEnd(fromOffset, arg.blockLength)
-  const match = findNthMatch(text, re, fromOffset, windowEnd, arg.nth ?? 0)
-  if (!match) {
+  const target = findReplaceRange(text, arg.line ?? 0, {
+    rawSource,
+    nth: arg.nth,
+    blockLength: arg.blockLength,
+  })
+  if (!target) {
+    // rawSource failing to parse as a comment directive "never happens in practice" (it always
+    // comes from a rendered :comment/:ai directive) — the realistic case here is the text moved
+    // out of the search window since the click.
     vscode.window.showWarningMessage(
       'Blueprint Markdown: could not locate that comment — it may have changed.',
     )
     return
   }
 
-  const range = new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[0].length))
+  const note = await vscode.window.showInputBox({
+    prompt: 'Edit comment note',
+    value: target.currentNote,
+    validateInput: v => (v.includes(']') ? 'Note text cannot contain "]"' : undefined),
+  })
+  if (note === undefined || note === target.currentNote) return // Escape, or unchanged — no-op
+
+  const range = new vscode.Range(document.positionAt(target.start), document.positionAt(target.end))
   const edit = new vscode.WorkspaceEdit()
-  edit.replace(uri, range, `:${directiveName}[${note}]${attrsPart}`)
+  edit.replace(uri, range, `:${target.directiveName}[${note}]${target.attrsPart}`)
   await vscode.workspace.applyEdit(edit)
 }
 

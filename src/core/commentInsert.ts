@@ -21,12 +21,32 @@
  * Installed once at module load (this file is only ever imported for its side effect,
  * from src/preview.ts, never re-run) — a listener on `document` survives every morphdom
  * patch since `document`/`document.body` themselves are never replaced.
+ *
+ * The computed context is written to two places: `data-vscode-context` (for VS Code's
+ * webview/context menu forwarding, as above) and the exported `lastCommentContext` — a plain
+ * module-level variable a *different* consumer, the standalone CLI preview's own right-click
+ * menu (no VS Code webview involved, so no relay needed), reads directly. One anchor-finding
+ * implementation, two consumers.
  */
 
 // The source document's URI never changes for a given preview instance — read it once
 // rather than re-parsing the meta tag on every selectionchange.
 const settingsRaw = document.getElementById('vscode-markdown-preview-data')?.getAttribute('data-settings')
 const sourceUri: string | undefined = settingsRaw ? JSON.parse(settingsRaw).source : undefined
+
+export type CommentContext =
+  | { emCommentEdit: true; uri: string; line: number; rawSource: string; nth: number; blockLength: number }
+  | { emCommentTarget: true; uri: string; line: number; selectedText: string; inlineCode: boolean; nth: number; blockLength: number }
+
+/** The most recently computed context, or null when nothing commentable is selected/focused.
+ *  Read by the CLI preview's comment menu; VS Code reads the dataset attribute instead. */
+export let lastCommentContext: CommentContext | null = null
+
+function setContext(ctx: CommentContext | null): void {
+  lastCommentContext = ctx
+  if (ctx) document.body.dataset.vscodeContext = JSON.stringify(ctx)
+  else delete document.body.dataset.vscodeContext
+}
 
 /** Which occurrence `target` is among same-source directive wrappers in `block` — see the
  *  matching "Selected/anchor text can repeat" comment below for why this exists. */
@@ -53,7 +73,7 @@ document.addEventListener('selectionchange', () => {
     const block = commentEl.closest<HTMLElement>('[data-line]')
     const rawSource = directiveEl?.getAttribute('data-em-source')
     if (directiveEl && block && rawSource) {
-      document.body.dataset.vscodeContext = JSON.stringify({
+      setContext({
         emCommentEdit: true,
         uri: sourceUri,
         line: Number(block.getAttribute('data-line')),
@@ -62,7 +82,7 @@ document.addEventListener('selectionchange', () => {
         blockLength: block.textContent?.length ?? 0,
       })
     } else {
-      delete document.body.dataset.vscodeContext
+      setContext(null)
     }
     return
   }
@@ -77,7 +97,7 @@ document.addEventListener('selectionchange', () => {
   // renderer), so `block` itself *is* that element here — bail, since a comment inserted into
   // a fence would land in opaque, never-parsed code (see CLAUDE.md's fence description).
   if (!range || !block || block.closest('pre')) {
-    delete document.body.dataset.vscodeContext
+    setContext(null)
     return
   }
 
@@ -101,7 +121,7 @@ document.addEventListener('selectionchange', () => {
       ? codeEl.textContent ?? ''
       : range.toString()
   if (!anchorText) {
-    delete document.body.dataset.vscodeContext
+    setContext(null)
     return
   }
 
@@ -126,7 +146,7 @@ document.addEventListener('selectionchange', () => {
     nth = preRange.toString().split(anchorText).length - 1
   }
 
-  document.body.dataset.vscodeContext = JSON.stringify({
+  setContext({
     emCommentTarget: true,
     uri: sourceUri,
     line: Number(block.getAttribute('data-line')),
