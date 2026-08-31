@@ -27,15 +27,20 @@ too, not just once at the top.
 
 ## Section level
 
-The same ordering repeats one level down. Each `##`/`###` section opens with
-its own point — the conclusion, the change, the number — in its first
-sentence or line. Supporting detail, reasoning, and edge cases follow inside
-that same section, not before it.
+The same ordering repeats one level down, and "section" means whatever the
+reader experiences as one — a `##`/`###` heading, but just as much a
+`:::step`, `:::details`, `:::tab`, or `:::card` title in a blueprint-markdown
+container. Each one opens with its own point — the conclusion, the change,
+the number — in its first sentence or line. Supporting detail, reasoning,
+and edge cases follow inside that same section, not before it.
 
 - A reader skimming just the section headers plus each section's first line
   should be able to reconstruct the whole document's argument.
 - Don't make the reader read to the bottom of a section to find out what it
   concludes — that inverts the rule the document level just established.
+- A **Context** section is not exempt. Its point is the root cause or
+  decision, in one sentence — not the narrative of how you found it. State
+  the diagnosis first; the investigation story, if worth keeping, comes after.
 
 ## Paragraph level
 
@@ -44,7 +49,9 @@ that same section, not before it.
 - **Comparing 2+ options → table**, not prose.
 - **Short sentences. One idea per sentence.**
 - **Bold the single load-bearing word or phrase per line, not every
-  phrase** — over-bolding defeats scanning as much as no bolding does.
+  phrase** — over-bolding defeats scanning as much as no bolding does. In a
+  connecting-ideas paragraph (the one case above that stays prose), the same
+  budget is one bold phrase for the whole paragraph, not one per sentence.
 - **Put the bolded phrase first in the line**, not mid-sentence, so the bold
   alone tells the point.
 - **Common, simple words over jargon**, when both say it as well.
@@ -92,6 +99,8 @@ first to decide what goes where, then use the other skill to write the
 actual markup.
 
 ## Self-check before saving a file
+
+Run this against your own draft before writing the file — fix what fails, don't just note it.
 
 - Can the reader stop after paragraph 1 of section 1 and get the gist?
 - Does every section's first line carry that section's point?
