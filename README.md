@@ -254,6 +254,31 @@ And a binding in `keymap.json`:
 
 `Ctrl+Shift+M` on any `.md` file now opens (or updates) its preview tab.
 
+**Zed for Windows** (Node/`blueprint-preview` only exist inside WSL): the task shells into WSL
+instead of running the command directly. Use this `tasks.json` in place of the one above:
+
+```json
+[
+  {
+    "label": "Blueprint preview",
+    "command": "wsl.exe",
+    "args": ["-e", "bash", "-lic", "blueprint-preview \"$1\"", "bash", "$ZED_FILE"],
+    "save": "current_file",
+    "reveal": "never",
+    "allow_concurrent_runs": true
+  }
+]
+```
+
+`-lic` (not `-lc`) matters — `nvm` only initializes for an *interactive* login shell, so `-lc`
+alone can't find `blueprint-preview` on PATH. The `$ZED_FILE` path must be its own `args`
+element rather than embedded inside the `-lic` string — Zed re-serializes `args` into a single
+PowerShell command line, and a path spliced into an already-quoted string doesn't survive that
+requoting (the extra trailing `"bash"` is the required placeholder for `$0`; `$1` is what
+actually holds the path). Same `keymap.json` binding as above. The CLI translates the Windows
+path it receives and polls for changes on Windows drives (`fs.watch` doesn't fire there), so
+live reload and comments both work the same as on Linux/WSL/macOS.
+
 ---
 
 ## Themes

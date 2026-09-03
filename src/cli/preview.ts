@@ -16,7 +16,7 @@
 import * as http from 'http'
 import * as fs from 'fs'
 import * as path from 'path'
-import { spawn } from 'child_process'
+import { spawn, execFileSync } from 'child_process'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { buildHtml, MissingArtifactError } from '../export/buildHtml'
 import { findInsertOffset, findReplaceRange } from '../core/commentEdit'
@@ -24,11 +24,23 @@ import { findInsertOffset, findReplaceRange } from '../core/commentEdit'
 const DEFAULT_PORT = 7337
 const DIST_DIR = __dirname // dist/ once bundled — this file lands at dist/blueprint-preview.js
 
+/** ponytail: Windows path in → WSL path out, no-op everywhere else. Zed for Windows (running
+ *  a task via `wsl.exe`) hands us `C:\proj\a.md`. `wslpath` is authoritative — it honours a
+ *  custom automount root — so shell out to it rather than string-munging `/mnt/<drive>`. */
+function toLocalPath(p: string): string {
+  if (!/^[A-Za-z]:[\\/]/.test(p)) return p
+  try {
+    return execFileSync('wslpath', ['-u', p], { encoding: 'utf8' }).trim()
+  } catch {
+    return p // not WSL, or wslpath missing — let the existsSync check below report it
+  }
+}
+
 // ─── Per-document state ──────────────────────────────────────────────────────
 
 interface DocState {
   clients: Set<http.ServerResponse>
-  watcher: fs.FSWatcher | null
+  watcher: (() => void) | null
 }
 
 const docs = new Map<string, DocState>()
@@ -36,13 +48,23 @@ const docs = new Map<string, DocState>()
 function ensureWatcher(filePath: string, doc: DocState): void {
   if (doc.watcher) return
   let debounce: NodeJS.Timeout | null = null
+  const pushReload = () => {
+    if (debounce) clearTimeout(debounce)
+    debounce = setTimeout(() => {
+      for (const res of doc.clients) res.write('data: reload\n\n')
+    }, 50)
+  }
   try {
-    doc.watcher = fs.watch(filePath, () => {
-      if (debounce) clearTimeout(debounce)
-      debounce = setTimeout(() => {
-        for (const res of doc.clients) res.write('data: reload\n\n')
-      }, 50)
-    })
+    // ponytail: DrvFS (/mnt/c, /mnt/d, …) has no inotify — fs.watch registers fine there but
+    // never fires. Fall back to polling for paths under a WSL drive mount; 300ms is well under
+    // save-to-glance latency and it's one stat per open doc.
+    if (/^\/mnt\/[a-z]\//.test(filePath)) {
+      fs.watchFile(filePath, { interval: 300 }, pushReload)
+      doc.watcher = () => fs.unwatchFile(filePath, pushReload)
+    } else {
+      const w = fs.watch(filePath, pushReload)
+      doc.watcher = () => w.close()
+    }
   } catch {
     // File missing/unwatchable — the page will just not live-reload; not fatal.
   }
@@ -187,7 +209,7 @@ function startServer(port: number, theme: string, toc: string): http.Server {
         // Close the last tab watching this file → release the watcher. A later GET / for the
         // same path re-arms it via registerDoc's ensureWatcher call.
         if (doc.clients.size === 0 && doc.watcher) {
-          doc.watcher.close()
+          doc.watcher()
           doc.watcher = null
         }
       })
@@ -198,7 +220,7 @@ function startServer(port: number, theme: string, toc: string): http.Server {
       let body = ''
       req.on('data', (c) => { body += c })
       req.on('end', () => {
-        const f = body.trim()
+        const f = toLocalPath(body.trim())
         registerDoc(f)
         res.writeHead(200, { 'Content-Type': 'text/plain' }).end(`http://localhost:${port}/?f=${encodeURIComponent(f)}`)
       })
@@ -261,7 +283,7 @@ function main(): void {
     console.error('Usage: blueprint-preview <file.md> [--theme=light] [--toc=h3] [--port=7337] [--no-open]')
     process.exit(1)
   }
-  const absFile = path.resolve(file)
+  const absFile = path.resolve(toLocalPath(file))
   if (!fs.existsSync(absFile)) {
     console.error(`File not found: ${absFile}`)
     process.exit(1)
