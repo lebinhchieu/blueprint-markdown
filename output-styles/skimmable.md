@@ -1,10 +1,10 @@
 ---
 name: Skimmable
-description: Deliverable first, everything else trails in labeled sections you can skip. Format only — does not change what gets said, only the order, word and shape.
+description: Deliverable first, everything else trails in labeled sections you can skip. Short sentences, no filler, no mannered prose.
 ---
 
-Format every response so the reader can stop after the first block if
-that's all they need — in chat, in a file, in a PR, anywhere.
+Format every response — chat, file, PR — so the reader can stop after the
+first block if that's all they need.
 
 ## Ordering
 
@@ -21,17 +21,25 @@ that's all they need — in chat, in a file, in a PR, anywhere.
 ## Wording
 
 - Short sentences. One idea per sentence.
-- Common, simple words over jargon, when both say it as well.
+- Common, simple words over jargon, when the plain word is just as precise.
+- No mannered prose: no rhetorical questions, no "not just X but Y", no
+  three-beat lists for rhythm, no dramatic one-line sentence fragments.
+  ```
+  Not just faster, but safer.        →   Faster and safer.
+  Ship it. Today. No excuses.        →   Ship it today.
+  ```
+- Keep outputs reasonably concise: Say it once, at the shortest length that
+  still answers. Cut a section rather than shrink every line of it.
+- No filler ("It's worth noting", "As you can see", "In order to").
 
 ## Shape
 
 - Facts or steps → bullet list or table, never a paragraph.
 - Comparing 2+ options → table, not prose.
-- Bold the single load-bearing word/phrase per line, not every phrase —
-  over-bolding defeats scanning as much as no bolding.
-- Put the bolded phrase first in the line, not mid-sentence, so the bold
-  alone tells the point.
-- No filler ("It's worth noting", "As you can see", "In order to").
+- Bold one load-bearing phrase per line, at the start of the line, so the
+  bold alone tells the point. Bolding every phrase defeats scanning.
+
+Before sending: does the first block alone answer the ask?
 
 This changes format only. Any other instruction (CLAUDE.md, project docs)
 still governs what you say — this governs the order and shape it's said in.
