@@ -6,7 +6,7 @@
  *
  *   | **What you see** :cue{#see} | … |
  *
- *   :::narration{voice="af_heart"}      ← optional Kokoro voice for scripts/narrate.mjs
+ *   :::narration{lang="vi" voice="Hải Đăng"}   ← both optional; see core/speech.ts for defaults
  *   :::say{on="answer see" note="Bug 2 is silent" lines="3-6"}
  *   Spoken narration for this segment.
  *   :::
@@ -23,8 +23,8 @@ export const narrationDirectives: Record<string, DirectiveSpec> = {
   narration: {
     forms: ['container'],
     render(node, ctx) {
-      const voice = node.attrs.named.voice ? ` data-voice="${ctx.esc(node.attrs.named.voice)}"` : ''
-      return `<div class="em-narration" hidden${voice}>${ctx.renderChildren(node)}</div>`
+      const attr = (key: string) => node.attrs.named[key] ? ` data-${key}="${ctx.esc(node.attrs.named[key])}"` : ''
+      return `<div class="em-narration" hidden${attr('lang')}${attr('voice')}>${ctx.renderChildren(node)}</div>`
     },
   },
 

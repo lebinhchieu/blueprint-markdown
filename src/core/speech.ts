@@ -1,12 +1,19 @@
 /**
- * speech.ts — the spoken text of a :::say and the file name of its Kokoro audio.
+ * speech.ts — the spoken text of a :::say and the file name of its generated audio.
  *
  * Shared by the renderer (stamps data-speech), present.ts (plays the audio) and
  * scripts/narrate.mjs (generates it), so all three agree on the exact sentence text
  * that the audio file name is hashed from.
  */
 
-export const DEFAULT_KOKORO_VOICE = 'af_heart'
+/** Narration language → default voice. `en` is Kokoro; `vi` is VieNeu-TTS (scripts/vieneu_narrate.py). */
+export const DEFAULT_VOICES: Record<string, string> = { en: 'af_heart', vi: 'Hải Đăng' }
+export const DEFAULT_LANG = 'en'
+
+export function defaultVoice(lang: string): string {
+  return DEFAULT_VOICES[lang] ?? DEFAULT_VOICES[DEFAULT_LANG]
+}
+
 export const NARRATION_DIR = '.narration'
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ' }
@@ -39,5 +46,8 @@ function hash53(s: string): string {
 
 /** Relative path of one sentence's audio, next to the markdown file. */
 export function narrationFile(voice: string, sentence: string): string {
-  return `${NARRATION_DIR}/${voice}-${hash53(sentence)}.wav`
+  // VieNeu voice names are Vietnamese ("Hải Đăng"); keep file names ASCII.
+  const slug = voice.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd')
+    .replace(/[^a-z0-9_]+/gi, '-').toLowerCase()
+  return `${NARRATION_DIR}/${slug}-${hash53(sentence)}.wav`
 }

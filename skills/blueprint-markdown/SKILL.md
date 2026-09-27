@@ -346,6 +346,7 @@ Try 3 is the final version. If roles were already mapped, the step returns early
 - `on` — space-separated ids to spotlight. `lines` — 1-based lines to light inside the named
   code block(s), same range syntax as the fence's `{3-6}`. `note` — the margin sticky note.
 - The body is spoken and captioned: plain prose, no markdown, no tables.
+- `:::narration{lang="vi"}` narrates in Vietnamese; `voice=` overrides the generated-audio voice.
 
 **Narration rules**
 

@@ -12,7 +12,7 @@
  */
 
 import { parseLineRanges } from './ranges'
-import { DEFAULT_KOKORO_VOICE, narrationFile } from './speech'
+import { DEFAULT_LANG, defaultVoice, narrationFile } from './speech'
 
 export interface Segment {
   /** Cue ids to spotlight */
@@ -21,7 +21,8 @@ export interface Segment {
   /** 1-based code lines to light inside the cued code block(s) */
   lines?: Set<number>
   say: string
-  /** Kokoro voice of the enclosing :::narration */
+  /** Language and generated-audio voice of the enclosing :::narration */
+  lang: string
   voice: string
 }
 
@@ -64,13 +65,19 @@ export function hasNarration(root: ParentNode): boolean {
   return root.querySelector('.em-say') !== null
 }
 
+function narrationVoice(el: HTMLElement): { lang: string; voice: string } {
+  const n = el.closest<HTMLElement>('.em-narration')
+  const lang = n?.dataset.lang || DEFAULT_LANG
+  return { lang, voice: n?.dataset.voice || defaultVoice(lang) }
+}
+
 export function readSegments(root: ParentNode): Segment[] {
   return Array.from(root.querySelectorAll<HTMLElement>('.em-say')).map(el => ({
     on: (el.dataset.on ?? '').split(/\s+/).filter(Boolean),
     note: el.dataset.note ?? '',
     lines: el.dataset.lines ? parseLineRanges(el.dataset.lines) : undefined,
     say: el.dataset.speech ?? '',
-    voice: el.closest<HTMLElement>('.em-narration')?.dataset.voice || DEFAULT_KOKORO_VOICE,
+    ...narrationVoice(el),
   }))
 }
 
@@ -190,10 +197,11 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   // ── Voices ──
   function loadVoices(): void {
     const all = synth?.getVoices() ?? []
-    const en = all.filter(v => /^en/i.test(v.lang))
-    voices = (en.length ? en : all).sort((a, b) => voiceScore(b) - voiceScore(a))
+    const lang = segments[0].lang
+    const match = all.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()))
+    voices = (match.length ? match : all).sort((a, b) => voiceScore(b) - voiceScore(a))
     const saved = storage('get')
-    voiceSel.innerHTML = `<option value="${KOKORO}">Kokoro (npm run narrate)</option>` + (voices.length
+    voiceSel.innerHTML = `<option value="${KOKORO}">Generated (npm run narrate)</option>` + (voices.length
       ? voices.map((v, i) => `<option value="${i}"${v.name === saved ? ' selected' : ''}>${escapeHtml(v.name)}</option>`).join('')
       : '<option value="">Captions only (no voice)</option>')
   }

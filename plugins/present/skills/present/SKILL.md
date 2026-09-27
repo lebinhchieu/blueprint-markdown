@@ -23,6 +23,7 @@ what a presentation needs on top.
 |---|---|
 | **Source** — a topic, or material to convert (doc, PR, code, notes)? Read the material first. | — |
 | **Audience** — who watches, what they already know | Engineers on the team |
+| **Language** — `:::narration{lang="vi"}` for Vietnamese (voice Hải Đăng), omit for English (Kokoro) | Language of the request |
 | **Length** | 10 minutes |
 | **The one sentence** they should remember | Must exist before writing; ask if unclear |
 | **Output path** | Next to the source, `<name>-presentation.md` |
@@ -69,6 +70,14 @@ directions — nobody is there to follow them.
 | No leading numbers or symbols | "42% of calls failed." | "Of all calls, forty two percent failed." |
 | Numbers rounded and compared | "3,847 ms" | "almost four seconds, three times the budget" |
 
+**Vietnamese (`lang="vi"`)** — the voice reads English words, but plainly:
+
+- Keep established English tech terms as words (cache, API, commit, deploy); don't force a translation nobody says.
+- Code identifiers still get spoken form: `getUserById` → "hàm lấy người dùng theo I D", not the raw name.
+- Numbers and units in words: "3,8 giây" → "gần bốn giây"; "v4 → v5" → "phiên bản bốn lên năm".
+- Full diacritics always — "khong" instead of "không" is read as a different word.
+- Headings, notes and page text stay in Vietnamese too; mixing languages across page and voice confuses.
+
 - **Open segment:** the one sentence. **Close segment:** the next step, then stop.
 - **Notes (`note=`)** are the viewer's takeaway in ≤ 8 words — the key number or claim.
   Risk segments get `note="⚠ …"`.
@@ -80,8 +89,9 @@ directions — nobody is there to follow them.
 
 1. Run `blueprint-markdown`'s `validate.mjs` on the file — must pass; fixes `on=` ids naming nothing.
 2. Word count of all `:::say` bodies within ±15 % of the length budget.
-3. From the enhanced-markdown-vscode repo: `npm run narrate -- <file>` generates the Kokoro
-   audio into `.narration/` beside the file. Re-run; it must print `0 to generate`.
+3. From the enhanced-markdown-vscode repo: `npm run narrate -- <file>` generates the audio
+   (Kokoro, or VieNeu for `vi` — one-time setup at the top of `scripts/narrate.mjs`) into
+   `.narration/` beside the file. Re-run; it must print `0 to generate`.
 4. Report: file path, segment count, estimated minutes, and the narrate result. If narrate
    couldn't run, say so — Present mode then falls back to the browser voice.
 
