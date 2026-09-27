@@ -3,3 +3,4 @@ dist
 *.vsix
 firefox
 .playwright-cli
+**/.narration
