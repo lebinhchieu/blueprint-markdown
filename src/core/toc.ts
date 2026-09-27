@@ -13,6 +13,8 @@
  * of a hardcoded offset.
  */
 
+import { smoothScrollIntoView } from './motion'
+
 // ─── State (survives morphdom re-renders) ─────────────────────────────────────
 
 /** Whether document-level delegated listeners have been attached. */
@@ -81,7 +83,7 @@ function onTocClick(e: Event): void {
   const idx = link.getAttribute('data-toc-target')
   if (idx === null) return
   const heading = headings[parseInt(idx, 10)]
-  if (heading) heading.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  if (heading) smoothScrollIntoView(heading, 'start')
 }
 
 // ─── Hover: scroll active into view in the expanded panel ────────────────────

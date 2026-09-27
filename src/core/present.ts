@@ -15,6 +15,7 @@
  * under "Present mode".
  */
 
+import { smoothScrollBy } from './motion'
 import { parseLineRanges } from './ranges'
 import { DEFAULT_LANG, defaultVoice, narrationFile, speechText } from './speech'
 
@@ -533,8 +534,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     const delta = r.bottom - r.top > avail - 48
       ? r.top - view.top - 24
       : (r.top + r.bottom) / 2 - (view.top + avail / 2)
-    const target = scroller === document.scrollingElement ? window : scroller
-    target.scrollBy({ top: delta, behavior: 'smooth' })
+    smoothScrollBy(scroller, delta)
     scrolledAt = performance.now()
   }
 
@@ -583,7 +583,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     begun = true
     renderCaption(k)
     const line = caption.querySelector<HTMLElement>('.em-cur')
-    if (line) caption.scrollTop = line.offsetTop - caption.offsetTop
+    if (line) smoothScrollBy(caption, line.offsetTop - caption.offsetTop - caption.scrollTop)
     focusPoint(pointPlan()[k] ?? [])
     paintProgress()
     paintLeft()

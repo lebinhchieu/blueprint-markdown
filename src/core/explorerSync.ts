@@ -26,6 +26,7 @@
  */
 
 import { getMermaidPanHandle } from './mermaidPanZoom'
+import { smoothScrollIntoView } from './motion'
 
 /**
  * Node id → the author's own id. The type prefix differs but the shape is
@@ -449,7 +450,7 @@ function onNodeClick(g: Element): void {
     // view. When the section is taller than the viewport, 'nearest' falls back
     // to aligning the top edge, which is what we'd want anyway.
     pair.heading.style.scrollMarginBottom = `${sectionContentHeight(inst, pair.heading)}px`
-    pair.heading.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    smoothScrollIntoView(pair.heading, 'nearest')
     flash(pair.g, 'em-explorer__node--flash')
     flash(pair.heading, 'em-explorer__section--flash')
     return

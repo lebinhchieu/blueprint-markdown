@@ -193,6 +193,7 @@ Beyond the directive components below, the extension adds:
 - **`:::legend`** — a collapsible color-key panel for a diagram or any content block.
 - **`:::revision` / `:::previous`** — flags a changed passage with a hover note and a click-to-reveal panel showing the prior text. Handy for tracked-change style docs.
 - **TOC reading rail** — a scroll-spy table of contents down the side of the preview and exported HTML. Controlled by `blueprintMarkdown.toc` (`off` / `h2` / `h3`, default `h3`). Add `toc=h1|h2|h3` to a `card`, `callout`, `details`, or `step` to promote its title to a real heading that feeds the rail.
+- **Forced motion** — keeps smooth scrolling and animations in the preview and exported HTML even when the OS asks for reduced motion (e.g. Windows animation effects off). Controlled by `blueprintMarkdown.forceMotion` (default `true`); set `false` to honor the OS preference.
 - **Heading shortcuts** — `Ctrl+1`…`Ctrl+6` sets the heading level of the current line while editing a Markdown file.
 - **Present mode** — a narrated walkthrough: each segment spotlights its blocks, dims the rest, and speaks + captions the script. See [Present Mode](#present-mode).
 - **Review comments** — right-click a line in the preview to add a comment or an AI note; it's inserted inline at that line in the source.

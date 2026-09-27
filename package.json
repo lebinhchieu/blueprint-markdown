@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -207,6 +207,11 @@
           ],
           "default": "h3",
           "description": "Table-of-contents reading rail in the preview and exported HTML."
+        },
+        "blueprintMarkdown.forceMotion": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep smooth scrolling and animations in the preview and exported HTML even when the OS asks for reduced motion (e.g. Windows animation effects off)."
         }
       }
     }

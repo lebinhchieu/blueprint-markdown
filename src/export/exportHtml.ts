@@ -85,6 +85,7 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
   // ── 3. Extract theme from the injected marker ───────────────────────────────
   const themeMatch = rendered.match(/data-em-theme="([^"]+)"/)
   const theme = themeMatch ? themeMatch[1] : 'light'
+  const forceMotion = /data-em-force-motion="true"/.test(rendered)
 
   // Strip the hidden em-theme-config marker div — it's only needed by the live
   // preview runtime. The export stamps the theme directly on <body data-em-theme>.
@@ -129,7 +130,7 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
     : ''
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-em-force-motion="${forceMotion}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">

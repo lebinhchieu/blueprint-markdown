@@ -29,6 +29,8 @@ export function applyTheme(root: HTMLElement): string {
   const marker = root.ownerDocument.querySelector<HTMLElement>('.em-theme-config')
   const theme = marker?.getAttribute('data-em-theme') || root.getAttribute('data-em-theme') || 'light'
   root.setAttribute('data-em-theme', theme)
+  const force = marker?.getAttribute('data-em-force-motion')
+  if (force) root.ownerDocument.documentElement.setAttribute('data-em-force-motion', force)
   return theme
 }
 

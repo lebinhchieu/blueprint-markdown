@@ -17,6 +17,8 @@
  * any wrapper this module adds back to raw source/SVG on each doc edit.
  */
 
+import { smoothScrollIntoView } from './motion'
+
 interface Transform {
   x: number
   y: number
@@ -435,7 +437,7 @@ export function enhanceMermaidZoom(blocks: HTMLElement[]): void {
       const marginY = 24 // ponytail: mirrors --sp-lg; not read from CSS to avoid a rem->px lookup for one number
       el.style.height = `${Math.max(DEFAULT_PANEL_HEIGHT_MIN, window.innerHeight - marginY * 2)}px`
       controls.reset.click()
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      smoothScrollIntoView(el, 'center')
     }
     controls.grow?.addEventListener('click', grow)
     // "f" shortcut fires only for the diagram the user has clicked into scroll-zoom

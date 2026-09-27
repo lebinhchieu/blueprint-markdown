@@ -243,7 +243,8 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeConfiguration(e => {
       if (
         e.affectsConfiguration('blueprintMarkdown.theme') ||
-        e.affectsConfiguration('blueprintMarkdown.toc')
+        e.affectsConfiguration('blueprintMarkdown.toc') ||
+        e.affectsConfiguration('blueprintMarkdown.forceMotion')
       ) {
         refresh()
       }

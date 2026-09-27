@@ -2011,10 +2011,12 @@ kbd {
 .em-present-voice select option { background: var(--bg-raised); }
 
 @media (prefers-reduced-motion: reduce) {
-  .em-present-rails > :is(i, b),
-  .em-presenting .em-point,
-  .em-present-bar,
-  .em-playing .em-present-eq i { animation: none; }
+  html:not([data-em-force-motion="true"]) :is(
+    .em-present-rails > :is(i, b),
+    .em-presenting .em-point,
+    .em-present-bar,
+    .em-playing .em-present-eq i
+  ) { animation: none; }
 }
 
 /* Standalone-page launcher (mountPresentLauncher) */

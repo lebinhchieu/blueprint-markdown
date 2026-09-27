@@ -59,6 +59,12 @@ function resolveToc(): string {
     .get<string>('toc', 'h3')
 }
 
+function resolveForceMotion(): boolean {
+  return vscode.workspace
+    .getConfiguration('blueprintMarkdown')
+    .get<boolean>('forceMotion', true)
+}
+
 // ─── Block directive regexes (mirror parser.ts) ───────────────────────────────
 
 const RE_CLOSE = /^\s*:::\s*$/
@@ -241,7 +247,7 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
     if (state.inlineMode) return false
     const theme = resolveTheme()
     const token = new state.Token('html_block', '', 0)
-    token.content = `<div class="em-theme-config" data-em-theme="${theme}" hidden></div>\n`
+    token.content = `<div class="em-theme-config" data-em-theme="${theme}" data-em-force-motion="${resolveForceMotion()}" hidden></div>\n`
     state.tokens.unshift(token)
     return false   // non-terminating; let other core rules run
   })
