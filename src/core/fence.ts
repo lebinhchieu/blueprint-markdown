@@ -126,7 +126,8 @@ export function installFenceRenderer(md: MarkdownIt): void {
     // Mermaid: emit raw div for mermaid.js to render post-DOM-insert
     if (meta.lang === 'mermaid') {
       const code = escapeHtml(token.content.trim())
-      return `<div class="mermaid">${code}</div>\n`
+      const cue = meta.cue ? ` data-cue="${escapeHtml(meta.cue)}"` : ''
+      return `<div class="mermaid"${cue}>${code}</div>\n`
     }
 
     // Highlight the code

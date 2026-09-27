@@ -63,7 +63,7 @@ const REGISTRY = {
   // legend.ts — wraps a diagram + ::legend-item children into a toggleable legend panel
   legend:      ['container'],
   'legend-item': ['leaf'],
-  // narration.ts — present-mode script (the inline :cue marker is listed below)
+  // narration.ts — present-mode script (the inline :cue / :at markers are listed below)
   narration: ['container'],
   say:       ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
@@ -77,6 +77,7 @@ const REGISTRY = {
   comment:   ['inline'],
   ai:        ['inline'],
   cue:       ['inline'],
+  at:        ['inline'],
 }
 
 // ─── Parser — ported from src/core/parser.ts (exact regexes, same logic) ─────
@@ -299,12 +300,16 @@ const cueUses = []
       const id = m[1].match(/#([\w-]+)/)
       if (id) cueNames.add(id[1])
     }
+    for (const m of line.matchAll(/:at\{([^}]*)\}/g)) {
+      const id = m[1].match(/#([\w-]+)/)
+      if (id) cueUses.push({ name: id[1], line: i + 1, at: true })
+    }
   })
 }
 for (const use of cueUses) {
   if (!cueNames.has(use.name)) {
     errors.push(
-      `:::say on="${use.name}" (line ${use.line}) — nothing is named #${use.name}; ` +
+      `${use.at ? ':at{#' + use.name + '}' : ':::say on="' + use.name + '"'} (line ${use.line}) — nothing is named #${use.name}; ` +
       `add {#${use.name}} to a directive, #${use.name} to a fence line, or :cue{#${use.name}} to a heading/row/item`
     )
   }

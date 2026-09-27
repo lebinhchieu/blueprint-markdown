@@ -315,8 +315,9 @@ AI note: :ai[Double-check this assumption next time]
 
 When asked to **present / narrate / walk someone through** a document, don't answer in chat:
 add a narration script to the file. The viewer then shows a **Present** button that plays it
-as a voiced walkthrough — each segment spotlights its blocks, dims the rest, shows a margin
-note, and captions the narration.
+as a voiced walkthrough — each segment rings its blocks, highlights the item inside them
+being talked about (list item, row, step, card, diagram node), shows a margin note, and
+captions the narration.
 
 **1. Name the blocks** the script will point at. Names are invisible until presenting.
 
@@ -345,6 +346,10 @@ Try 3 is the final version. If roles were already mapped, the step returns early
 
 - `on` — space-separated ids to spotlight. `lines` — 1-based lines to light inside the named
   code block(s), same range syntax as the fence's `{3-6}`. `note` — the margin sticky note.
+- The highlighted item follows the narration automatically: a sentence that opens with
+  "First, / Second, …" or reuses an item's words lights that item. To pin it instead, put
+  `:at{#id}` (a named item) or `:at{lines="4"}` (lines of the lit code) before a sentence —
+  it holds until the next `:at`, and isn't spoken.
 - The body is spoken and captioned: plain prose, no markdown, no tables.
 - `:::narration{lang="vi"}` narrates in Vietnamese; `voice=` overrides the generated-audio voice.
 

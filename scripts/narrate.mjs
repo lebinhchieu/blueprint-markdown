@@ -41,6 +41,7 @@ await build({
       export { createRenderTree } from './src/core/renderer'
       export { buildRegistry } from './src/core/directives/index'
       export { createBrowserMarkdownIt } from './src/core/markdownitBrowser'
+      export { installInlineRule, installHexColorRule } from './src/core/inline'
       export { narrationFile, narrationDocDir, defaultVoice, DEFAULT_LANG } from './src/core/speech'
       export { splitSentences } from './src/core/present'`,
     resolveDir: root,
@@ -54,7 +55,13 @@ await build({
 })
 const core = await import(pathToFileURL(tmp).href)
 
-const render = core.createRenderTree(core.createBrowserMarkdownIt(), core.buildRegistry())
+// Same inline rules as the plugin's private md, so inline directives in a :::say (e.g. :at)
+// render — and drop out of the spoken text — exactly as in the preview.
+const registry = core.buildRegistry()
+const md = core.createBrowserMarkdownIt()
+core.installInlineRule(md, registry)
+core.installHexColorRule(md)
+const render = core.createRenderTree(md, registry)
 const unescape = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 
 const doc = basename(file, extname(file))

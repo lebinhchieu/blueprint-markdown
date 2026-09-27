@@ -152,8 +152,8 @@
 body {
   --present-spot:        var(--c-low);             /* spotlight ring */
   --present-line-bg:     color-mix(in srgb, var(--c-low) 18%, transparent);  /* lit code line */
-  --present-dim:         0.28;                     /* top-level blocks outside the spotlight */
-  --present-dim-inner:   0.45;                     /* siblings inside a lit container */
+  --present-point-bg:    color-mix(in srgb, var(--c-low) 22%, transparent);  /* point being read, inside the lit section */
+  --present-line-point-bg: color-mix(in srgb, var(--c-low) 40%, transparent);  /* code line being read */
   --present-note-bg:     var(--c-low-bg);
   --present-note-border: var(--c-low);
   --present-note-text:   var(--c-low-text);

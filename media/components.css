@@ -1668,41 +1668,84 @@ kbd {
 }
 
 .em-presenting {
-  padding-bottom: 45vh;  /* lets the last blocks scroll up above the caption bar */
+  padding-bottom: 45vh;  /* lets the last blocks scroll up above the dock */
 }
 
 .em-presenting * {
-  transition: opacity 0.35s ease, outline-color 0.35s ease, background-color 0.35s ease;
+  transition: outline-color 0.35s ease, background-color 0.35s ease, box-shadow 0.35s ease;
 }
 
-.em-presenting .em-dim       { opacity: var(--present-dim); }
-.em-presenting .em-dim-inner { opacity: var(--present-dim-inner); }
-.em-presenting .em-jump      { cursor: pointer; }
+.em-presenting .em-jump,
+.em-presenting .em-seekable { cursor: pointer; }
 
+/* Section — the cued block(s) of the segment */
 .em-presenting .em-lit {
   outline: 3px solid var(--present-spot);
-  outline-offset: 4px;
+  outline-offset: 6px;
   border-radius: var(--radius-sm);
+  animation: em-lit-in 0.45s ease-out;
+}
+
+@keyframes em-lit-in {
+  from { outline-color: transparent; outline-offset: 16px; }
 }
 
 /* Tables scroll-clip their overflow, so a row's ring sits inside it */
-.em-presenting tr.em-lit { outline-offset: -3px; }
+.em-presenting tr.em-lit { outline-offset: -3px; animation: none; }
+
+/* Point — the item inside the section the narration is on right now.
+   A gradient overlay, not a background colour, so the item's own fill (card, zebra row)
+   still shows through; the halo bleeds past its edge without shifting layout, and the
+   second shadow is an accent bar down its left side. */
+.em-presenting .em-point {
+  background-image: linear-gradient(var(--present-point-bg), var(--present-point-bg));
+  box-shadow: 0 0 0 4px var(--present-point-bg), -4px 0 0 0 var(--present-spot);
+  animation: em-point-in 0.3s ease-out;
+}
+
+.em-presenting :is(li, dt, details).em-point { border-radius: var(--radius-sm); }
+
+@keyframes em-point-in {
+  from { box-shadow: 0 0 0 0 var(--present-point-bg), 0 0 0 0 var(--present-spot); }
+}
+
+/* Rows: box-shadow on <tr> is unreliable, so the cells carry the overlay and the bar */
+.em-presenting tr.em-point { background-image: none; box-shadow: none; animation: none; }
+.em-presenting tr.em-point > :is(td, th) {
+  background-image: linear-gradient(var(--present-point-bg), var(--present-point-bg));
+}
+.em-presenting tr.em-point > :first-child { box-shadow: inset 4px 0 0 var(--present-spot); }
+
+/* Diagram nodes */
+.em-presenting g.node.em-point { filter: drop-shadow(0 0 6px var(--present-spot)); }
+.em-presenting g.node.em-point :is(rect, circle, ellipse, polygon, path) {
+  stroke: var(--present-spot) !important;  /* beats mermaid's scoped styles and classDef inline styles */
+  stroke-width: 3px !important;
+}
 
 .em-presenting .code-block .em-lit {
   outline: none;
   border-radius: 0;
   background: var(--present-line-bg);
+  animation: none;
+}
+
+.em-presenting .code-block .em-point {
+  background: var(--present-line-point-bg);
+  box-shadow: inset 3px 0 0 var(--present-spot);
+  border-radius: 0;
+  animation: none;
 }
 
 /* Bleed a lit line into the code padding, like .hl does */
-.em-presenting .code-block .code-line.em-lit,
-.em-presenting .code-block .em-ln.em-lit {
+.em-presenting .code-block .code-line:is(.em-lit, .em-point),
+.em-presenting .code-block .em-ln:is(.em-lit, .em-point) {
   margin: 0 calc(-1 * var(--sp-md));
   padding: 0 var(--sp-md);
 }
 
 /* Cue-only fences keep inline line spans; widen a lit one to the full row */
-.em-presenting .code-block .em-ln.em-lit {
+.em-presenting .code-block .em-ln:is(.em-lit, .em-point) {
   display: inline-block;
   box-sizing: border-box;
   min-width: calc(100% + 2 * var(--sp-md));
@@ -1732,33 +1775,48 @@ kbd {
 .em-present-note.em-on   { opacity: 1; transform: none; }
 .em-present-note.em-warn { border-color: var(--c-danger); }
 
+/* Dock — caption, segment track, controls */
 .em-present-bar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: var(--sp-md);
   z-index: 50;
-  background: var(--present-bar-bg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs);
+  width: min(780px, calc(100vw - 2 * var(--sp-md)));
+  box-sizing: border-box;
+  padding: var(--sp-sm) var(--sp-md);
+  background: color-mix(in srgb, var(--present-bar-bg) 88%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
   color: var(--present-bar-text);
-  border-top: 1px solid var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-lg);
   font-family: var(--font-sans);
+  transform: translateX(-50%);
+  animation: em-dock-in 0.35s ease-out;
 }
 
-.em-present-progress       { height: 4px; background: var(--bg-overlay); }
-.em-present-progress > div { height: 100%; width: 0; background: var(--c-primary); transition: width 0.3s; }
+@keyframes em-dock-in {
+  from { opacity: 0; transform: translate(-50%, 16px); }
+}
 
 .em-present-caption {
-  max-width: 900px;
-  min-height: 4.8em;
-  margin: 0 auto;
-  padding: var(--sp-md) var(--sp-lg) var(--sp-xs);
+  max-height: 4.6em;      /* three lines; the current sentence is scrolled into view */
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  padding: var(--sp-xs) var(--sp-xs) 0;
   font-size: var(--font-size-lg);
-  line-height: 1.55;
+  line-height: 1.5;
 }
 
-.em-present-sentence        { opacity: 0.45; transition: opacity 0.2s; }
-.em-present-sentence.em-cur { opacity: 1; }
+.em-no-captions .em-present-caption { display: none; }
+
+.em-present-sentence         { opacity: 0.6; transition: opacity 0.2s; }
+.em-present-sentence.em-said { opacity: 0.35; }
+.em-present-sentence.em-cur  { opacity: 1; }
 
 .em-present-word {
   background: var(--present-word-bg);
@@ -1767,65 +1825,180 @@ kbd {
   padding: 0 2px;
 }
 
+/* One tick per segment, as wide as its narration is long */
+.em-present-track {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 14px;
+}
+
+.em-present-tick {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 6px;
+  height: 5px;
+  padding: 0;
+  background: var(--bg-overlay);
+  border: none;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.em-present-tick > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  background: var(--c-primary);
+  border-radius: inherit;
+  transition: width 0.25s linear;
+}
+
+.em-present-tick.em-cur { background: color-mix(in srgb, var(--c-primary) 22%, var(--bg-overlay)); }
+.em-present-tick.em-cur,
+.em-present-tick:hover  { height: 9px; }
+
+.em-present-tick::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  max-width: 300px;
+  overflow: hidden;
+  padding: 3px 8px;
+  background: var(--tooltip-bg);
+  color: var(--tooltip-text);
+  border-radius: var(--tooltip-radius);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.em-present-tick:first-child::after { left: 0; transform: none; }
+.em-present-tick:last-child::after  { left: auto; right: 0; transform: none; }
+.em-present-tick:hover::after       { opacity: 1; }
+
 .em-present-controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sp-sm);
-  max-width: 900px;
-  margin: 0 auto;
-  padding: var(--sp-xs) var(--sp-lg) var(--sp-md);
   font-size: var(--font-size-sm);
 }
 
-.em-present-controls button {
-  display: inline-flex;
+.em-present-transport,
+.em-present-options {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 0.3em;
-  padding: 0.35em 0.7em;
-  background: var(--bg-overlay);
+  gap: 2px;
+}
+
+.em-present-controls button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 0.4em;
+  background: transparent;
   color: var(--text-base);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
   font: inherit;
   cursor: pointer;
 }
 
-.em-present-controls button:hover { border-color: var(--c-primary); }
+.em-present-controls button:hover { background: var(--bg-overlay); }
 
 .em-present-controls .em-present-main {
-  min-width: 6.5em;
+  width: 42px;
+  height: 42px;
+  margin: 0 var(--sp-xs);
   background: var(--c-primary);
-  border-color: var(--c-primary);
   color: var(--text-on-solid);
+  box-shadow: var(--shadow-md);
 }
 
-.em-present-controls .material-symbols-outlined { font-size: 18px; }
+.em-present-controls .em-present-main:hover { background: var(--c-primary); filter: brightness(1.08); }
+.em-present-controls .em-present-main .material-symbols-outlined { font-size: 26px; }
+.em-present-controls .material-symbols-outlined { font-size: 20px; }
 
-.em-present-controls label {
+.em-present-controls .em-present-rate {
+  border-color: var(--border-color);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.em-present-bar:not(.em-no-captions) [data-act="captions"] { color: var(--c-primary); }
+
+.em-present-status {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: var(--sp-xs);
-  color: var(--text-muted);
-}
-
-.em-present-controls select {
-  max-width: 240px;
-  padding: 0.25em;
-  background: var(--bg-overlay);
-  color: var(--text-base);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font: inherit;
-}
-
-.em-present-controls input[type="range"] { accent-color: var(--c-primary); }
-
-.em-present-count {
-  margin-left: auto;
+  justify-content: center;
+  gap: var(--sp-sm);
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.em-present-count { color: var(--text-base); font-weight: 600; }
+
+/* Speaking indicator */
+.em-present-eq {
+  visibility: hidden;     /* only while speaking; three still bars read as "…" */
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.em-present-eq i {
+  width: 3px;
+  height: 30%;
+  background: var(--c-primary);
+  border-radius: 1px;
+}
+
+.em-playing .em-present-eq               { visibility: visible; }
+.em-playing .em-present-eq i            { animation: em-eq 0.9s ease-in-out infinite; }
+.em-playing .em-present-eq i:nth-child(2) { animation-delay: -0.3s; }
+.em-playing .em-present-eq i:nth-child(3) { animation-delay: -0.6s; }
+
+@keyframes em-eq {
+  0%, 100% { height: 30%; }
+  50%      { height: 100%; }
+}
+
+.em-present-voice {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-left: var(--sp-xs);
+  color: var(--text-muted);
+}
+
+.em-present-voice select {
+  max-width: 150px;
+  padding: 0.25em;
+  background: transparent;
+  color: var(--text-base);
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.em-present-voice select option { background: var(--bg-raised); }
+
+@media (prefers-reduced-motion: reduce) {
+  .em-presenting .em-lit,
+  .em-presenting .em-point,
+  .em-present-bar,
+  .em-playing .em-present-eq i { animation: none; }
 }
 
 /* Standalone-page launcher (mountPresentLauncher) */
