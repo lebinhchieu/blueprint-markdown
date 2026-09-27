@@ -65,7 +65,8 @@ directions — nobody is there to follow them.
 | Say why, the page shows what | "This table has three rows: A, B, C." | "Only B survives the load test. That's why we chose it." |
 | 8–15 words a sentence | one sentence with three clauses | three sentences |
 | Signpost | "Another thing is…" | "Three changes. First, …" |
-| Spell out for the ear | `getUserById()`, `v4 → v5`, `API`, `~2x`, `/api/users` | "get user by I D", "version 4 to 5", "A P I", "about twice", "the users endpoint" |
+| Spell out for the ear | `getUserById()`, `v4 → v5`, `~2x`, `/api/users`, `150 ms` | "get user by ID", "version 4 to 5", "about twice", "the users endpoint", "150 milliseconds" |
+| Acronyms stay solid capitals | "A P I", "A I" — a lone "A" is read as "uh" | "API", "AI", "MCP" — the voice spells them letter by letter |
 | Commas are pauses | "However the cache was stale" | "However, the cache was stale." |
 | No leading numbers or symbols | "42% of calls failed." | "Of all calls, forty two percent failed." |
 | Numbers rounded and compared | "3,847 ms" | "almost four seconds, three times the budget" |

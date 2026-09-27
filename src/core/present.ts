@@ -162,7 +162,9 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   let timers: number[] = []
   let voices: SpeechSynthesisVoice[] = []
   let speechBroken = false
-  let audio: HTMLAudioElement | null = null
+  // One element for every sentence: VS Code's webview only lets a media element play if a
+  // click or key started it once, so a fresh Audio() per sentence is blocked after the first.
+  const player = new Audio()
   const synth: SpeechSynthesis | undefined = 'speechSynthesis' in window ? window.speechSynthesis : undefined
   const scroller = findScroller(root)
 
@@ -199,7 +201,8 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     const all = synth?.getVoices() ?? []
     const lang = segments[0].lang
     const match = all.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()))
-    voices = (match.length ? match : all).sort((a, b) => voiceScore(b) - voiceScore(a))
+    // Never fall back to another language's voice: an English voice reading Vietnamese is worse than silent captions.
+    voices = match.sort((a, b) => voiceScore(b) - voiceScore(a))
     const saved = storage('get')
     voiceSel.innerHTML = `<option value="${KOKORO}">Generated (npm run narrate)</option>` + (voices.length
       ? voices.map((v, i) => `<option value="${i}"${v.name === saved ? ' selected' : ''}>${escapeHtml(v.name)}</option>`).join('')
@@ -340,9 +343,11 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     nextSentence()
   }
 
-  /** Pre-generated Kokoro audio; a sentence with no file (not generated yet) falls back. */
+  /** Pre-generated audio (npm run narrate); a sentence with no file (not generated yet) falls back. */
   function speakAudio(parts: string[], cur: number, voice: string, my: number, done: () => void, fallback: () => void): void {
-    const a = audio = new Audio(new URL(narrationFile(voice, parts[cur]), document.baseURI).href)
+    const url = new URL(narrationFile(voice, parts[cur]), document.baseURI).href
+    const a = player
+    a.src = url
     a.playbackRate = Number(rateIn.value)
     const words = Array.from(parts[cur].matchAll(/\S+/g))
     // No word timings from a WAV: advance the highlight evenly through the clip.
@@ -353,14 +358,19 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     }
     a.onended = () => { if (my === token) done() }
     let failed = false
-    const fail = (): void => { if (!failed && my === token) { failed = true; fallback() } }
-    a.onerror = fail
-    a.play().catch(fail)
+    const fail = (why: string): void => {
+      if (failed || my !== token) return
+      failed = true
+      console.warn(`[present] generated audio failed (${why}), falling back: ${url}\n  "${parts[cur]}"`)
+      fallback()
+    }
+    a.onerror = () => fail(`media error ${a.error?.code}: ${a.error?.message ?? ''}`)
+    a.play().catch((e: Error) => fail(`play() ${e.name}: ${e.message}`))
   }
 
   function stopAudio(): void {
-    audio?.pause()
-    audio = null
+    player.onended = player.onerror = player.ontimeupdate = null
+    player.pause()
   }
 
   // One utterance per sentence: Chrome cuts off long utterances, and it lets the caption track progress.
@@ -430,7 +440,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     replay()
   })
   rateIn.addEventListener('input', () => {
-    if (audio) audio.playbackRate = Number(rateIn.value)
+    player.playbackRate = Number(rateIn.value)
     $('.em-present-rate').textContent = `${Number(rateIn.value).toFixed(2)}×`
   })
 

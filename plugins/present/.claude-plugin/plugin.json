@@ -1,7 +1,7 @@
 {
   "name": "present-skill",
   "description": "Write Blueprint Markdown documents that present themselves, narrated by Kokoro",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": { "name": "Chieu Le" },
   "dependencies": ["blueprint-markdown-skills"]
 }

@@ -12,8 +12,9 @@
  *   python3 -m venv ~/.cache/blueprint-narrate/venv
  *   ~/.cache/blueprint-narrate/venv/bin/pip install vieneu "onnxruntime<1.23"
  *
- * (onnxruntime 1.23+ rejects the model's external data through Hugging Face's symlinked cache.) Unchanged sentences are skipped, so re-running after an
- * edit only generates what changed. Sentence text comes from the real renderer (bundled
+ * (onnxruntime 1.23+ rejects the model's external data through Hugging Face's symlinked cache.)
+ *
+ * Unchanged sentences are skipped, so re-running after an edit only generates what changed. Sentence text comes from the real renderer (bundled
  * on the fly) so it matches present mode's data-speech exactly.
  */
 
