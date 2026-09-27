@@ -4,8 +4,8 @@
  * Call startPresent(root) on a DOM that contains rendered :::narration output.
  * It reads the hidden .em-say segments and, for each one, rings the cued blocks
  * (the section) and follows the narration inside them sentence by sentence (the
- * point: a list item, row, step, card or diagram node), shows a margin note, and
- * speaks with a synced caption in a floating dock.
+ * point: a list item, row, step, card or diagram node), and speaks with a synced
+ * caption in a floating dock that also shows the segment's note.
  *
  * The point comes from an explicit `:at{#id}` marker in the :::say, or else is
  * matched from the words of the sentence being spoken (see pointMatcher).
@@ -59,6 +59,9 @@ const KOKORO = 'kokoro'
 const PAUSE_BETWEEN_SEGMENTS_MS = 650
 const RATES = [0.8, 0.9, 1, 1.15, 1.3, 1.5]
 const WORDS_PER_MINUTE = 150
+/** Section rail: px left of the lit block, and the widest gap between blocks that still share one rail */
+const RAIL_GAP = 14
+const RAIL_JOIN = 28
 // The items a lit block is made of — what "which point is being read" chooses between.
 const POINT = 'li, tr:has(td), .step, .timeline-event, .card, dt, details, g.node'
 
@@ -358,6 +361,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   const bar = document.createElement('div')
   bar.className = 'em-present-bar'
   bar.innerHTML = `
+    <div class="em-present-note"></div>
     <div class="em-present-caption" aria-live="polite"></div>
     <div class="em-present-track" role="group" aria-label="Segments"></div>
     <div class="em-present-controls">
@@ -379,11 +383,14 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
         <button type="button" data-act="exit" title="Exit (Esc)" aria-label="Exit present mode">${icon('close')}</button>
       </div>
     </div>`
-  const note = document.createElement('div')
-  note.className = 'em-present-note'
-  document.body.append(bar, note)
+  // Section rail: a bar in the left gutter beside each run of lit blocks. An overlay, not a
+  // pseudo-element on the block, because tables and code blocks clip their own overflow.
+  const rails = document.createElement('div')
+  rails.className = 'em-present-rails'
+  document.body.append(bar, rails)
 
   const $ = <T extends HTMLElement>(sel: string) => bar.querySelector<T>(sel)!
+  const note = $('.em-present-note')
   const caption = $('.em-present-caption')
   const track = $('.em-present-track')
   const playBtn = $<HTMLButtonElement>('[data-act="play"]')
@@ -464,19 +471,50 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     focused.forEach(el => el.classList.remove('em-point'))
     focused = els
     els.forEach(el => el.classList.add('em-point'))
+    placeRails()
     if (els.length) keepVisible(els)
   }
 
-  let noteFor: Element[] = []
-  function placeNote(): void {
-    if (!noteFor.length || !note.classList.contains('em-on')) return
-    const r = unionRect(noteFor)
-    // The content column's right edge: the root minus its padding (the VS Code preview pads <body>).
-    const contentRight = root.getBoundingClientRect().right - parseFloat(getComputedStyle(root).paddingRight)
-    const w = note.offsetWidth
-    const fits = contentRight + 12 + w <= window.innerWidth - 8
-    note.style.left = `${fits ? contentRight + 12 : Math.max(8, contentRight - w - 8)}px`
-    note.style.top = `${clamp(r.top, 64, viewBox().bottom - note.offsetHeight - 12)}px`
+  /** One rail per run of lit blocks; blocks closer than RAIL_JOIN share a rail.
+   *  Each point gets a bright stretch of its rail, spanning its tint (halo included). */
+  function placeRails(): void {
+    // Rails live in the scrolled content, so they scroll natively; measure from their origin.
+    const origin = rails.getBoundingClientRect()
+    const runs: { top: number; bottom: number; left: number }[] = []
+    lit.map(el => el.getBoundingClientRect()).filter(r => r.height > 0)
+      .sort((a, b) => a.top - b.top)
+      .forEach(r => {
+        const run = runs[runs.length - 1]
+        if (run && r.top - run.bottom < RAIL_JOIN) {
+          run.bottom = Math.max(run.bottom, r.bottom)
+          run.left = Math.min(run.left, r.left)
+        } else runs.push({ top: r.top, bottom: r.bottom, left: r.left })
+      })
+    const lines = rails.getElementsByTagName('i')
+    while (lines.length > runs.length) lines[lines.length - 1].remove()
+    while (lines.length < runs.length) rails.append(document.createElement('i'))
+    const railLeft = (run: { left: number }): number => Math.max(4, run.left - RAIL_GAP) - origin.left
+    runs.forEach((run, i) => {
+      lines[i].style.cssText =
+        `top:${run.top - origin.top}px;left:${railLeft(run)}px;height:${run.bottom - run.top}px`
+    })
+
+    // Rows and code lines are tinted flush, without the halo
+    const halo = parseFloat(getComputedStyle(root).getPropertyValue('--present-point-halo')) || 0
+    const thumbs = focused.flatMap(el => {
+      const r = el.getBoundingClientRect()
+      const mid = (r.top + r.bottom) / 2
+      const run = runs.find(run => mid >= run.top && mid <= run.bottom)
+      if (!run || r.height === 0) return []
+      const pad = el.matches('tr, g.node, .code-block *') ? 0 : halo
+      return [{ top: r.top - pad, bottom: r.bottom + pad, left: railLeft(run) }]
+    })
+    const bars = rails.getElementsByTagName('b')
+    while (bars.length > thumbs.length) bars[bars.length - 1].remove()
+    while (bars.length < thumbs.length) rails.append(document.createElement('b'))
+    thumbs.forEach((t, i) => {
+      bars[i].style.cssText = `top:${t.top - origin.top}px;left:${t.left}px;height:${t.bottom - t.top}px`
+    })
   }
 
   /** The visible part of the scroller, above the dock. */
@@ -524,17 +562,14 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     clearSpotlight()
     lit.forEach(el => el.classList.add('em-lit'))
     pointPlan().flat().forEach(el => el.classList.add('em-seekable'))
+    placeRails()
     scrollToFocus(lit)
 
     const { missing } = resolved
     const warn = missing.length ? `⚠ cue not found: ${missing.join(', ')}` : ''
     const text = [seg.note, warn].filter(Boolean).join('\n')
-    note.classList.remove('em-on')
     note.classList.toggle('em-warn', missing.length > 0)
     note.textContent = text
-    // With nothing lit, a warning still needs an anchor: the top of the document.
-    noteFor = lit.length ? lit : [root]
-    if (text) requestAnimationFrame(() => { note.classList.add('em-on'); placeNote() })
 
     $('.em-present-count').textContent = `${idx + 1} / ${segments.length}`
     paintTrack()
@@ -791,10 +826,13 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   let raf = 0
   const onMove = (): void => {
     cancelAnimationFrame(raf)
-    raf = requestAnimationFrame(placeNote)
+    raf = requestAnimationFrame(placeRails)
   }
   document.addEventListener('scroll', onMove, true)
   window.addEventListener('resize', onMove)
+  // Late layout shifts (a mermaid diagram rendering, an image loading) move the lit blocks.
+  const resizes = new ResizeObserver(onMove)
+  resizes.observe(root)
   const onUnload = (): void => { synth?.cancel(); stopAudio() }
   window.addEventListener('beforeunload', onUnload)
 
@@ -807,10 +845,11 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     document.removeEventListener('keydown', onKey)
     document.removeEventListener('scroll', onMove, true)
     window.removeEventListener('resize', onMove)
+    resizes.disconnect()
     window.removeEventListener('beforeunload', onUnload)
     synth?.removeEventListener('voiceschanged', loadVoices)
     bar.remove()
-    note.remove()
+    rails.remove()
     opts.onExit?.()
   }
 
@@ -823,7 +862,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     words = segments.map(s => splitSentences(s.say).map(countWords))
     // A re-render may have replaced <body>'s children (VS Code's morphdom), UI included.
     if (!bar.isConnected) document.body.append(bar)
-    if (!note.isConnected) document.body.append(note)
+    if (!rails.isConnected) document.body.append(rails)
     buildTrack()
     markJumps(true)
     root.classList.add('em-presenting')

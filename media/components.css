@@ -576,7 +576,8 @@ details[open] > .details__summary::before {
 .timeline {
   position: relative;
   padding-left: var(--sp-2xl);
-  margin-bottom: var(--sp-md);
+  padding-bottom: calc(var(--sp-xs) + 1em);  /* the last event's trailing space, see .timeline-event */
+  margin-bottom: var(--sp-lg);
 }
 
 .timeline::before {
@@ -591,8 +592,12 @@ details[open] > .details__summary::before {
 
 .timeline-event {
   position: relative;
-  margin-bottom: var(--sp-lg);
+  /* The content's trailing space (padding + last paragraph's margin) lives out here,
+     so a Present-mode tint hugs the content */
+  margin-bottom: calc(var(--sp-lg) + var(--sp-xs) + 1em);
 }
+
+.timeline-event:last-child { margin-bottom: 0; }
 
 .timeline-event__marker {
   position: absolute;
@@ -640,9 +645,7 @@ details[open] > .details__summary::before {
 }
 
 /* Instead show the date as part of the content block */
-.timeline-event__content {
-  padding-bottom: var(--sp-xs);
-}
+.timeline-event__content > :last-child { margin-bottom: 0; }
 
 .timeline-event__content::before {
   display: none;
@@ -729,8 +732,10 @@ details[open] > .details__summary::before {
   grid-template-columns: subgrid;
   align-items: start;
   position: relative;
-  padding-bottom: var(--sp-lg);
+  margin-bottom: var(--sp-lg);  /* margin, not padding: a Present-mode tint stays on the content */
 }
+
+.step:last-child { margin-bottom: 0; }
 
 .step::before {
   counter-increment: step-counter;
@@ -753,7 +758,7 @@ details[open] > .details__summary::before {
   position: absolute;
   left: calc(var(--font-size-sm) - 1px);
   top: calc(var(--font-size-sm) * 2);
-  bottom: 0;
+  bottom: calc(-1 * var(--sp-lg));
   width: 2px;
   background: var(--border-color);
 }
@@ -1662,59 +1667,79 @@ kbd {
 /* ─── Present mode ─────────────────────────────────────────────────────── */
 /* Classes set by core/present.ts; nothing here applies until .em-presenting (on <body>). */
 
-/* Reserve a margin column for the sticky note, clear of the TOC rail */
-@media (min-width: 900px) {
-  .em-presenting { padding-right: calc(var(--present-note-width) + 5rem); }
-}
-
 .em-presenting {
   padding-bottom: 45vh;  /* lets the last blocks scroll up above the dock */
 }
 
 .em-presenting * {
-  transition: outline-color 0.35s ease, background-color 0.35s ease, box-shadow 0.35s ease;
+  transition: background-color 0.35s ease, box-shadow 0.35s ease;
 }
 
 .em-presenting .em-jump,
 .em-presenting .em-seekable { cursor: pointer; }
 
-/* Section — the cued block(s) of the segment */
-.em-presenting .em-lit {
-  outline: 3px solid var(--present-spot);
-  outline-offset: 6px;
-  border-radius: var(--radius-sm);
-  animation: em-lit-in 0.45s ease-out;
+/* Section — the cued block(s) of the segment get a rail in the left gutter (placeRails).
+   It slides to the next section rather than blinking out and back. */
+.em-present-rails {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  pointer-events: none;
 }
 
-@keyframes em-lit-in {
-  from { outline-color: transparent; outline-offset: 16px; }
+.em-present-rails > :is(i, b) {
+  position: absolute;
+  width: 3px;
+  background: var(--present-rail);
+  border-radius: var(--radius-full);
+  transform-origin: top;
+  transition: top 0.35s ease, left 0.35s ease, height 0.35s ease;
+  animation: em-rail-in 0.35s ease-out;
 }
 
-/* Tables scroll-clip their overflow, so a row's ring sits inside it */
-.em-presenting tr.em-lit { outline-offset: -3px; animation: none; }
+/* The point's own stretch of the rail, level with its tint */
+.em-present-rails > b {
+  z-index: 1;
+  width: 5px;
+  margin-left: -1px;  /* centred on the 3px section rail */
+  background: var(--present-spot);
+}
 
-/* Point — the item inside the section the narration is on right now.
+@keyframes em-rail-in {
+  from { opacity: 0; transform: scaleY(0); }
+}
+
+/* Point — the item inside the section the narration is on right now; its marker is the
+   bright stretch of the section rail (placeRails), so the item itself carries only a tint.
    A gradient overlay, not a background colour, so the item's own fill (card, zebra row)
-   still shows through; the halo bleeds past its edge without shifting layout, and the
-   second shadow is an accent bar down its left side. */
+   still shows through; the halo bleeds past its edge without shifting layout. */
 .em-presenting .em-point {
   background-image: linear-gradient(var(--present-point-bg), var(--present-point-bg));
-  box-shadow: 0 0 0 4px var(--present-point-bg), -4px 0 0 0 var(--present-spot);
+  box-shadow: 0 0 0 var(--present-point-halo) var(--present-point-bg);
   animation: em-point-in 0.3s ease-out;
 }
 
-.em-presenting :is(li, dt, details).em-point { border-radius: var(--radius-sm); }
+/* Items without a radius of their own; cards and details keep theirs */
+.em-presenting :is(li, dt, .step, .timeline-event).em-point { border-radius: var(--radius-sm); }
 
-@keyframes em-point-in {
-  from { box-shadow: 0 0 0 0 var(--present-point-bg), 0 0 0 0 var(--present-spot); }
+/* Headers with their own fill would hide the item's tint */
+.em-presenting .em-point > :is(.card__header, .details__summary) {
+  background-image: linear-gradient(var(--present-point-bg), var(--present-point-bg));
 }
 
-/* Rows: box-shadow on <tr> is unreliable, so the cells carry the overlay and the bar */
+/* Stacked panels: lift the point so the next panel doesn't cover its halo */
+.em-presenting .accordion .details.em-point { position: relative; z-index: 1; }
+
+@keyframes em-point-in {
+  from { box-shadow: 0 0 0 0 var(--present-point-bg); }
+}
+
+/* Rows: box-shadow on <tr> is unreliable, so the cells carry the tint */
 .em-presenting tr.em-point { background-image: none; box-shadow: none; animation: none; }
 .em-presenting tr.em-point > :is(td, th) {
   background-image: linear-gradient(var(--present-point-bg), var(--present-point-bg));
 }
-.em-presenting tr.em-point > :first-child { box-shadow: inset 4px 0 0 var(--present-spot); }
 
 /* Diagram nodes */
 .em-presenting g.node.em-point { filter: drop-shadow(0 0 6px var(--present-spot)); }
@@ -1723,16 +1748,11 @@ kbd {
   stroke-width: 3px !important;
 }
 
-.em-presenting .code-block .em-lit {
-  outline: none;
-  border-radius: 0;
-  background: var(--present-line-bg);
-  animation: none;
-}
+.em-presenting .code-block .em-lit { background: var(--present-line-bg); }
 
 .em-presenting .code-block .em-point {
   background: var(--present-line-point-bg);
-  box-shadow: inset 3px 0 0 var(--present-spot);
+  box-shadow: none;
   border-radius: 0;
   animation: none;
 }
@@ -1751,28 +1771,24 @@ kbd {
   min-width: calc(100% + 2 * var(--sp-md));
 }
 
+/* The segment's note, as a chip heading the dock */
 .em-present-note {
-  position: fixed;
-  z-index: 40;
-  width: var(--present-note-width);
-  padding: var(--sp-sm) var(--sp-md);
+  align-self: flex-start;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 2px var(--sp-sm);
   background: var(--present-note-bg);
   border: 1px solid var(--present-note-border);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
   color: var(--present-note-text);
-  font-family: var(--font-sans);
   font-size: var(--font-size-sm);
+  font-weight: 600;
   line-height: 1.45;
   white-space: pre-line;
-  opacity: 0;
-  transform: translateX(-6px);
-  transition: opacity 0.3s, transform 0.3s, top 0.35s;
-  pointer-events: none;
 }
 
+.em-present-note:empty   { display: none; }
 .em-present-note::before { content: "✎ "; }
-.em-present-note.em-on   { opacity: 1; transform: none; }
 .em-present-note.em-warn { border-color: var(--c-danger); }
 
 /* Dock — caption, segment track, controls */
@@ -1995,7 +2011,7 @@ kbd {
 .em-present-voice select option { background: var(--bg-raised); }
 
 @media (prefers-reduced-motion: reduce) {
-  .em-presenting .em-lit,
+  .em-present-rails > :is(i, b),
   .em-presenting .em-point,
   .em-present-bar,
   .em-playing .em-present-eq i { animation: none; }
