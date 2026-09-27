@@ -65,6 +65,15 @@ export function hasNarration(root: ParentNode): boolean {
   return root.querySelector('.em-say') !== null
 }
 
+/**
+ * Base name of the markdown file: stamped on <body> by Export to HTML (the .html may be
+ * saved under another name); in the preview, <base href> is the .md file itself.
+ */
+function docName(): string {
+  const file = document.body.dataset.emDoc ?? decodeURIComponent(new URL(document.baseURI).pathname.split('/').pop() ?? '')
+  return file.replace(/\.[^.]*$/, '')
+}
+
 function narrationVoice(el: HTMLElement): { lang: string; voice: string } {
   const n = el.closest<HTMLElement>('.em-narration')
   const lang = n?.dataset.lang || DEFAULT_LANG
@@ -345,7 +354,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
 
   /** Pre-generated audio (npm run narrate); a sentence with no file (not generated yet) falls back. */
   function speakAudio(parts: string[], cur: number, voice: string, my: number, done: () => void, fallback: () => void): void {
-    const url = new URL(narrationFile(voice, parts[cur]), document.baseURI).href
+    const url = new URL(narrationFile(docName(), voice, parts[cur]), document.baseURI).href
     const a = player
     a.src = url
     a.playbackRate = Number(rateIn.value)

@@ -92,7 +92,7 @@ directions — nobody is there to follow them.
 2. Word count of all `:::say` bodies within ±15 % of the length budget.
 3. From the enhanced-markdown-vscode repo: `npm run narrate -- <file>` generates the audio
    (Kokoro, or VieNeu for `vi` — one-time setup at the top of `scripts/narrate.mjs`) into
-   `.narration/` beside the file. Re-run; it must print `0 to generate`.
+   `.narration/<doc>/` beside the file. Re-run; it must print `0 to generate`.
 4. Report: file path, segment count, estimated minutes, and the narrate result. If narrate
    couldn't run, say so — Present mode then falls back to the browser voice.
 

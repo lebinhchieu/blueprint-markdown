@@ -44,10 +44,18 @@ function hash53(s: string): string {
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36)
 }
 
-/** Relative path of one sentence's audio, next to the markdown file. */
-export function narrationFile(voice: string, sentence: string): string {
-  // VieNeu voice names are Vietnamese ("Hải Đăng"); keep file names ASCII.
-  const slug = voice.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd')
+/** ASCII file-name slug; VieNeu voice names ("Hải Đăng") and doc names may not be. */
+function slugify(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd')
     .replace(/[^a-z0-9_]+/gi, '-').toLowerCase()
-  return `${NARRATION_DIR}/${slug}-${hash53(sentence)}.wav`
+}
+
+/** Relative path of one sentence's audio, next to the markdown file; `doc` is its base name without extension. */
+export function narrationFile(doc: string, voice: string, sentence: string): string {
+  return `${narrationDocDir(doc)}/${slugify(voice)}-${hash53(sentence)}.wav`
+}
+
+/** One folder per document, so its clips can be found and pruned together. */
+export function narrationDocDir(doc: string): string {
+  return `${NARRATION_DIR}/${slugify(doc)}`
 }

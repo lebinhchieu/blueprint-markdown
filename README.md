@@ -231,7 +231,8 @@ Here's the short version. Both bugs are fixed.
 ```
 
 **Voices.** Pre-generate natural neural audio once per document — it's cached per
-sentence in `.narration/` next to the file, so re-runs only record what changed:
+sentence in `.narration/<doc>/` next to the file, so re-runs only record what changed
+and drop clips of removed sentences:
 
 ```bash
 npm run narrate -- path/to/doc.md

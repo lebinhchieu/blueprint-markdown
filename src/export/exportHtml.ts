@@ -141,7 +141,7 @@ export async function exportToHtml(context: vscode.ExtensionContext): Promise<vo
 ${inlinedCss}
 </style>
 </head>
-<body class="md-output" data-em-theme="${escapeAttr(theme)}">
+<body class="md-output" data-em-theme="${escapeAttr(theme)}" data-em-doc="${escapeAttr(title)}">
 ${body}
 ${mermaidScript}<script>
 ${exportClientJs}

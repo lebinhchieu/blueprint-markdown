@@ -17,7 +17,7 @@ One command turns every narrated sentence into a Kokoro recording. Present mode 
 `:::say` blocks in the markdown file.
 :::
 :::step{title="Generate"}
-`npm run narrate -- talk.md` writes one WAV per sentence to `.narration/`.
+`npm run narrate -- talk.md` writes one WAV per sentence to `.narration/talk/`.
 :::
 :::step{title="Present"}
 Pick **Kokoro** in the voice menu. Missing sentences fall back to the browser voice.
@@ -27,8 +27,8 @@ Pick **Kokoro** in the voice menu. Missing sentences fall back to the browser vo
 ## Only changed sentences regenerate :cue{#cache}
 
 ```js #key title="speech.ts"
-export function narrationFile(voice, sentence) {
-  return `.narration/${voice}-${hash53(sentence)}.wav`
+export function narrationFile(doc, voice, sentence) {
+  return `.narration/${doc}/${voice}-${hash53(sentence)}.wav`
 }
 ```
 

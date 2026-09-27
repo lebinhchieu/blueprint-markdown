@@ -4,7 +4,7 @@
  *
  *   npm run narrate -- docs/talk.md
  *
- * Writes one WAV per sentence to `.narration/` next to the file; present mode's
+ * Writes one WAV per sentence to `.narration/<doc>/` next to the file; present mode's
  * "Generated" voice plays them. English uses Kokoro; `:::narration{lang="vi"}` uses
  * VieNeu-TTS through scripts/vieneu_narrate.py, run with $VIENEU_PYTHON or
  * ~/.cache/blueprint-narrate/venv — set it up once with:
@@ -19,10 +19,10 @@
  */
 
 import { build } from 'esbuild'
-import { existsSync, mkdirSync, readFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import { homedir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { basename, dirname, extname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { tmpdir } from 'node:os'
 
@@ -41,7 +41,7 @@ await build({
       export { createRenderTree } from './src/core/renderer'
       export { buildRegistry } from './src/core/directives/index'
       export { createBrowserMarkdownIt } from './src/core/markdownitBrowser'
-      export { narrationFile, defaultVoice, DEFAULT_LANG, NARRATION_DIR } from './src/core/speech'
+      export { narrationFile, narrationDocDir, defaultVoice, DEFAULT_LANG } from './src/core/speech'
       export { splitSentences } from './src/core/present'`,
     resolveDir: root,
     loader: 'ts',
@@ -57,6 +57,8 @@ const core = await import(pathToFileURL(tmp).href)
 const render = core.createRenderTree(core.createBrowserMarkdownIt(), core.buildRegistry())
 const unescape = s => s.replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
 
+const doc = basename(file, extname(file))
+
 /** Every (voice, sentence) pair, in document order, deduplicated. */
 const jobs = new Map()
 function walk(nodes, lang, voice) {
@@ -68,18 +70,24 @@ function walk(nodes, lang, voice) {
     }
     if (n.name === 'say') {
       const speech = unescape(render([n]).match(/data-speech="([^"]*)"/)?.[1] ?? '')
-      for (const s of core.splitSentences(speech)) jobs.set(core.narrationFile(voice, s), { lang, voice, text: s })
+      for (const s of core.splitSentences(speech)) jobs.set(core.narrationFile(doc, voice, s), { lang, voice, text: s })
     } else if (n.children) walk(n.children, lang, voice)
   }
 }
 walk(core.parseBlocks(readFileSync(file, 'utf8')), core.DEFAULT_LANG, core.defaultVoice(core.DEFAULT_LANG))
 
 const docDir = dirname(resolve(file))
+const audioDir = join(docDir, core.narrationDocDir(doc))
+// Drop clips of sentences that were reworded or removed.
+if (existsSync(audioDir)) {
+  const keep = new Set([...jobs.keys()].map(rel => basename(rel)))
+  for (const f of readdirSync(audioDir)) if (!keep.has(f)) rmSync(join(audioDir, f))
+}
 const todo = [...jobs].filter(([rel]) => !existsSync(join(docDir, rel)))
 console.log(`${jobs.size} sentences, ${todo.length} to generate`)
 if (!todo.length) process.exit(0)
 
-mkdirSync(join(docDir, core.NARRATION_DIR), { recursive: true })
+mkdirSync(audioDir, { recursive: true })
 let i = 0
 const done = text => console.log(`[${++i}/${todo.length}] ${text.slice(0, 70)}`)
 const vi = todo.filter(([, j]) => j.lang === 'vi')
