@@ -288,3 +288,53 @@ Quality: :rating{value=4 max=5}
 Use ==double equals== to highlight a span of text inline.
 
 Combined with color: this is ==very important== and :color[this is critical]{danger}.
+
+---
+
+## Present mode :cue{#present}
+
+Click **Present** for a narrated walkthrough of this section. A segment names its targets;
+a target is named with `{#id}` on a directive, `#id` after a fence's language, or an inline
+`:cue{#id}` in a heading, paragraph, list item or table row.
+
+:::info{#pm-why title="Why the script lives in the file"}
+The narration travels with the document, so an exported page can present itself.
+:::
+
+| Target | How to name it |
+|---|---|
+| Directive block :cue{#pm-row-directive} | `:::info{#id}` |
+| Code lines :cue{#pm-row-code} | `#id` after the fence language, then `lines="2-3"` on the segment |
+| Heading, row, item :cue{#pm-row-inline} | `:cue{#id}` in its text; `{#id list}` for the whole list |
+
+```ts #pm-code title="present.ts"
+const seg = segments[idx]
+const { lit, missing } = resolveSegment(seg, cues)
+spotlight(lit)
+scrollToFocus(lit)
+```
+
+- Space plays and pauses. :cue{#pm-keys list}
+- The arrow keys move between segments.
+- Esc leaves present mode.
+
+:::narration
+:::say{on="present" note="The script is part of the document"}
+This section narrates itself. Each segment lights up the blocks it talks about, and dims everything else.
+:::
+:::say{on="pm-why" note="Why not a separate file?"}
+The script lives in the markdown file. An exported page can then present itself, with no second file to lose.
+:::
+:::say{on="pm-row-directive pm-row-inline" note="Name a block, then point at it"}
+A segment points at blocks by name. A directive takes its name in its attributes. A heading, row or list item takes an inline cue marker instead.
+:::
+:::say{on="pm-row-code pm-code" note="Code blocks are named on the fence line"}
+Code blocks are named on the fence line, right after the language.
+:::
+:::say{on="pm-code" lines="2-3" note="Only the listed lines light up"}
+Add a line range, and only those lines light up. Here, each segment resolves its cues, then spotlights them. A cue that points nowhere shows up as a warning in this note, so a typo never fails silently.
+:::
+:::say{on="pm-keys" note="Space · ← → · Esc"}
+You can drive it from the keyboard. Space plays and pauses, the arrow keys step through segments, and Escape leaves present mode. You can also click any narrated block to jump to it.
+:::
+:::

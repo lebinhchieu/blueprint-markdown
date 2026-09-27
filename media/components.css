@@ -1658,3 +1658,241 @@ kbd {
   animation: em-explorer-section-flash 1.4s ease-out;
   border-radius: var(--radius-sm);
 }
+
+/* ─── Present mode ─────────────────────────────────────────────────────── */
+/* Classes set by core/present.ts; nothing here applies until .em-presenting (on <body>). */
+
+/* Reserve a margin column for the sticky note, clear of the TOC rail */
+@media (min-width: 900px) {
+  .em-presenting { padding-right: calc(var(--present-note-width) + 5rem); }
+}
+
+.em-presenting {
+  padding-bottom: 45vh;  /* lets the last blocks scroll up above the caption bar */
+}
+
+.em-presenting * {
+  transition: opacity 0.35s ease, outline-color 0.35s ease, background-color 0.35s ease;
+}
+
+.em-presenting .em-dim       { opacity: var(--present-dim); }
+.em-presenting .em-dim-inner { opacity: var(--present-dim-inner); }
+.em-presenting .em-jump      { cursor: pointer; }
+
+.em-presenting .em-lit {
+  outline: 3px solid var(--present-spot);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
+/* Tables scroll-clip their overflow, so a row's ring sits inside it */
+.em-presenting tr.em-lit { outline-offset: -3px; }
+
+.em-presenting .code-block .em-lit {
+  outline: none;
+  border-radius: 0;
+  background: var(--present-line-bg);
+}
+
+/* Bleed a lit line into the code padding, like .hl does */
+.em-presenting .code-block .code-line.em-lit,
+.em-presenting .code-block .em-ln.em-lit {
+  margin: 0 calc(-1 * var(--sp-md));
+  padding: 0 var(--sp-md);
+}
+
+/* Cue-only fences keep inline line spans; widen a lit one to the full row */
+.em-presenting .code-block .em-ln.em-lit {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: calc(100% + 2 * var(--sp-md));
+}
+
+.em-present-note {
+  position: fixed;
+  z-index: 40;
+  width: var(--present-note-width);
+  padding: var(--sp-sm) var(--sp-md);
+  background: var(--present-note-bg);
+  border: 1px solid var(--present-note-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  color: var(--present-note-text);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  line-height: 1.45;
+  white-space: pre-line;
+  opacity: 0;
+  transform: translateX(-6px);
+  transition: opacity 0.3s, transform 0.3s, top 0.35s;
+  pointer-events: none;
+}
+
+.em-present-note::before { content: "✎ "; }
+.em-present-note.em-on   { opacity: 1; transform: none; }
+.em-present-note.em-warn { border-color: var(--c-danger); }
+
+.em-present-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background: var(--present-bar-bg);
+  color: var(--present-bar-text);
+  border-top: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+}
+
+.em-present-progress       { height: 4px; background: var(--bg-overlay); }
+.em-present-progress > div { height: 100%; width: 0; background: var(--c-primary); transition: width 0.3s; }
+
+.em-present-caption {
+  max-width: 900px;
+  min-height: 4.8em;
+  margin: 0 auto;
+  padding: var(--sp-md) var(--sp-lg) var(--sp-xs);
+  font-size: var(--font-size-lg);
+  line-height: 1.55;
+}
+
+.em-present-sentence        { opacity: 0.45; transition: opacity 0.2s; }
+.em-present-sentence.em-cur { opacity: 1; }
+
+.em-present-word {
+  background: var(--present-word-bg);
+  color: var(--present-word-text);
+  border-radius: var(--radius-sm);
+  padding: 0 2px;
+}
+
+.em-present-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-sm);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: var(--sp-xs) var(--sp-lg) var(--sp-md);
+  font-size: var(--font-size-sm);
+}
+
+.em-present-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  padding: 0.35em 0.7em;
+  background: var(--bg-overlay);
+  color: var(--text-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font: inherit;
+  cursor: pointer;
+}
+
+.em-present-controls button:hover { border-color: var(--c-primary); }
+
+.em-present-controls .em-present-main {
+  min-width: 6.5em;
+  background: var(--c-primary);
+  border-color: var(--c-primary);
+  color: var(--text-on-solid);
+}
+
+.em-present-controls .material-symbols-outlined { font-size: 18px; }
+
+.em-present-controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  color: var(--text-muted);
+}
+
+.em-present-controls select {
+  max-width: 240px;
+  padding: 0.25em;
+  background: var(--bg-overlay);
+  color: var(--text-base);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+
+.em-present-controls input[type="range"] { accent-color: var(--c-primary); }
+
+.em-present-count {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Standalone-page launcher (mountPresentLauncher) */
+.em-present-launch {
+  position: fixed;
+  right: var(--sp-lg);
+  bottom: var(--sp-lg);
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.5em 1em;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: var(--radius-full);
+  box-shadow: var(--shadow-md);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.em-present-launch[hidden] { display: none; }
+
+.em-present-start {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--bg-base) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.em-present-start__card {
+  max-width: 420px;
+  padding: var(--sp-xl);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--text-base);
+  font-family: var(--font-sans);
+  text-align: center;
+}
+
+.em-present-start__card h3 {
+  margin: 0 0 var(--sp-sm);
+  font-family: var(--font-display);
+}
+
+.em-present-start__card button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  margin-top: var(--sp-md);
+  padding: 0.6em 1.4em;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  border: none;
+  border-radius: var(--radius-md);
+  font: inherit;
+  cursor: pointer;
+}
+
+.em-present-start__card small {
+  display: block;
+  margin-top: var(--sp-md);
+  color: var(--text-muted);
+}

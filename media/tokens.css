@@ -146,3 +146,20 @@
   --tooltip-text:   #faf6ef;
   --tooltip-radius: var(--radius-md);
 }
+
+/* Present mode — declared on body, not :root: themes override the palette on
+   body[data-em-theme], and these aliases must resolve against that. */
+body {
+  --present-spot:        var(--c-low);             /* spotlight ring */
+  --present-line-bg:     color-mix(in srgb, var(--c-low) 18%, transparent);  /* lit code line */
+  --present-dim:         0.28;                     /* top-level blocks outside the spotlight */
+  --present-dim-inner:   0.45;                     /* siblings inside a lit container */
+  --present-note-bg:     var(--c-low-bg);
+  --present-note-border: var(--c-low);
+  --present-note-text:   var(--c-low-text);
+  --present-note-width:  250px;
+  --present-bar-bg:      var(--bg-raised);
+  --present-bar-text:    var(--text-base);
+  --present-word-bg:     var(--c-low);             /* word being spoken */
+  --present-word-text:   #1c1914;
+}

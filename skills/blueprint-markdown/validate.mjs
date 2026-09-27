@@ -13,6 +13,7 @@
  *   • Unknown directive names (typos, unregistered names)
  *   • Wrong form (e.g. :::progress when only :: is valid)
  *   • Near-miss lines (::: card with space, ::::card with four colons, etc.)
+ *   • Present-mode cues: every :::say{on="…"} id must be named somewhere
  *
  * NOT checked: inline directives (:name[text]{attrs}) intentionally stay in
  * text runs and require a render-path check to validate — out of scope here.
@@ -62,6 +63,9 @@ const REGISTRY = {
   // legend.ts — wraps a diagram + ::legend-item children into a toggleable legend panel
   legend:      ['container'],
   'legend-item': ['leaf'],
+  // narration.ts — present-mode script (the inline :cue marker is listed below)
+  narration: ['container'],
+  say:       ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],
@@ -72,6 +76,7 @@ const REGISTRY = {
   rating:    ['inline'],
   comment:   ['inline'],
   ai:        ['inline'],
+  cue:       ['inline'],
 }
 
 // ─── Parser — ported from src/core/parser.ts (exact regexes, same logic) ─────
@@ -263,6 +268,47 @@ rawLines.forEach((line, i) => {
   else if (RE_NEAR_SPACE_2.test(line))
     warnings.push(`Line ${i + 1}: space after :: — "${line.trim()}"`)
 })
+
+// Present-mode cues: a segment pointing at an unnamed block lights nothing, silently.
+// Names come from {#id} on a directive, #id on a fence line, or an inline :cue{#id}.
+const cueNames = new Set()
+const cueUses = []
+{
+  let fence = null
+  rawLines.forEach((line, i) => {
+    const fm = matchFence(line)
+    if (fence) {
+      if (fm && fm.char === fence.char && fm.len >= fence.len) fence = null
+      return
+    }
+    if (fm) {
+      fence = fm
+      const info = line.replace(/title=["'][^"']*["']/, '').replace(/\{[^}]*\}/, '')
+      const id = info.match(/\s#([\w-]+)/)
+      if (id) cueNames.add(id[1])
+      return
+    }
+    const block = line.match(RE_OPEN) ?? line.match(RE_LEAF)
+    if (block?.[2]) {
+      const id = block[2].match(/[\s{]#([\w-]+)/)
+      if (id) cueNames.add(id[1])
+      const on = block[1] === 'say' && block[2].match(/\bon="([^"]*)"/)
+      if (on) on[1].split(/\s+/).filter(Boolean).forEach(name => cueUses.push({ name, line: i + 1 }))
+    }
+    for (const m of line.matchAll(/:cue\{([^}]*)\}/g)) {
+      const id = m[1].match(/#([\w-]+)/)
+      if (id) cueNames.add(id[1])
+    }
+  })
+}
+for (const use of cueUses) {
+  if (!cueNames.has(use.name)) {
+    errors.push(
+      `:::say on="${use.name}" (line ${use.line}) — nothing is named #${use.name}; ` +
+      `add {#${use.name}} to a directive, #${use.name} to a fence line, or :cue{#${use.name}} to a heading/row/item`
+    )
+  }
+}
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 

@@ -17,6 +17,7 @@
 import type MarkdownIt from 'markdown-it'
 import type Token from 'markdown-it/lib/token.mjs'
 import hljs from 'highlight.js'
+import { parseLineRanges } from './ranges'
 import { hljsDefineVue } from './hljsVueLanguage'
 
 hljs.registerLanguage('vue', hljsDefineVue)
@@ -28,24 +29,8 @@ interface FenceMeta {
   title: string | undefined
   /** Set of 1-based line numbers to highlight */
   highlightLines: Set<number>
-}
-
-function parseHighlightRanges(raw: string): Set<number> {
-  const lines = new Set<number>()
-  // e.g. "1,3-5,7"
-  for (const part of raw.split(',')) {
-    const p = part.trim()
-    const range = p.match(/^(\d+)-(\d+)$/)
-    if (range) {
-      const from = parseInt(range[1], 10)
-      const to = parseInt(range[2], 10)
-      for (let n = from; n <= to; n++) lines.add(n)
-    } else {
-      const single = parseInt(p, 10)
-      if (!isNaN(single)) lines.add(single)
-    }
-  }
-  return lines
+  /** Present-mode cue id from a `#id` token */
+  cue: string | undefined
 }
 
 function parseFenceInfo(info: string): FenceMeta {
@@ -65,14 +50,21 @@ function parseFenceInfo(info: string): FenceMeta {
   // Extract highlight ranges {…}
   let highlightLines = new Set<number>()
   rest = rest.replace(/\{([^}]+)\}/, (_, ranges) => {
-    highlightLines = parseHighlightRanges(ranges)
+    highlightLines = parseLineRanges(ranges)
     return ''
+  })
+
+  // Extract a present-mode cue: `#id`
+  let cue: string | undefined
+  rest = rest.replace(/(^|\s)#([\w-]+)/, (_, lead, id) => {
+    cue = id
+    return lead
   })
 
   // The first remaining token is the language
   const lang = rest.trim().split(/\s+/)[0] ?? ''
 
-  return { lang, title, highlightLines }
+  return { lang, title, highlightLines, cue }
 }
 
 // ─── Code highlighting ────────────────────────────────────────────────────
@@ -113,6 +105,17 @@ function wrapHighlightedLines(highlighted: string, hlLines: Set<number>): string
     .join('')
 }
 
+/**
+ * Wrap each line in an inline span, keeping the newlines, so a cued block looks
+ * exactly as it would unwrapped while the presenter can still address its lines.
+ */
+function wrapCueLines(highlighted: string): string {
+  const lines = highlighted.split('\n')
+  const trailing = lines.at(-1) === ''
+  if (trailing) lines.pop()
+  return lines.map(line => `<span class="em-ln">${line}</span>`).join('\n') + (trailing ? '\n' : '')
+}
+
 // ─── Public: install on a markdown-it instance ───────────────────────────
 
 export function installFenceRenderer(md: MarkdownIt): void {
@@ -128,7 +131,9 @@ export function installFenceRenderer(md: MarkdownIt): void {
 
     // Highlight the code
     const rawHighlighted = highlightCode(token.content, meta.lang)
-    const withLineHL = wrapHighlightedLines(rawHighlighted, meta.highlightLines)
+    const withLineHL = meta.highlightLines.size > 0 || !meta.cue
+      ? wrapHighlightedLines(rawHighlighted, meta.highlightLines)
+      : wrapCueLines(rawHighlighted)
 
     const langClass = meta.lang ? ` class="hljs language-${escapeHtml(meta.lang)}"` : ' class="hljs"'
 
@@ -136,8 +141,10 @@ export function installFenceRenderer(md: MarkdownIt): void {
       ? `<div class="code-title"><span class="material-symbols-outlined" style="font-size:14px">draft</span>${escapeHtml(meta.title)}</div>`
       : ''
 
+    const cueAttr = meta.cue ? ` data-cue="${escapeHtml(meta.cue)}"` : ''
+
     return (
-      `<div class="code-block">${titleBar}` +
+      `<div class="code-block"${cueAttr}>${titleBar}` +
       `<pre><code${langClass}>${withLineHL}</code></pre></div>\n`
     )
   }

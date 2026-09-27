@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "1.6.2",
+  "version": "1.7.1",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -87,37 +87,49 @@
       {
         "key": "ctrl+1",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 1 },
+        "args": {
+          "level": 1
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       },
       {
         "key": "ctrl+2",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 2 },
+        "args": {
+          "level": 2
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       },
       {
         "key": "ctrl+3",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 3 },
+        "args": {
+          "level": 3
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       },
       {
         "key": "ctrl+4",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 4 },
+        "args": {
+          "level": 4
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       },
       {
         "key": "ctrl+5",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 5 },
+        "args": {
+          "level": 5
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       },
       {
         "key": "ctrl+6",
         "command": "blueprintMarkdown.setHeadingLevel",
-        "args": { "level": 6 },
+        "args": {
+          "level": 6
+        },
         "when": "editorTextFocus && editorLangId == 'markdown'"
       }
     ],
@@ -204,6 +216,7 @@
     "watch": "node esbuild.mjs --watch",
     "vscode:prepublish": "node esbuild.mjs --production",
     "package": "vsce package --no-yarn",
+    "narrate": "node scripts/narrate.mjs",
     "publish:ovsx": "ovsx publish"
   },
   "dependencies": {
@@ -222,6 +235,7 @@
     "@types/vscode": "^1.90.0",
     "@vscode/vsce": "^3.0.0",
     "esbuild": "^0.21.0",
+    "kokoro-js": "^1.2.1",
     "ovsx": "^0.10.0",
     "typescript": "^5.6.0"
   }

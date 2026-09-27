@@ -42,7 +42,16 @@ function renderDirective(node: DirectiveNode, ctx: InternalCtx): string {
     return `<div class="directive-unclosed" data-directive="${ctx.esc(node.name)}">${inner}</div>`
   }
 
-  return spec.render(node, ctx)
+  return withCue(spec.render(node, ctx), node, ctx)
+}
+
+/**
+ * Stamp `{#id}` onto the directive's outer element as `data-cue` (not `id`: the
+ * presenter lets several blocks share one cue, and ids would clash with heading slugs).
+ */
+function withCue(html: string, node: DirectiveNode, ctx: InternalCtx): string {
+  if (!node.attrs.id) return html
+  return html.replace(/^(\s*<[A-Za-z][\w-]*)/, `$1 data-cue="${ctx.esc(node.attrs.id)}"`)
 }
 
 function failSoft(node: DirectiveNode, ctx: InternalCtx): string {

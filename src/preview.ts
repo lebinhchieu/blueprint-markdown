@@ -16,6 +16,7 @@
 
 import mermaid from 'mermaid'
 import { runShared } from './core/previewRuntime'
+import { mountPresentLauncher } from './core/present'
 import './core/commentInsert'
 
 // Drop VS Code's built-in markdown-language-features styles. Both files are
@@ -35,6 +36,9 @@ function removeBuiltinStyles(): void {
 function run(): void {
   removeBuiltinStyles()
   runShared(mermaid)
+  // Re-run after every morphdom update: it refreshes a running presentation and
+  // re-adds the Present button if the update removed it.
+  mountPresentLauncher(document.body)
 }
 
 // Initial run on first load.

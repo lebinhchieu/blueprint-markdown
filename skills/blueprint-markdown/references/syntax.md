@@ -11,8 +11,10 @@
 5. [Inline (: )](#inline)
    - chip, icon, color, kbd, button, tooltip, rating, comment, ai
 6. [Fenced code extensions](#fenced-code)
-7. [Strict syntax rules](#strict-rules)
-8. [Fail-soft rule](#fail-soft)
+7. [Present mode (narration)](#present)
+   - narration, say, cue
+8. [Strict syntax rules](#strict-rules)
+9. [Fail-soft rule](#fail-soft)
 
 ---
 
@@ -633,6 +635,7 @@ The enhanced renderer reads metadata after the language identifier in a code fen
 |-----------|--------|--------|
 | Line ranges | `{1,3-5}` | Highlights lines 1 and 3–5 with `.hl` class |
 | Title | `title="filename"` | Renders a header bar above the code |
+| Present-mode name | `#id` | Names the block for `:::say{on="id"}`; no visible change |
 
 **` ```mermaid `** (the language identifier `mermaid`) emits a `<div class="mermaid">` block; `mermaid.js` renders it on page load.
 
@@ -660,6 +663,65 @@ Standard GFM mark: `==text==` renders as `<mark>` — in surrounding prose only.
 labels (`["..."]`) don't run through this renderer at all; inside one, `==text==` renders as
 literal `==text==`. For bold/italic *inside* a label, use `<b>`/`<i>` directly in the quoted
 string — confirmed to render as real formatting under `securityLevel:'strict'`, not stripped.
+
+---
+
+## Present mode (narration) {#present}
+
+A document with a `:::narration` script gets a **Present** button: a voiced walkthrough that
+spotlights each segment's blocks, dims the rest, shows a margin note and a synced caption.
+Everything below renders **hidden** — with Present off, the page looks exactly as without it.
+Authoring rules (segment count, tone, what to say) are in SKILL.md §Present mode.
+
+### Naming a block
+
+| Where | Syntax | Names |
+|-------|--------|-------|
+| Any container or leaf directive | `{#id}` in its attr block | the directive's outer element |
+| Fenced code | `#id` after the language: ` ```ts {2} #id title="a.ts" ` | the code block (and its lines, for `lines=`) |
+| Inline, in a heading / paragraph / table row / list item | `:cue{#id}` | the nearest enclosing row, heading, list item, then paragraph |
+| Inline, widened | `:cue{#id list}` / `:cue{#id table}` | the enclosing list / table |
+
+Ids may repeat: every block with the same id lights together. Name a heading with
+`:cue{#id}`, not a trailing `{#id}` — that only works inside `:::explorer`, and renders as
+literal text anywhere else.
+
+### `:::narration`
+
+Container for the script; no attributes. Put it at the end of the document. Its children are
+`:::say` blocks, played in order.
+
+### `:::say`
+
+| Attr | Values | Default |
+|------|--------|---------|
+| `on` | space-separated ids to spotlight | — (nothing lit) |
+| `lines` | `3-6`, `2,4-5` — 1-based lines within the named code block(s) | whole block |
+| `note` | one-line margin note | — |
+
+Body: the spoken narration, plain prose. It's split into sentences at `.` `!` `?` followed
+by a space (so `1.9.10` stays whole) and spoken one sentence at a time.
+
+```
+:::narration
+:::say{on="see user" note="Bug 2 is silent"}
+The two bugs behave very differently. Bug 1 is loud. Bug 2 is silent.
+:::
+:::say{on="fix" lines="3-6" note="Nullable lookup replaces firstOrFail"}
+Instead of a lookup that throws, it returns null and moves on.
+:::
+:::
+```
+
+### `:cue{#id}`
+
+Inline marker, renders an empty hidden `<span>`. Bare word after the id widens the target:
+`list` or `table`. Without an id it renders nothing.
+
+**Presenting:** Space play/pause · ← → previous/next · Esc exit · click a narrated block to
+jump to it. Voices come from the browser's Web Speech API (Microsoft Edge "Natural" voices
+rank first); with no voice available the captions still advance on a timer. A cue that
+names nothing shows `⚠ cue not found` in the note.
 
 ---
 

@@ -10,7 +10,9 @@
  */
 
 import { runShared } from './core/previewRuntime'
+import { mountPresentLauncher } from './core/present'
 
 // Set by a CDN <script> tag loaded before this one, only when the exported doc
 // actually needs it — undefined otherwise, and runShared skips it gracefully.
 runShared((window as any).mermaid)
+mountPresentLauncher(document.body, { startCard: true })

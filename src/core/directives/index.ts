@@ -21,6 +21,7 @@ import { inlineWidgetDirectives } from './inline-widgets'
 import { revisionDirectives } from './revision'
 import { explorerDirectives } from './explorer'
 import { legendDirectives } from './legend'
+import { narrationDirectives } from './narration'
 
 export type Registry = Record<string, DirectiveSpec>
 
@@ -39,6 +40,7 @@ export function buildRegistry(overrides?: Record<string, DirectiveSpec>): Regist
     ...revisionDirectives,
     ...explorerDirectives,
     ...legendDirectives,
+    ...narrationDirectives,
   }
   if (overrides) {
     return { ...base, ...overrides }

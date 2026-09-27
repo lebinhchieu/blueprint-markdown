@@ -4,7 +4,8 @@ description: >
   Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
   any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
   timeline, progress, chip, icon, …), "write it nicely / make it pretty / use cards /
-  add callouts".
+  add callouts", and "present / narrate this doc to me" (adds a Present-mode narration script
+  to an existing doc; a new presentation from scratch is the present skill).
   Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
 ---
 
@@ -86,6 +87,8 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
 | `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `idle : Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
 | `:::explorer` section headings must be top-level in the block | `### Cache {#cache}` | the same heading wrapped in a nested `:::card` (drops out of the pairing) |
+| Every `:::say{on="…"}` id must name a block | `:::tip{#why}` … `on="why"` | `on="why"` with no `#why` anywhere (lights nothing) |
+| `:cue` takes `#`, like every other name | `:cue{#see}` | `:cue{see}` (renders nothing) |
 
 Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
 of the document.
@@ -308,6 +311,61 @@ AI note: :ai[Double-check this assumption next time]
 
 ---
 
+## Present mode — narrating a document
+
+When asked to **present / narrate / walk someone through** a document, don't answer in chat:
+add a narration script to the file. The viewer then shows a **Present** button that plays it
+as a voiced walkthrough — each segment spotlights its blocks, dims the rest, shows a margin
+note, and captions the narration.
+
+**1. Name the blocks** the script will point at. Names are invisible until presenting.
+
+| Target | How to name it |
+|--------|----------------|
+| Any directive (callout, event, step, card, col…) | `{#id}` in its attr block: `:::event{#t3 date="v1"}` |
+| Code block | `#id` on the fence line: ` ```php {3-6} #fix title="A.php" ` |
+| Heading, paragraph, table row, list item | `:cue{#id}` at the end of its text: `\| **What you see** :cue{#see} \|` |
+| Whole list / table | `:cue{#id list}` / `:cue{#id table}` in its first item / cell |
+
+The same id on several blocks lights them together (a heading and its lead paragraph).
+
+**2. Write the script** as one `:::narration` block at the **end** of the file, one `:::say`
+per segment, in the order they play:
+
+```
+:::narration
+:::say{on="answer" note="Fixed and proven on a real migrate"}
+Here's the short version. Both bugs are fixed. The proof is a real migrate, not only unit tests.
+:::
+:::say{on="try3 fix" lines="3-5" note="Flag set in the same run"}
+Try 3 is the final version. If roles were already mapped, the step returns early.
+:::
+:::
+```
+
+- `on` — space-separated ids to spotlight. `lines` — 1-based lines to light inside the named
+  code block(s), same range syntax as the fence's `{3-6}`. `note` — the margin sticky note.
+- The body is spoken and captioned: plain prose, no markdown, no tables.
+
+**Narration rules**
+
+- **Explain why, not what.** The listener can read the block; say why it matters, what it
+  proves, or what would have gone wrong.
+- **Short sentences** — one clause each where possible. They're spoken one at a time.
+- **One idea per segment.** Split a segment that needs "also".
+- **Name the weakest evidence and open risks** in their own segment, and flag the note
+  (`note="⚠ Weakest evidence"`). Never let a walkthrough sound more certain than the doc is.
+- **About 20–25 segments for a two-page doc**; fewer, shorter ones for a short doc.
+- **Write for the ear:** "version 4 to 5", not "v4 → v5"; spell out symbols. Open with the
+  headline, close with what's left.
+- **Notes are one line** — the takeaway, not a repeat of the narration. Keep `{` `}` out of
+  attribute values.
+
+Leave the rest of the document unchanged apart from the names — it must read and render
+exactly as before. Then run `validate.mjs`: it reports any `on=` id that names nothing.
+
+---
+
 ## Authoring principles
 
 **Shallow nesting.** More than two directive levels deep usually signals the content needs
@@ -332,8 +390,9 @@ After writing a document, run the standalone validator to catch silent failures:
 node skills/blueprint-markdown/validate.mjs path/to/file.md
 ```
 
-Checks: unclosed containers, unknown/typo'd names, wrong form (e.g. `:::progress`), and
-near-miss lines (`::: card` with a space, `::::name` with four colons).
+Checks: unclosed containers, unknown/typo'd names, wrong form (e.g. `:::progress`),
+near-miss lines (`::: card` with a space, `::::name` with four colons), and Present-mode
+`on=` ids that name no block.
 
 > **Coverage note:** block directives only (`:::container`, `::leaf`). Inline `:name[text]`
 > directives are not checked — review those manually.
@@ -345,5 +404,5 @@ near-miss lines (`::: card` with a space, `::::name` with four colons).
 Read these as needed — they are not loaded by default:
 
 - **`references/syntax.md`** — full per-directive attribute tables, the color-token palette,
-  Material Symbols icon notes, and the fail-soft rule. Read it when you need a specific
+  Material Symbols icon notes, Present-mode narration, and the fail-soft rule. Read it when you need a specific
   attribute name or value set.

@@ -94,7 +94,7 @@
     },
     "directive-open-known": {
       "comment": "Container open with a known directive name",
-      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step|revision|previous|explorer|legend)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
+      "match": "^\\s*(:::)(card|cards|callout|note|tip|info|warning|danger|success|details|accordion|columns|col|timeline|event|tabs|tab|steps|step|revision|previous|explorer|legend|narration|say)(?:(\\{)((?:[^}\"']|\"[^\"]*\"|'[^']*')*)(\\}))?\\s*$",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"
@@ -194,7 +194,7 @@
     },
     "directive-inline-known": {
       "comment": "Inline directive with a known name, e.g. :chip[Active]{green}",
-      "match": "(:)(chip|icon|color|kbd|button|tooltip|rating|comment|ai)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
+      "match": "(:)(chip|icon|color|kbd|button|tooltip|rating|comment|ai|cue)(?=\\[|\\{)(\\[[^\\]]*\\])?(\\{(?:[^}\"']|\"[^\"]*\"|'[^']*')*\\})?",
       "captures": {
         "1": {
           "name": "punctuation.definition.directive.blueprint"

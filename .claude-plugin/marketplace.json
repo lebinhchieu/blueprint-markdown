@@ -1,6 +1,8 @@
 {
   "name": "blueprint-markdown-skills-marketplace",
-  "owner": { "name": "Chieu Le" },
+  "owner": {
+    "name": "Chieu Le"
+  },
   "plugins": [
     {
       "name": "blueprint-markdown-skills",
@@ -16,6 +18,11 @@
       "name": "skimmable-writing-skill",
       "source": "./plugins/skimmable-writing",
       "description": "Deliverable-first, skimmable structure for every file you write"
+    },
+    {
+      "name": "present-skill",
+      "source": "./plugins/present",
+      "description": "Self-presenting Blueprint Markdown documents with Kokoro narration"
     }
   ]
 }
