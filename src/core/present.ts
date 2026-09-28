@@ -496,14 +496,14 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     // Rails live in the scrolled content, so they scroll natively; measure from their origin.
     const origin = rails.getBoundingClientRect()
     const runs: { top: number; bottom: number; left: number }[] = []
-    lit.map(el => el.getBoundingClientRect()).filter(r => r.height > 0)
-      .sort((a, b) => a.top - b.top)
-      .forEach(r => {
+    lit.map(el => ({ r: el.getBoundingClientRect(), left: gutterLeft(el) })).filter(b => b.r.height > 0)
+      .sort((a, b) => a.r.top - b.r.top)
+      .forEach(({ r, left }) => {
         const run = runs[runs.length - 1]
         if (run && r.top - run.bottom < RAIL_JOIN) {
           run.bottom = Math.max(run.bottom, r.bottom)
-          run.left = Math.min(run.left, r.left)
-        } else runs.push({ top: r.top, bottom: r.bottom, left: r.left })
+          run.left = Math.min(run.left, left)
+        } else runs.push({ top: r.top, bottom: r.bottom, left })
       })
     const lines = rails.getElementsByTagName('i')
     while (lines.length > runs.length) lines[lines.length - 1].remove()
@@ -531,6 +531,27 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       bars[i].style.cssText = `top:${t.top - origin.top}px;left:${t.left}px;height:${t.bottom - t.top}px`
     })
     placeCaption()
+  }
+
+  /** Where a block visibly starts, for its rail. List bullets/numbers hang outside the list's
+   *  box, in its indent; task items pull their checkbox out past the list's edge; and a block
+   *  inside a quote or callout would otherwise put its rail on that container's left border. */
+  function gutterLeft(el: Element): number {
+    const lists = [...el.querySelectorAll('ul, ol')]
+    const own = el.matches('li') ? el.parentElement : el.matches('ul, ol') ? el : null
+    if (own) lists.push(own)
+    const edges = lists.flatMap(list => {
+      const item = list.querySelector(':scope > li')
+      if (!item) return []
+      const left = item.getBoundingClientRect().left
+      const s = getComputedStyle(item)
+      if (s.listStyleType === 'none' || s.listStylePosition === 'inside') return [left]
+      const ls = getComputedStyle(list)
+      return [left - parseFloat(ls.marginLeft) - parseFloat(ls.paddingLeft)]
+    })
+    const frame = el.parentElement?.closest('blockquote, .callout')
+    if (frame && root.contains(frame)) edges.push(frame.getBoundingClientRect().left)
+    return Math.min(el.getBoundingClientRect().left, ...edges)
   }
 
   /** Park a floating caption just above/below the lit section, kept inside the visible area
