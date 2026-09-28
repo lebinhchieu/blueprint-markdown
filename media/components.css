@@ -1839,6 +1839,7 @@ kbd {
   color: var(--present-word-text);
   border-radius: var(--radius-sm);
   padding: 0 2px;
+  margin: 0 -2px;         /* cancel the padding's width so neighbours don't shift as the mark moves */
 }
 
 /* One tick per segment, as wide as its narration is long */

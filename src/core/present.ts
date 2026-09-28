@@ -593,7 +593,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     caption.innerHTML = parts.map((p, i) => {
       const t = i === cur && wordLen
         ? escapeHtml(p.slice(0, wordStart)) +
-          `<mark class="em-present-word">${escapeHtml(p.slice(wordStart, wordStart + wordLen))}</mark>` +
+          `<span class="em-present-word">${escapeHtml(p.slice(wordStart, wordStart + wordLen))}</span>` +
           escapeHtml(p.slice(wordStart + wordLen))
         : escapeHtml(p)
       return `<span class="em-present-sentence${i === cur ? ' em-cur' : i < cur ? ' em-said' : ''}">${t}</span>`
