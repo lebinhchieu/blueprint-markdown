@@ -53,6 +53,8 @@ export interface Presenter {
   exit(): void
 }
 
+// 10 ms of silence, for unlocking audio elements without making a sound.
+const SILENT_WAV = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=='
 const VOICE_KEY = 'em-present-voice'
 const RATE_KEY = 'em-present-rate'
 const CAPTIONS_KEY = 'em-present-captions'
@@ -361,9 +363,16 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   let rate = Number(storage(RATE_KEY)) || 1
   let scrolledAt = 0
   let captionPos: CaptionPos = CAPTION_POSITIONS.find(p => p === storage(CAPTION_POS_KEY)) ?? 'bar'
-  // One element for every sentence: VS Code's webview only lets a media element play if a
-  // click or key started it once, so a fresh Audio() per sentence is blocked after the first.
-  const player = new Audio()
+  // A small pool that takes turns: the current clip plus the next two, buffering ahead. A clip
+  // must play from the element that buffered it — each element streams its own range requests,
+  // so swapping a preloaded URL into another element downloads it again. Not fetch()+blob: the
+  // preview's CSP has no connect-src and no blob: in media-src.
+  // VS Code's webview only lets a media element play if a click or key started it once, so a
+  // fresh Audio() per sentence is blocked; the pool is unlocked on the gesture that starts play.
+  const pool = [new Audio(), new Audio(), new Audio()]
+  pool.forEach(p => { p.preload = 'auto' })
+  const unlocked = new Set<HTMLAudioElement>()
+  let player = pool[0]
   const synth: SpeechSynthesis | undefined = 'speechSynthesis' in window ? window.speechSynthesis : undefined
   const scroller = findScroller(root)
 
@@ -716,11 +725,15 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
 
   /** Pre-generated audio (npm run narrate); a sentence with no file (not generated yet) falls back. */
   function speakAudio(cur: number, voice: string, my: number, done: () => void, fallback: () => void, cont: boolean): void {
-    const url = new URL(narrationFile(docName(), voice, parts[cur]), document.baseURI).href
+    const url = clipUrl(voice, parts[cur])
+    // Prefer the element that buffered this clip; one never unlocked would be refused play().
+    const buffered = pool.find(p => p.src === url && unlocked.has(p))
+    if (buffered && buffered !== player) { stopAudio(); player = buffered }
     const a = player
     // Re-assigning src restarts the clip, so a resumed sentence keeps the one it paused in.
     if (a.src !== url) a.src = url
-    else if (!cont) a.currentTime = 0
+    // Skip a no-op seek on a freshly buffered clip: over file:// any seek re-reads the file.
+    else if (!cont && a.currentTime) a.currentTime = 0
     a.playbackRate = rate
     const ws = Array.from(parts[cur].matchAll(/\S+/g))
     // No word timings from a WAV: advance the highlight evenly through the clip.
@@ -738,7 +751,35 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       fallback()
     }
     a.onerror = () => fail(`media error ${a.error?.code}: ${a.error?.message ?? ''}`)
-    a.play().catch((e: Error) => fail(`play() ${e.name}: ${e.message}`))
+    a.play().then(() => { unlocked.add(a); preloadAfter(cur, voice) }, (e: Error) => fail(`play() ${e.name}: ${e.message}`))
+  }
+
+  function clipUrl(voice: string, sentence: string): string {
+    return new URL(narrationFile(docName(), voice, sentence), document.baseURI).href
+  }
+
+  /** Buffer the next two clips (crossing into the next segment) in the idle pool elements. */
+  function preloadAfter(cur: number, voice: string): void {
+    const ahead = pool.length - 1
+    const next: { voice: string; sentence: string }[] = parts.slice(cur + 1, cur + 1 + ahead)
+      .map(sentence => ({ voice, sentence }))
+    for (let i = idx + 1; next.length < ahead && i < segments.length; i++) {
+      splitSentences(segments[i].say).slice(0, ahead - next.length)
+        .forEach(sentence => next.push({ voice: segments[i].voice, sentence }))
+    }
+    const urls = next.map(n => clipUrl(n.voice, n.sentence))
+    // Leave already-buffering elements alone; only reassign ones holding a stale clip.
+    const free = pool.filter(p => p !== player && !urls.includes(p.src))
+    urls.filter(u => !pool.some(p => p.src === u)).forEach((u, i) => { if (free[i]) free[i].src = u })
+  }
+
+  /** Called from the click/key that starts playback: play() on each idle element once so it may play later. */
+  function unlockPool(): void {
+    pool.forEach(p => {
+      if (p === player || unlocked.has(p)) return
+      p.src = SILENT_WAV
+      p.play().then(() => { p.pause(); unlocked.add(p) }, () => { /* no gesture (autoplay): stays locked */ })
+    })
   }
 
   function stopAudio(): void {
@@ -785,7 +826,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     bar.classList.toggle('em-playing', p)
     playBtn.innerHTML = icon(p ? 'pause' : 'play_arrow')
     playBtn.setAttribute('aria-label', p ? 'Pause' : 'Play')
-    if (p) speak(resume)
+    if (p) { unlockPool(); speak(resume) }
     else { token++; clearTimers(); synth?.cancel(); stopAudio() }
   }
 
@@ -812,7 +853,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
 
   function setRate(r: number): void {
     rate = r
-    player.playbackRate = r
+    pool.forEach(p => { p.playbackRate = r })
     rateBtn.textContent = `${r}×`
     storage(RATE_KEY, String(r))
     paintLeft()
