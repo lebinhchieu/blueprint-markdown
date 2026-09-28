@@ -1830,6 +1830,25 @@ kbd {
 
 .em-no-captions .em-present-caption { display: none; }
 
+/* Caption floated just above / below the lit section (placeCaption); P cycles dock → above → below */
+.em-present-float {
+  position: absolute;
+  z-index: 40;
+  box-sizing: border-box;
+  padding: var(--sp-xs) var(--sp-sm) var(--sp-sm);
+  background: color-mix(in srgb, var(--present-bar-bg) 92%, transparent);
+  backdrop-filter: blur(14px) saturate(1.2);
+  color: var(--present-bar-text);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  font-family: var(--font-sans);
+  pointer-events: none;
+  transition: top 0.35s ease, left 0.35s ease, width 0.35s ease;
+}
+
+.em-present-float[hidden] { display: none; }
+
 .em-present-sentence         { opacity: 0.6; transition: opacity 0.2s; }
 .em-present-sentence.em-said { opacity: 0.35; }
 .em-present-sentence.em-cur  { opacity: 1; }

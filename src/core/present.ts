@@ -56,6 +56,14 @@ export interface Presenter {
 const VOICE_KEY = 'em-present-voice'
 const RATE_KEY = 'em-present-rate'
 const CAPTIONS_KEY = 'em-present-captions'
+const CAPTION_POS_KEY = 'em-present-caption-pos'
+/** Where the caption sits: in the dock, or floating just above / below the lit section */
+const CAPTION_POSITIONS = ['bar', 'above', 'below'] as const
+type CaptionPos = typeof CAPTION_POSITIONS[number]
+const CAPTION_POS_ICON: Record<CaptionPos, string> = { bar: 'call_to_action', above: 'vertical_align_top', below: 'vertical_align_bottom' }
+/** px between the lit section and a floating caption, and the narrowest a floating caption gets */
+const CAPTION_GAP = 12
+const CAPTION_MIN_WIDTH = 360
 const KOKORO = 'kokoro'
 const PAUSE_BETWEEN_SEGMENTS_MS = 650
 const RATES = [0.8, 0.9, 1, 1.15, 1.3, 1.5]
@@ -352,6 +360,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   let speechBroken = false
   let rate = Number(storage(RATE_KEY)) || 1
   let scrolledAt = 0
+  let captionPos: CaptionPos = CAPTION_POSITIONS.find(p => p === storage(CAPTION_POS_KEY)) ?? 'bar'
   // One element for every sentence: VS Code's webview only lets a media element play if a
   // click or key started it once, so a fresh Audio() per sentence is blocked after the first.
   const player = new Audio()
@@ -380,6 +389,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       <div class="em-present-options">
         <button type="button" data-act="rate" class="em-present-rate" title="Speed (− / +)"></button>
         <button type="button" data-act="captions" title="Captions on / off (C)" aria-label="Captions">${icon('subtitles')}</button>
+        <button type="button" data-act="caption-pos" title="Caption position: dock / above / below the section (P)" aria-label="Caption position"></button>
         <label class="em-present-voice" title="Voice">${icon('record_voice_over')}<select data-act="voice"></select></label>
         <button type="button" data-act="exit" title="Exit (Esc)" aria-label="Exit present mode">${icon('close')}</button>
       </div>
@@ -388,7 +398,10 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   // pseudo-element on the block, because tables and code blocks clip their own overflow.
   const rails = document.createElement('div')
   rails.className = 'em-present-rails'
-  document.body.append(bar, rails)
+  // Floating caption box: holds the caption while it sits above/below the section.
+  const float = document.createElement('div')
+  float.className = 'em-present-float'
+  document.body.append(bar, rails, float)
 
   const $ = <T extends HTMLElement>(sel: string) => bar.querySelector<T>(sel)!
   const note = $('.em-present-note')
@@ -401,6 +414,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   root.classList.add('em-presenting')
   bar.classList.toggle('em-no-captions', storage(CAPTIONS_KEY) === 'off')
   rateBtn.textContent = `${rate}×`
+  applyCaptionPos()
 
   // ── Voices ──
   function loadVoices(): void {
@@ -516,6 +530,28 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     thumbs.forEach((t, i) => {
       bars[i].style.cssText = `top:${t.top - origin.top}px;left:${t.left}px;height:${t.bottom - t.top}px`
     })
+    placeCaption()
+  }
+
+  /** Park a floating caption just above/below the lit section, kept inside the visible area
+   *  (so a section taller than the screen still has its caption on screen). */
+  function placeCaption(): void {
+    float.hidden = captionPos === 'bar' || bar.classList.contains('em-no-captions')
+    if (float.hidden) return
+    const rects = lit.map(el => el.getBoundingClientRect()).filter(r => r.height > 0)
+    if (!rects.length) return
+    const origin = rails.getBoundingClientRect()
+    const view = viewBox()
+    const top = Math.min(...rects.map(r => r.top))
+    const bottom = Math.max(...rects.map(r => r.bottom))
+    const left = Math.min(...rects.map(r => r.left))
+    const right = Math.max(...rects.map(r => r.right))
+    const width = Math.min(Math.max(right - left, CAPTION_MIN_WIDTH), window.innerWidth - 16)
+    const h = float.offsetHeight
+    const y = clamp(captionPos === 'above' ? top - h - CAPTION_GAP : bottom + CAPTION_GAP,
+      view.top + 8, Math.max(view.top + 8, view.bottom - h - 8))
+    const x = clamp(left, 8, window.innerWidth - width - 8)
+    float.style.cssText = `top:${y - origin.top}px;left:${x - origin.left}px;width:${width}px`
   }
 
   /** The visible part of the scroller, above the dock. */
@@ -526,10 +562,19 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     return { top: view.top, bottom: Math.min(view.bottom, bar.getBoundingClientRect().top) }
   }
 
+  /** The view minus room for a floating caption, so scrolling leaves it space beside the section. */
+  function focusBox(): { top: number; bottom: number } {
+    const view = viewBox()
+    const room = float.hidden ? 0 : float.offsetHeight + CAPTION_GAP
+    if (captionPos === 'above') view.top += room
+    else if (captionPos === 'below') view.bottom -= room
+    return view
+  }
+
   function scrollToFocus(els: Element[]): void {
     if (!els.length) return
     const r = unionRect(els)
-    const view = viewBox()
+    const view = focusBox()
     const avail = view.bottom - view.top
     const delta = r.bottom - r.top > avail - 48
       ? r.top - view.top - 24
@@ -546,7 +591,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       return
     }
     const r = unionRect(els)
-    const view = viewBox()
+    const view = focusBox()
     if (r.top < view.top + 8 || r.bottom > view.bottom - 8) scrollToFocus(els)
   }
 
@@ -562,6 +607,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     clearSpotlight()
     lit.forEach(el => el.classList.add('em-lit'))
     pointPlan().flat().forEach(el => el.classList.add('em-seekable'))
+    renderCaption(-1)  // before placing: the new text sets a floating caption's height
     placeRails()
     scrollToFocus(lit)
 
@@ -574,7 +620,6 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     $('.em-present-count').textContent = `${idx + 1} / ${segments.length}`
     paintTrack()
     paintLeft()
-    renderCaption(-1)
   }
 
   /** Make sentence k the current one: caption, point, progress. */
@@ -763,6 +808,21 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     onMove()
   }
 
+  /** Move the caption element itself between the dock and the floating box. */
+  function applyCaptionPos(): void {
+    if (captionPos === 'bar') note.after(caption)
+    else float.append(caption)
+    $('[data-act="caption-pos"]').innerHTML = icon(CAPTION_POS_ICON[captionPos])
+    placeCaption()
+  }
+
+  function cycleCaptionPos(): void {
+    captionPos = CAPTION_POSITIONS[(CAPTION_POSITIONS.indexOf(captionPos) + 1) % CAPTION_POSITIONS.length]
+    storage(CAPTION_POS_KEY, captionPos)
+    applyCaptionPos()
+    keepVisible(lit)
+  }
+
   // ── Events ──
   // Clicking a bar button must not focus it, or the next Space would press it again.
   bar.addEventListener('mousedown', e => {
@@ -779,6 +839,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     else if (act === 'restart') restart()
     else if (act === 'rate') setRate(RATES[(RATES.indexOf(rate) + 1) % RATES.length] ?? 1)
     else if (act === 'captions') toggleCaptions()
+    else if (act === 'caption-pos') cycleCaptionPos()
     else if (act === 'exit') exit()
   })
   voiceSel.addEventListener('change', () => {
@@ -816,6 +877,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     else if (key === 'ArrowLeft') { e.preventDefault(); e.shiftKey ? seek(sent - 1) : go(-1) }
     else if (key === 'r') restart()
     else if (key === 'c') toggleCaptions()
+    else if (key === 'p') cycleCaptionPos()
     else if (key === '-') stepRate(-1)
     else if (key === '+' || key === '=') stepRate(1)
     else if (key === 'Home') { e.preventDefault(); jump(0) }
@@ -850,6 +912,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     synth?.removeEventListener('voiceschanged', loadVoices)
     bar.remove()
     rails.remove()
+    float.remove()
     opts.onExit?.()
   }
 
@@ -863,6 +926,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     // A re-render may have replaced <body>'s children (VS Code's morphdom), UI included.
     if (!bar.isConnected) document.body.append(bar)
     if (!rails.isConnected) document.body.append(rails)
+    if (!float.isConnected) document.body.append(float)
     buildTrack()
     markJumps(true)
     root.classList.add('em-presenting')
@@ -925,7 +989,7 @@ export function mountPresentLauncher(root: HTMLElement, opts: { startCard?: bool
       <h3>${escapeHtml(title)}</h3>
       <p>A narrated walkthrough in ${count} segments.</p>
       <button type="button">${icon('play_arrow')} Start presentation</button>
-      <small>Space play/pause · ← → segment · Shift+← → sentence · R restart segment · C captions · − + speed · Esc exit.<br>
+      <small>Space play/pause · ← → segment · Shift+← → sentence · R restart segment · C captions · P caption position · − + speed · Esc exit.<br>
       Click a highlighted item to hear it again. Best browser voices: Microsoft Edge ("Natural").</small>
     </div>`
   start.addEventListener('click', e => {
