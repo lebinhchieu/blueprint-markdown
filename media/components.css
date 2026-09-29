@@ -1848,6 +1848,8 @@ kbd {
 }
 
 .em-present-float[hidden] { display: none; }
+/* The float ignores the pointer so it never blocks the page; only its caption takes the wheel, to scroll a long one */
+.em-present-float .em-present-caption { pointer-events: auto; overscroll-behavior: contain; }
 
 .em-present-sentence         { opacity: 0.6; transition: opacity 0.2s; }
 .em-present-sentence.em-said { opacity: 0.35; }

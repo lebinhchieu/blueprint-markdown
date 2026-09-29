@@ -53,8 +53,6 @@ export interface Presenter {
   exit(): void
 }
 
-// 10 ms of silence, for unlocking audio elements without making a sound.
-const SILENT_WAV = 'data:audio/wav;base64,UklGRnQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YVAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=='
 const VOICE_KEY = 'em-present-voice'
 const RATE_KEY = 'em-present-rate'
 const CAPTIONS_KEY = 'em-present-captions'
@@ -359,6 +357,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   let token = 0          // bumps on every stop/seek so stale speech callbacks bail out
   let timers: number[] = []
   let voices: SpeechSynthesisVoice[] = []
+  let matched = 0   // voices[0..matched) speak the narration's language
   let speechBroken = false
   let rate = Number(storage(RATE_KEY)) || 1
   let scrolledAt = 0
@@ -428,14 +427,29 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
   // ── Voices ──
   function loadVoices(): void {
     const all = synth?.getVoices() ?? []
-    const lang = segments[0].lang
-    const match = all.filter(v => v.lang.toLowerCase().startsWith(lang.toLowerCase()))
-    // Never fall back to another language's voice: an English voice reading Vietnamese is worse than silent captions.
-    voices = match.sort((a, b) => voiceScore(b) - voiceScore(a))
+    const lang = segments[0].lang.toLowerCase()
+    // Voice langs vary by platform ("vi-VN", "vi_VN"); some engines only say it in the name ("… - Vietnamese (Vietnam)").
+    const langName = new Intl.DisplayNames(['en'], { type: 'language' }).of(lang)?.toLowerCase()
+    const isLang = (v: SpeechSynthesisVoice): boolean =>
+      v.lang.toLowerCase().replace('_', '-').split('-')[0] === lang.split('-')[0] ||
+      (!!langName && v.name.toLowerCase().includes(langName))
+    const byScore = (a: SpeechSynthesisVoice, b: SpeechSynthesisVoice): number => voiceScore(b) - voiceScore(a)
+    const match = all.filter(isLang).sort(byScore)
+    // Never auto-fall back to another language's voice (an English voice reading Vietnamese is worse than silent
+    // captions), but list the rest so a voice the engine mislabels can still be picked by hand.
+    const others = all.filter(v => !isLang(v)).sort(byScore)
+    voices = [...match, ...others]
+    matched = match.length
     const saved = storage(VOICE_KEY)
-    voiceSel.innerHTML = `<option value="${KOKORO}" title="Pre-generated with npm run narrate">Generated audio</option>` + (voices.length
-      ? voices.map((v, i) => `<option value="${i}"${v.name === saved ? ' selected' : ''}>${escapeHtml(v.name)}</option>`).join('')
-      : '<option value="">Captions only (no voice)</option>')
+    const option = (v: SpeechSynthesisVoice, i: number): string =>
+      `<option value="${i}"${v.name === saved ? ' selected' : ''}>${escapeHtml(v.name)} (${escapeHtml(v.lang)})</option>`
+    voiceSel.innerHTML = `<option value="${KOKORO}" title="Pre-generated with npm run narrate">Generated audio</option>` +
+      (match.length ? match.map((v, i) => option(v, i)).join('') : '<option value="">Captions only (no voice)</option>') +
+      (others.length ? `<optgroup label="Other languages">${others.map((v, i) => option(v, matched + i)).join('')}</optgroup>` : '')
+  }
+  /** The system voice picked in the select; none for "Generated audio" or "Captions only". */
+  function selectedVoice(): SpeechSynthesisVoice | undefined {
+    return voiceSel.value === '' || voiceSel.value === KOKORO ? undefined : voices[Number(voiceSel.value)]
   }
   loadVoices()
   synth?.addEventListener('voiceschanged', loadVoices)
@@ -712,7 +726,8 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       const cur = k++
       setSentence(cur)
       const browserSpeak = (): void => {
-        const voice = voices[voiceSel.value === KOKORO ? 0 : Number(voiceSel.value)]
+        // Generated audio falls back to the best voice of the narration's language, never another's.
+        const voice = voiceSel.value === KOKORO ? matched ? voices[0] : undefined : selectedVoice()
         if (synth && voice && !speechBroken) speakVoice(cur, voice, my, nextSentence)
         else speakTimed(cur, my, nextSentence)
       }
@@ -758,8 +773,8 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     return new URL(narrationFile(docName(), voice, sentence), document.baseURI).href
   }
 
-  /** Buffer the next two clips (crossing into the next segment) in the idle pool elements. */
-  function preloadAfter(cur: number, voice: string): void {
+  /** URLs of the next clips after sentence `cur` (crossing into the next segment), at most as many as idle pool elements. */
+  function upcomingUrls(cur: number, voice: string): string[] {
     const ahead = pool.length - 1
     const next: { voice: string; sentence: string }[] = parts.slice(cur + 1, cur + 1 + ahead)
       .map(sentence => ({ voice, sentence }))
@@ -767,18 +782,27 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
       splitSentences(segments[i].say).slice(0, ahead - next.length)
         .forEach(sentence => next.push({ voice: segments[i].voice, sentence }))
     }
-    const urls = next.map(n => clipUrl(n.voice, n.sentence))
+    return next.map(n => clipUrl(n.voice, n.sentence))
+  }
+
+  /** Buffer the next two clips in the idle pool elements. */
+  function preloadAfter(cur: number, voice: string): void {
+    const urls = upcomingUrls(cur, voice)
     // Leave already-buffering elements alone; only reassign ones holding a stale clip.
     const free = pool.filter(p => p !== player && !urls.includes(p.src))
     urls.filter(u => !pool.some(p => p.src === u)).forEach((u, i) => { if (free[i]) free[i].src = u })
   }
 
-  /** Called from the click/key that starts playback: play() on each idle element once so it may play later. */
+  /** Called from the click/key that starts playback: play() each idle element once, muted, on a clip it will need anyway, so it may play later. */
   function unlockPool(): void {
-    pool.forEach(p => {
-      if (p === player || unlocked.has(p)) return
-      p.src = SILENT_WAV
-      p.play().then(() => { p.pause(); unlocked.add(p) }, () => { /* no gesture (autoplay): stays locked */ })
+    const urls = upcomingUrls(sent - 1, segments[idx].voice)
+    pool.filter(p => p !== player && !unlocked.has(p)).forEach((p, i) => {
+      if (!urls[i]) return
+      p.src = urls[i]
+      p.muted = true
+      const done = (ok: boolean): void => { p.pause(); p.muted = false; if (ok) unlocked.add(p) }
+      // No gesture (autoplay): stays locked.
+      p.play().then(() => done(true), () => done(false))
     })
   }
 
@@ -905,7 +929,7 @@ export function startPresent(root: HTMLElement, opts: PresentOptions = {}): Pres
     else if (act === 'exit') exit()
   })
   voiceSel.addEventListener('change', () => {
-    const v = voices[Number(voiceSel.value)]
+    const v = selectedVoice()
     if (voiceSel.value === KOKORO || v) storage(VOICE_KEY, v ? v.name : KOKORO)
     speechBroken = false
     // Hand the keys back: a focused <select> would swallow Space and the arrows.
