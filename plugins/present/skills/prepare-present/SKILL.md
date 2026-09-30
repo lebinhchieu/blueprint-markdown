@@ -44,8 +44,21 @@ Fixed arc — each part is one `##` section:
 
 Page rules:
 
-- **Visual first, prose last.** Every section leads with a block the narration can point at:
-  a diagram, table, code block, steps, timeline or callout. Paragraphs are one to two lines.
+- **Show, don't describe.** Every section leads with the richest visual that fits, and the
+  narration points at it; paragraphs are one to two lines, the last resort.
+
+  | Content | Visual | Name it |
+  |---|---|---|
+  | UI, results | screenshot `![alt](img/x.png)` (a real file, path relative to the doc) | `:cue{#id}` after the image, same paragraph |
+  | Flow, structure, dependencies | ` ```mermaid #id ` (`mermaid-diagrams` picks the type), or `:::explorer` when each node needs detail | fence `#id` |
+  | A change | ` ```diff #id ` or a before/after table | fence `#id` / `:cue{#id table}` |
+  | Comparison, numbers | table | `:cue{#id table}` |
+  | Sequence, history | `:::steps` / `:::timeline` | `{#id}` |
+
+  Never invent a screenshot path — no real image, use a diagram or table instead.
+- **Show relationships, not lists.** Draw what calls, causes or replaces what — diagram
+  arrows, before → after — and narrate the link ("the cache feeds the retry loop"), not each
+  part alone. Refer back to earlier sections by their heading so the parts join up.
 - **One idea per section, one lit block per segment.** If a segment would light three
   scattered blocks, split it or regroup the page.
 - **The page must still read without audio** — headings are claims ("Retries fixed the
@@ -82,12 +95,18 @@ directions — nobody is there to follow them.
 - **Notes (`note=`)** are the viewer's takeaway in ≤ 8 words — the key number or claim.
   Risk segments get `note="⚠ …"`.
 - Never sound more certain than the evidence. Say what was measured, and what wasn't.
+- **Pin the spotlight with `:at`; don't leave it to auto-detect.** Auto-detect guesses from
+  "First, …" or shared words and misses paraphrase. Put `:at{#id}` (an item named inside the
+  segment's `on=` blocks) or `:at{lines="4"}` (lit code) before each sentence that moves to a
+  new item. A pin holds until the next — one per shift, not per sentence.
+- **Diagram nodes:** pin one by the id you gave it in the source — `:at{#auth}` for
+  `auth[Auth]` (flowchart, state and class diagrams only; other types number nodes by position).
 
 ---
 
 ## 4. Finish — verify, don't assume
 
-1. Run `blueprint-markdown`'s `validate.mjs` on the file — must pass; fixes `on=` ids naming nothing.
+1. Run `blueprint-markdown`'s `validate.mjs` on the file — must pass; fixes `on=` and `:at{#id}` ids naming nothing.
 2. Word count of all `:::say` bodies within ±15 % of the length budget.
 3. **Do not run narrate.** Report: file path, segment count, estimated minutes, and that
    audio isn't generated yet — `npm run narrate -- <file>` (or the present skill) does that.

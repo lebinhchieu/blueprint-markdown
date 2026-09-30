@@ -16,6 +16,7 @@
  */
 
 import { smoothScrollBy } from './motion'
+import { RE_NODE_ID } from './explorerSync'
 import { parseLineRanges } from './ranges'
 import { DEFAULT_LANG, defaultVoice, narrationFile, speechText } from './speech'
 
@@ -293,8 +294,15 @@ function pointCandidates(lit: HTMLElement[]): Element[] {
   return list.filter(p => !list.some(q => q !== p && q.contains(p)))
 }
 
+/** A mermaid node named by its author id, inside the blocks the segment lights (ids carry a per-render prefix, so match the tail). */
+function diagramNodes(id: string, lit: HTMLElement[]): Element[] {
+  return lit.flatMap(el => Array.from(el.querySelectorAll<SVGGElement>('g.node'))
+    .filter(g => RE_NODE_ID.exec(g.id)?.[1] === id))
+}
+
 function resolveAt(m: AtMarker, lit: HTMLElement[], cues: Map<string, HTMLElement[]>): Element[] {
   // No id: the lines are in the code block(s) the segment already lights.
+  if (m.id && !cues.has(m.id)) return diagramNodes(m.id, lit)
   const targets = m.id
     ? cues.get(m.id) ?? []
     : Array.from(new Set(lit.map(el => el.closest<HTMLElement>('.code-block') ?? el)))

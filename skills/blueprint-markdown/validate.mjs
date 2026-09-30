@@ -280,6 +280,8 @@ const cueUses = []
     const fm = matchFence(line)
     if (fence) {
       if (fm && fm.char === fence.char && fm.len >= fence.len) fence = null
+      // :at{#id} may name a mermaid node — accept any word in the diagram source
+      else if (fence.mermaid) for (const w of line.match(/[\w-]+/g) ?? []) cueNames.add(w)
       return
     }
     if (fm) {
@@ -287,6 +289,7 @@ const cueUses = []
       const info = line.replace(/title=["'][^"']*["']/, '').replace(/\{[^}]*\}/, '')
       const id = info.match(/\s#([\w-]+)/)
       if (id) cueNames.add(id[1])
+      if (/^\s*mermaid\b/.test(info.replace(/^\s*[`~]+/, ''))) fence.mermaid = true
       return
     }
     const block = line.match(RE_OPEN) ?? line.match(RE_LEAF)
