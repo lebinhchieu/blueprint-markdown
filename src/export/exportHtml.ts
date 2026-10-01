@@ -46,25 +46,51 @@ function readExtFile(extensionPath: string, ...parts: string[]): string {
   return fs.readFileSync(path.join(extensionPath, ...parts), 'utf8')
 }
 
-export async function exportToHtml(context: vscode.ExtensionContext): Promise<void> {
+/**
+ * A focused markdown preview with no source editor visible (e.g. Ctrl+Shift+V replaced the
+ * tab). The preview's source URI isn't exposed by any API, but the built-in
+ * `markdown.showSource` knows it — it opens the source as the active editor (in the
+ * preview's group). Returns true when that left a markdown editor active.
+ */
+async function showSourceOfActivePreview(): Promise<boolean> {
+  const input = vscode.window.tabGroups.activeTabGroup.activeTab?.input
+  if (!(input instanceof vscode.TabInputWebview) || !input.viewType.endsWith('markdown.preview')) return false
+  await vscode.commands.executeCommand('markdown.showSource')
+  return vscode.window.activeTextEditor?.document.languageId === 'markdown'
+}
+
+export async function exportToHtml(context: vscode.ExtensionContext, arg?: { uri?: string }): Promise<void> {
   // ── 1. Resolve active markdown document ──────────────────────────────────────
-  // Fast path: a markdown text editor has focus.
-  // Fallback: the preview panel is focused but the source editor is still visible.
+  // Preview right-click: the webview context carries the exact source URI (see
+  // commentInsert.ts) — a focused preview is a webview, so activeTextEditor is unset.
+  // Otherwise: a focused markdown editor, else the visible markdown editor(s), else ask
+  // the focused preview for its source.
   let document: vscode.TextDocument | undefined
   const activeEditor = vscode.window.activeTextEditor
-  if (activeEditor?.document.languageId === 'markdown') {
+  if (arg?.uri) {
+    document = await vscode.workspace.openTextDocument(vscode.Uri.parse(arg.uri))
+  } else if (activeEditor?.document.languageId === 'markdown') {
     document = activeEditor.document
   } else {
-    const visible = vscode.window.visibleTextEditors.filter(
-      e => e.document.languageId === 'markdown',
-    )
+    // Dedupe by URI: the same file split across two groups is still one candidate.
+    const visible = [...new Map(
+      vscode.window.visibleTextEditors
+        .filter(e => e.document.languageId === 'markdown')
+        .map(e => [e.document.uri.toString(), e.document]),
+    ).values()]
     if (visible.length === 1) {
-      document = visible[0].document
+      document = visible[0]
     } else if (visible.length > 1) {
-      vscode.window.showErrorMessage(
-        'Blueprint Markdown: Multiple Markdown files are open. Focus the one you want to export.',
+      const picked = await vscode.window.showQuickPick(
+        visible.map(d => ({ label: path.basename(d.fileName), description: vscode.workspace.asRelativePath(d.uri), document: d })),
+        { placeHolder: 'Blueprint Markdown: which file to export?' },
       )
-      return
+      if (!picked) return
+      document = picked.document
+    } else if (await showSourceOfActivePreview()) {
+      document = vscode.window.activeTextEditor!.document
+      // showSource swapped the preview out of its group; bring it back.
+      await vscode.commands.executeCommand('workbench.action.openPreviousRecentlyUsedEditorInGroup')
     } else {
       vscode.window.showErrorMessage(
         'Blueprint Markdown: No Markdown file is open. Open a .md file first.',

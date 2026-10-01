@@ -28,6 +28,11 @@
 const settingsRaw = document.getElementById('vscode-markdown-preview-data')?.getAttribute('data-settings')
 const sourceUri: string | undefined = settingsRaw ? JSON.parse(settingsRaw).source : undefined
 
+// Right-click "Export to HTML" needs the URI anywhere in the preview, not just on a
+// selection. On <html>, not <body>: the listener below rewrites/deletes body's context on
+// every selectionchange, and VS Code merges contexts from all ancestors, so both coexist.
+if (sourceUri) document.documentElement.dataset.vscodeContext = JSON.stringify({ uri: sourceUri })
+
 /** Which occurrence `target` is among same-source directive wrappers in `block` — see the
  *  matching "Selected/anchor text can repeat" comment below for why this exists. */
 function nthDirectiveOccurrence(block: HTMLElement, target: HTMLElement, source: string): number {

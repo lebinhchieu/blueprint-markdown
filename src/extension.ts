@@ -206,7 +206,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.executeCommand('markdown.preview.refresh')
 
   context.subscriptions.push(
-    vscode.commands.registerCommand('blueprintMarkdown.exportHtml', () => exportToHtml(context)),
+    vscode.commands.registerCommand('blueprintMarkdown.exportHtml', (arg?: { uri?: string }) => exportToHtml(context, arg)),
   )
 
   context.subscriptions.push(
