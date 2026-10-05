@@ -1537,7 +1537,8 @@ kbd {
 
 /* The panel's own 16px bottom margin would otherwise make the pin's padding
  * lopsided — 8px above the diagram, 24px below. */
-.em-explorer__pin > .mermaid {
+.em-explorer__pin > .mermaid,
+.em-explorer__pin > .em-legend-wrap > .mermaid {
   margin-bottom: 0;
 }
 
@@ -1584,7 +1585,11 @@ kbd {
   /* Beats the inline height enhanceMermaidZoom sets on the panel. border-box
    * so the panel's 1px border fits inside the 100%, instead of overflowing and
    * eating 2px of the pin's bottom padding. */
-  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .mermaid {
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .em-legend-wrap {
+    height: 100%;
+  }
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .mermaid,
+  .em-explorer:not([data-pin="top"]) .em-explorer__pin > .em-legend-wrap > .mermaid {
     height: 100% !important;
     box-sizing: border-box;
   }

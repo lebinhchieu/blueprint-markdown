@@ -343,9 +343,10 @@ Body for this node.
 | `pin` | `left`, `top` | `left` | `top` stacks the diagram above the detail on any width |
 | `width` | CSS length — `%`, `px`, `rem`, `em`, `ch`, `vw` | `45%` | Diagram column width. Anything else falls back to the default |
 
-**Splitting** — the **first** `mermaid` fence pins; everything after it becomes the detail
-pane, including nested directives such as the closing `Not shown` callout. Later mermaid
-fences are ordinary diagrams inside the detail pane.
+**Splitting** — the **first** `mermaid` fence pins, along with anything above it; everything
+after it becomes the detail pane, including nested directives such as the closing `Not shown`
+callout. Later mermaid fences are ordinary diagrams inside the detail pane. To give the pinned
+diagram a color key, wrap its fence in [`:::legend`](#containers) — the whole legend block pins.
 
 **Titling** — the block has no title of its own. Put a heading immediately *before* it, one
 level above the section headings inside (`##` outside, `###` inside), so the sections nest

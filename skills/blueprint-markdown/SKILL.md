@@ -259,7 +259,8 @@ a `:::card` or other directive — it drops out of the pairing.
 as a panel in the diagram's top-left corner, shown expanded by default; click it to collapse to
 a small button, click again to expand. Row layout for a wide chart, column for a tall one.
 Filters its `::legend-item` children out of the normal render flow; everything else (the fence)
-renders unchanged.
+renders unchanged. Inside `:::explorer`, wrap the fence in `:::legend` the same way — it pins
+with the diagram.
 
 ````
 :::legend

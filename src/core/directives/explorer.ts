@@ -45,6 +45,12 @@ export function splitAtMermaidFence(children: ASTNode[] | undefined): ExplorerSp
 
   for (let i = 0; i < children.length; i++) {
     const child = children[i]
+    // A :::legend wrapping the fence pins whole, so its panel stays paired
+    // with the diagram (legend.ts, enhanceMermaidZoom) instead of landing in
+    // the detail pane with the pin left empty.
+    if (child.type === 'directive' && child.name === 'legend' && splitAtMermaidFence(child.children).pin.length > 0) {
+      return { pin: children.slice(0, i + 1), detail: children.slice(i + 1) }
+    }
     if (child.type !== 'text') continue
 
     const end = mermaidFenceEnd(child.lines)
@@ -55,7 +61,8 @@ export function splitAtMermaidFence(children: ASTNode[] | undefined): ExplorerSp
     if (tail.length > 0) detail.push({ type: 'text', lines: tail })
     detail.push(...children.slice(i + 1))
 
-    return { pin: [{ type: 'text', lines: child.lines.slice(0, end + 1) }], detail }
+    // Earlier siblings go with the pin, same as the text lines above the fence.
+    return { pin: [...children.slice(0, i), { type: 'text', lines: child.lines.slice(0, end + 1) }], detail }
   }
 
   return { pin: [], detail: children }
@@ -137,8 +144,12 @@ export function extractHeadingKeys(html: string): string {
  * is. djb2: collisions are harmless here (worst case, two diagrams share a
  * width/pin default), so no need for anything cryptographic.
  */
+function pinText(nodes: ASTNode[]): string {
+  return nodes.map(n => (n.type === 'text' ? n.lines.join('\n') : pinText(n.children ?? []))).join('\n')
+}
+
 function pinKey(pin: ASTNode[]): string {
-  const text = pin.map(n => (n.type === 'text' ? n.lines.join('\n') : '')).join('\n')
+  const text = pinText(pin)
   let h = 5381
   for (let i = 0; i < text.length; i++) h = ((h * 33) ^ text.charCodeAt(i)) >>> 0
   return h.toString(36)
