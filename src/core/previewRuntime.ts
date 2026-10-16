@@ -90,6 +90,30 @@ function resolveCssVars(source: string, v: (name: string) => string): string {
   return source.replace(/var\(\s*(--[\w-]+)\s*\)/g, (whole, name) => v(name) || whole)
 }
 
+/**
+ * Mermaid and the pan/zoom fit both measure the DOM (getBBox, clientWidth), and
+ * an inactive `.tab-panel` is display:none — measured there, a diagram comes
+ * back as a 16×16 viewBox and stays blank after the tab opens. Lay such panels
+ * out invisibly and zero-height for the duration of the render, then undo.
+ */
+function revealTabPanels(blocks: HTMLElement[]): () => void {
+  const panels = new Set<HTMLElement>()
+  blocks.forEach(el => {
+    const panel = el.closest<HTMLElement>('.tab-panel:not([data-active])')
+    if (panel) panels.add(panel)
+  })
+  panels.forEach(p => {
+    p.style.cssText += ';display:block;visibility:hidden;height:0;padding-block:0;overflow:hidden'
+  })
+  return () => panels.forEach(p => {
+    p.style.removeProperty('display')
+    p.style.removeProperty('visibility')
+    p.style.removeProperty('height')
+    p.style.removeProperty('padding-block')
+    p.style.removeProperty('overflow')
+  })
+}
+
 export async function renderMermaid(
   root: HTMLElement,
   theme: string,
@@ -97,6 +121,20 @@ export async function renderMermaid(
 ): Promise<void> {
   const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
   if (blocks.length === 0) return
+  const restorePanels = revealTabPanels(blocks)
+  try {
+    await renderBlocks(blocks, root, theme, mermaid)
+  } finally {
+    restorePanels()
+  }
+}
+
+async function renderBlocks(
+  blocks: HTMLElement[],
+  root: HTMLElement,
+  theme: string,
+  mermaid: MermaidApi,
+): Promise<void> {
 
   // Needed up front, not just for themeVariables below — resolveCssVars uses
   // it to turn a diagram's own `var(--x)` into a literal value mermaid can
