@@ -73,6 +73,32 @@ find the one that matters.
   skip it when the paragraph already says which file this is, so it isn't said twice.
 - **Skip highlighting on full, self-contained snippets** — a whole new file's contents, a
   runnable example — where every line matters equally.
+- **Real line numbers and numbered markers** (blueprint-markdown ≥ 1.9.0): `start=N` makes
+  lines carry their file numbers; `marks="3:1 7:2"` badges lines for the visual level below.
+- **A change is a `diff` fence**, not a "before" block plus an "after" block.
+
+## Visual level
+
+**Material beats description.** When a claim rests on code, a screenshot, or a before/after,
+show it in place and mark it — don't describe it in prose. Syntax lives in `blueprint-markdown`
+(`references/syntax.md`); which form fits lives in `visual-answer`. This table only says when
+to reach for one.
+
+| Situation | Use | Plain-markdown fallback |
+|---|---|---|
+| Code change (plan, PR, review) | ```` ```diff ```` fence (`lang=ts` adds syntax colour) | same fence |
+| Why a code line matters | fence `start=N marks="3:1"` + `:::annotated` + `:::marker` | `file:line` + bullet |
+| Region of a screenshot | `:::pins` + `::pin{x y n}` | numbered list under the image |
+| Before vs after, option vs option | `:::compare` | 2-row table |
+| Claim needs a trust level | `:tag[verified]{src="file:line"}` | `(verified: file:line)` |
+| Short column beside a long one | `:::columns` + `col{sticky}` | skip |
+| Sequence, state, structure | mermaid / `:::steps` | mermaid fence |
+
+- **3–5 markers or highlights per view**, about 7 at most.
+- **Every marker number appears on the material and on its note.** No orphans.
+- **Only when it cuts reading.** A one-line change is a sentence, not a compare.
+- **Tag claims** verified or inferred, linked to `file:line`.
+- **Gate on the target.** If the file won't render blueprint-markdown, use the fallback column.
 
 ## Overriding other skills' file templates
 
@@ -93,6 +119,8 @@ must be skimmable-first:
 - Use blueprint-markdown's components (steps, callout, table) to *render*
   this structure — component choice never excuses skipping deliverable-first
   ordering inside the component.
+- A phase that changes code shows it as a `diff` fence. The verification
+  section tags what was run vs inferred (Visual level).
 
 If a file needs both — e.g. a plan file — apply this skill's ordering rules
 first to decide what goes where, then use the other skill to write the
@@ -106,3 +134,4 @@ Run this against your own draft before writing the file — fix what fails, don'
 - Does every section's first line carry that section's point?
 - Is any paragraph a list of things pretending to be prose?
 - Is exactly one phrase bolded per line, and is it first?
+- Does every claim resting on code or an image have a marker, diff, or `file:line` pointing at it?
