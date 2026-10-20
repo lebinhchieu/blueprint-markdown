@@ -40,7 +40,7 @@ directive when the directive doesn't add meaningfully to the reading experience.
 All custom components use the same grammar. Learn these three forms and you know every feature.
 
 > **Colon count *is* the grammar.** `:::` = container block, and it opens **and closes** with `:::`.
-> `::` = leaf block, used by **`progress` and `legend-item`**. `:` = inline. When in doubt, it's `:::`.
+> `::` = leaf block, used by **`progress`, `legend-item` and `pin`**. `:` = inline. When in doubt, it's `:::`.
 
 ### 1. Container block (open with `:::`, close with `:::`)
 ```
@@ -80,13 +80,15 @@ renders as plain text or an unstyled block. Check every directive you write agai
 | Multi-word values must be quoted | `title="Two words"` | `title=Two words` |
 | Bare-word order matters (first = primary) | `{danger open}` → color=danger | `{open danger}` → color lost |
 | Blocks open AND close with `:::` | `:::callout{…}` … `:::` | `::callout{…}` … `::` |
-| `::` is leaf-only (`progress`, `legend-item`) | `::progress{…}` | `:::progress{…}` |
+| `::` is leaf-only (`progress`, `legend-item`, `pin`) | `::progress{…}` | `:::progress{…}` |
 | Use `col`, not `column` | `:::col` | `:::column` |
 | Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
 | `:::explorer` pairs **only** by `{#id}` | `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — no anchor, so the box goes dead with no error |
 | `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
 | `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `idle : Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
 | `:::explorer` section headings must be top-level in the block | `### Cache {#cache}` | the same heading wrapped in a nested `:::card` (drops out of the pairing) |
+| `:::marker` notes pair with material by number only | `marks="3:1"` + `:::marker{n=1}` inside one `:::annotated` | `n=1` note with no matching badge (note renders, nothing lights) |
+| `::pin` needs `x` and `y` (0–100) | `::pin{x=30 y=20 n=1}` | `::pin{n=1}` (renders nothing) |
 | Every `:::say{on="…"}` id must name a block | `:::tip{#why}` … `on="why"` | `on="why"` with no `#why` anywhere (lights nothing) |
 | `:cue` takes `#`, like every other name | `:cue{#see}` | `:cue{see}` (renders nothing) |
 
@@ -207,6 +209,28 @@ The API accepts up to 1000 requests per minute.
 :::
 ```
 
+**Marked-up material** — numbered markers link code lines, image regions or phrases to
+margin notes. Full attrs in `references/syntax.md`.
+````
+:::annotated
+```ts start=40 marks="1:1 4:2"
+…
+```
+:::pins
+![shot](a.png)
+::pin{x=30 y=20 n=3}
+:::
+:::marker{n=1 title="Why"}
+Note.
+:::
+:::
+````
+`:marker[phrase]{n=1}` tags prose the same way.
+
+**Compare** — `:::compare` with `:::before{title=…}` / `:::after`: both sides visible.
+
+**Columns** — `:::columns{min=320px}` auto-fits; `:::col{sticky}` pins a short column beside a long one.
+
 **Explorer** — pins a mermaid diagram beside its detail sections. The first `mermaid` fence
 pins; everything after it scrolls in the detail pane. Clicking a box scrolls to its section and
 flashes both; clicking a section brings its box into view. A box with no matching heading
@@ -292,6 +316,7 @@ Status: :chip[Active]{success}  :chip[Beta]{color=warning variant=outline}  :chi
 Icon: :icon[home]  :icon[settings]{fill size=20 color=info}
 Color: :color[critical issue]{danger}
 Keys: :kbd[Ctrl+K]
+Truth: :tag[verified]{src="src/a.ts:21"}  :tag[inferred]  :tag[not verified]
 Button: :button[Get started]{href="/start" color=primary variant=solid}
 Hover: :tooltip[this word]{tip="Tooltip content."}
 Stars: :rating{value=4 max=5}
@@ -307,6 +332,7 @@ AI note: :ai[Double-check this assumption next time]
 | Table | pipe tables |
 | Mark / highlight | `==text==` |
 | Code + line highlight | ` ```js {1,3-5} title="app.js" ` |
+| Code diff | ` ```diff lang=ts ` (paste `git diff`, or bare `+`/`-` lines) |
 | Mermaid diagram | ` ```mermaid ` |
 | Heading anchor | `### Title {#anchor}` — **only inside `:::explorer`**, where it sets the pairing key. Elsewhere `markdown-it-attrs` is not installed, so the braces render as literal text; ordinary heading ids are slugified from the heading text automatically |
 

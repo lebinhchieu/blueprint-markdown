@@ -66,6 +66,15 @@ const REGISTRY = {
   // narration.ts — present-mode script (the inline :cue / :at markers are listed below)
   narration: ['container'],
   say:       ['container'],
+  // annotate.ts — marker is the note (container) AND the phrase reference (inline)
+  annotated: ['container'],
+  marker:    ['container', 'inline'],
+  pins:      ['container'],
+  pin:       ['leaf'],
+  // compare.ts
+  compare:   ['container'],
+  before:    ['container'],
+  after:     ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],
@@ -78,6 +87,7 @@ const REGISTRY = {
   ai:        ['inline'],
   cue:       ['inline'],
   at:        ['inline'],
+  tag:       ['inline'],
 }
 
 // ─── Parser — ported from src/core/parser.ts (exact regexes, same logic) ─────

@@ -266,7 +266,7 @@ function codeLines(el: HTMLElement, lines: Set<number>): HTMLElement[] {
   if (!code) return []
   // Document order, not direct children: an hljs span that crosses a newline makes the
   // browser nest the next line's span inside this one, but start tags stay in line order.
-  const all = code.querySelectorAll<HTMLElement>('.hl, .code-line, .em-ln')
+  const all = code.querySelectorAll<HTMLElement>('.hl, .ln-row, .em-ln')
   return Array.from(all).filter((_, i) => lines.has(i + 1))
 }
 
@@ -336,7 +336,7 @@ function indexJumps(segments: Segment[], cues: Map<string, HTMLElement[]>): Map<
   const jumps = new Map<HTMLElement, number>()
   segments.forEach((seg, i) => {
     for (const el of resolveSegment(seg, cues).lit) {
-      // A lit code line jumps via its code block (VS Code also stamps .code-line on prose).
+      // A lit code line jumps via its code block.
       const block = el.closest('pre') ? el.closest<HTMLElement>('.code-block') ?? el : el
       if (!jumps.has(block)) jumps.set(block, i)
     }

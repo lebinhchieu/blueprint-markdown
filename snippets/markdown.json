@@ -25,32 +25,56 @@
   },
   "Blueprint: note callout": {
     "prefix": "bp-note",
-    "body": [":::note{title=\"${1:Title}\"}", "$0", ":::"],
+    "body": [
+      ":::note{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Note callout"
   },
   "Blueprint: tip callout": {
     "prefix": "bp-tip",
-    "body": [":::tip{title=\"${1:Title}\"}", "$0", ":::"],
+    "body": [
+      ":::tip{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Tip callout"
   },
   "Blueprint: info callout": {
     "prefix": "bp-info",
-    "body": [":::info{title=\"${1:Title}\"}", "$0", ":::"],
+    "body": [
+      ":::info{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Info callout"
   },
   "Blueprint: warning callout": {
     "prefix": "bp-warning",
-    "body": [":::warning{title=\"${1:Heads up}\"}", "$0", ":::"],
+    "body": [
+      ":::warning{title=\"${1:Heads up}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Warning callout"
   },
   "Blueprint: danger callout": {
     "prefix": "bp-danger",
-    "body": [":::danger{title=\"${1:Title}\"}", "$0", ":::"],
+    "body": [
+      ":::danger{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Danger callout"
   },
   "Blueprint: success callout": {
     "prefix": "bp-success",
-    "body": [":::success{title=\"${1:Title}\"}", "$0", ":::"],
+    "body": [
+      ":::success{title=\"${1:Title}\"}",
+      "$0",
+      ":::"
+    ],
     "description": "Success callout"
   },
   "Blueprint: generic callout": {
@@ -280,5 +304,53 @@
       "```"
     ],
     "description": "Mermaid diagram block"
+  },
+  "Blueprint: annotated": {
+    "prefix": "bp-annotated",
+    "body": [
+      ":::annotated",
+      "```${1:ts} start=${2:1} marks=\"${3:1:1}\"",
+      "$4",
+      "```",
+      "",
+      ":::marker{n=1 title=\"${5:Why}\"}",
+      "${6:Note text.}",
+      ":::",
+      ":::"
+    ],
+    "description": "Code with numbered markers and margin notes"
+  },
+  "Blueprint: compare": {
+    "prefix": "bp-compare",
+    "body": [
+      ":::compare",
+      ":::before{title=\"${1:Before}\"}",
+      "${2:Old.}",
+      ":::",
+      ":::after{title=\"${3:After}\"}",
+      "${4:New.}",
+      ":::",
+      ":::"
+    ],
+    "description": "Before/after pair, both visible"
+  },
+  "Blueprint: tag": {
+    "prefix": "bp-tag",
+    "body": [
+      ":tag[${1|verified,inferred,not verified,failed|}]{src=\"${2:src/file.ts:1}\"}$0"
+    ],
+    "description": "Truth tag with source"
+  },
+  "Blueprint: diff": {
+    "prefix": "bp-diff",
+    "body": [
+      "```diff lang=${1:ts} title=\"${2:file.ts}\"",
+      "@@ -${3:1},${4:3} +${3:1},${5:3} @@",
+      "${6: context}",
+      "-${7:removed}",
+      "+${8:added}",
+      "```"
+    ],
+    "description": "Unified code diff with tinted rows"
   }
 }

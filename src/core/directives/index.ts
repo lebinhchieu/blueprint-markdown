@@ -22,6 +22,8 @@ import { revisionDirectives } from './revision'
 import { explorerDirectives } from './explorer'
 import { legendDirectives } from './legend'
 import { narrationDirectives } from './narration'
+import { annotateDirectives } from './annotate'
+import { compareDirectives } from './compare'
 
 export type Registry = Record<string, DirectiveSpec>
 
@@ -41,6 +43,8 @@ export function buildRegistry(overrides?: Record<string, DirectiveSpec>): Regist
     ...explorerDirectives,
     ...legendDirectives,
     ...narrationDirectives,
+    ...annotateDirectives,
+    ...compareDirectives,
   }
   if (overrides) {
     return { ...base, ...overrides }

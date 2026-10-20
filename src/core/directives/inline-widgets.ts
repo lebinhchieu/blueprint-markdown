@@ -12,6 +12,7 @@
  * :rating{value=4 max=5}
  * :comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
  * :ai[Double-check this assumption next time]
+ * :tag[verified]{src="src/a.ts:21"}
  */
 
 import type { DirectiveSpec } from '../types'
@@ -147,6 +148,38 @@ const ratingSpec: DirectiveSpec = {
   },
 }
 
+// ─── :tag ─────────────────────────────────────────────────────────────────
+// A claim's truth status, optionally pointing at the source that backs it.
+// Known labels pick their own colour (the house roles: verified green, inferred
+// and not-verified amber, failed red); `color=` overrides.
+
+const TAG_ROLE: Record<string, string> = {
+  'verified': 'success',
+  'pass': 'success',
+  'inferred': 'warning',
+  'not verified': 'warning',
+  'unverified': 'warning',
+  'failed': 'danger',
+  'fail': 'danger',
+  'broken': 'danger',
+}
+
+const tagSpec: DirectiveSpec = {
+  forms: ['inline'],
+  render(node, ctx) {
+    const text  = node.text ?? ''
+    const role  = canonicalRole(node.attrs.named['color'] ?? TAG_ROLE[text.trim().toLowerCase()] ?? 'gray')
+    const src   = node.attrs.named['src']
+    const srcHtml = src
+      ? `<code class="file-ref tag__src" data-copy="${ctx.esc(src)}" title="Click to copy">${ctx.esc(src)}</code>`
+      : ''
+    return (
+      `<span class="chip chip--soft chip--${ctx.esc(role)} tag">` +
+      `<span class="tag__label">${ctx.esc(text)}</span>${srcHtml}</span>`
+    )
+  },
+}
+
 // ─── :comment / :ai (identical rendering, different icon) ─────────────────
 
 function makeCommentSpec(icon: string): DirectiveSpec {
@@ -186,4 +219,5 @@ export const inlineWidgetDirectives: Record<string, DirectiveSpec> = {
   rating:  ratingSpec,
   comment: commentSpec,
   ai:      aiSpec,
+  tag:     tagSpec,
 }

@@ -86,7 +86,7 @@
 }
 
 /* Line highlighting */
-.md-output .code-block .code-line {
+.md-output .code-block .ln-row {
   display: block;
 }
 
@@ -1763,7 +1763,7 @@ kbd {
 }
 
 /* Bleed a lit line into the code padding, like .hl does */
-.em-presenting .code-block .code-line:is(.em-lit, .em-point),
+.em-presenting .code-block .ln-row:is(.em-lit, .em-point),
 .em-presenting .code-block .em-ln:is(.em-lit, .em-point) {
   margin: 0 calc(-1 * var(--sp-md));
   padding: 0 var(--sp-md);
@@ -2114,3 +2114,300 @@ kbd {
   margin-top: var(--sp-md);
   color: var(--text-muted);
 }
+
+/* ─── Columns: auto-fit + sticky ─────────────────────────────────────────── */
+/* Placed after the 768px block above so min= wins at every width: auto-fit
+ * already collapses to one column when the container is narrower than --col-min. */
+
+.columns[data-fit] {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--col-min)), 1fr));
+}
+
+/* A pinned column that is taller than the viewport scrolls inside itself. */
+.col[data-sticky] {
+  position: sticky;
+  top: var(--em-sticky-top, var(--sp-md));
+  align-self: start;
+  max-height: calc(100vh - 2 * var(--sp-md));
+  overflow: auto;
+}
+
+@media (max-width: 768px) {
+  .col[data-sticky] { position: static; max-height: none; overflow: visible; }
+}
+
+/* ─── Code: line-number gutter + numbered markers ───────────────────────── */
+
+.md-output .code-block[data-numbered] code { counter-reset: ln var(--ln-base); }
+.md-output .code-block[data-numbered] code > span { counter-increment: ln; }
+.md-output .code-block[data-numbered] code > span::before {
+  content: counter(ln);
+  display: inline-block;
+  width: calc(var(--ln-digits) * 1ch);
+  margin-right: var(--sp-md);
+  text-align: right;
+  color: var(--text-faint);
+  user-select: none;
+}
+
+/* A marked line: same bleed as .hl, in the marker colour. */
+.md-output .code-block .mk {
+  display: block;
+  background: var(--code-hl-bg);
+  margin: 0 calc(-1 * var(--sp-md));
+  padding: 0 var(--sp-md);
+  padding-left: calc(var(--sp-md) - 3px);
+  border-left: 3px solid var(--c-primary);
+}
+.md-output .code-block .mk[data-mk-on] { background: var(--c-primary-bg); }
+
+/* The badge is generated content, so copying code never picks up the number. */
+.md-output .code-block .mk::after {
+  content: attr(data-mk);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5em;
+  height: 1.5em;
+  margin-left: var(--sp-md);
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  font-family: var(--font-sans);
+  font-size: 0.8em;
+  font-weight: 700;
+  vertical-align: middle;
+  user-select: none;
+  transition: transform 120ms ease;
+}
+.md-output .code-block .mk[data-mk-on]::after { transform: scale(1.25); }
+
+/* ─── :marker — phrase reference ─────────────────────────────────────────── */
+
+.mk-ref {
+  background: var(--c-primary-bg);
+  border-bottom: 2px solid var(--c-primary);
+  border-radius: 3px;
+  padding: 0 0.15em;
+}
+.mk-ref[data-mk]::after {
+  content: attr(data-mk);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4em;
+  height: 1.4em;
+  margin-left: 0.3em;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  font-size: 0.75em;
+  font-weight: 700;
+  vertical-align: 0.1em;
+  transition: transform 120ms ease;
+}
+.mk-ref[data-mk-on]::after { transform: scale(1.25); }
+
+/* ─── :::annotated + :::marker — material with margin notes ─────────────── */
+
+.annot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-md);
+}
+.annot__main { min-width: 0; }
+.annot__main > :last-child { margin-bottom: 0; }
+
+/* Narrow: notes stack under the material, markers keep the link. */
+.annot__notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm);
+  min-width: 0;
+}
+.annot__notes:empty { display: none; }
+
+/* Wide (markers.ts sets data-aligned): notes in a side column, each level with its marker. */
+.annot[data-aligned] { grid-template-columns: minmax(0, 1fr) minmax(220px, 300px); align-items: start; }
+.annot[data-aligned] .annot__notes { position: relative; display: block; }
+.annot[data-aligned] .marker { position: absolute; left: 0; right: 0; }
+
+.marker {
+  position: relative;
+  box-sizing: border-box;
+  padding: var(--sp-sm) var(--sp-md) var(--sp-sm) calc(var(--sp-md) + 1.6em);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--c-primary);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised);
+  font-size: var(--font-size-sm);
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.marker[data-mk]::before {
+  content: attr(data-mk);
+  position: absolute;
+  left: var(--sp-sm);
+  top: var(--sp-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  font-size: 0.85em;
+  font-weight: 700;
+}
+.marker[data-mk-on] { background: var(--c-primary-bg); border-color: var(--c-primary); }
+.marker__title { font-weight: 600; margin-bottom: 0.15em; }
+.marker__body > :last-child { margin-bottom: 0; }
+
+/* ─── :::pins + ::pin — numbered pins over an image ─────────────────────── */
+
+.pins {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: var(--sp-md);
+  line-height: 0;
+}
+.pins p { margin: 0; }
+.pins img { display: block; max-width: 100%; height: auto; }
+
+.pin {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+  box-shadow: 0 0 0 2px var(--bg-raised), var(--shadow-md);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  transition: transform 120ms ease;
+}
+.pin[data-mk]::after { content: attr(data-mk); }
+.pin[data-mk-on] { transform: translate(-50%, -50%) scale(1.25); }
+
+/* A region: the outline is the pin, the badge rides its top-left corner. */
+.pin--box {
+  transform: none;
+  display: block;
+  border: 2px solid var(--c-primary);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  box-shadow: none;
+}
+.pin--box[data-mk]::after {
+  position: absolute;
+  left: -0.85em;
+  top: -0.85em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7em;
+  height: 1.7em;
+  border-radius: 999px;
+  background: var(--c-primary);
+  color: var(--text-on-solid);
+}
+.pin--box[data-mk-on] { transform: none; background: color-mix(in srgb, var(--c-primary) 12%, transparent); }
+
+/* ─── :::compare — before / after ────────────────────────────────────────── */
+
+.compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-md);
+  margin-bottom: var(--sp-md);
+}
+.compare__side {
+  min-width: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--bg-raised);
+  overflow: hidden;
+}
+.compare__title {
+  padding: var(--sp-xs) var(--sp-md);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.compare__side--before .compare__title { background: var(--c-danger-bg);  color: var(--c-danger-text); }
+.compare__side--after  .compare__title { background: var(--c-success-bg); color: var(--c-success-text); }
+.compare__body { padding: var(--sp-md); }
+.compare__body > :last-child { margin-bottom: 0; }
+
+@media (max-width: 768px) {
+  .compare { grid-template-columns: 1fr; }
+}
+
+/* ─── :tag — truth status, optionally with its source ───────────────────── */
+
+.tag { gap: 0.55em; }
+.md-output .tag code.file-ref.tag__src {
+  padding: 0 0 0 0.55em;
+  border: none;
+  border-left: 1px solid currentColor;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  font-size: 0.95em;
+}
+
+/* ─── ```diff — unified diff rows ───────────────────────────────────────── */
+
+.md-output .code-block--diff .dl {
+  display: flex;
+  margin: 0 calc(-1 * var(--sp-md));
+  padding: 0 var(--sp-md);
+  padding-left: calc(var(--sp-md) - 3px);
+  border-left: 3px solid transparent;
+}
+.md-output .code-block--diff .dl__c { flex: 1; white-space: pre; }
+
+/* Sign and line numbers are generated content: copying a selection gives plain code. */
+.md-output .code-block--diff .dl__c::before {
+  content: attr(data-sign);
+  display: inline-block;
+  width: 1.6ch;
+  color: var(--text-faint);
+  user-select: none;
+}
+.md-output .code-block--diff .dl__o,
+.md-output .code-block--diff .dl__n {
+  flex: none;
+  box-sizing: content-box;
+  width: calc(var(--dn-digits) * 1ch);
+  margin-right: var(--sp-sm);
+  text-align: right;
+  color: var(--text-faint);
+  user-select: none;
+}
+.md-output .code-block--diff .dl__o::before,
+.md-output .code-block--diff .dl__n::before { content: attr(data-n); }
+
+.md-output .code-block--diff .dl--add {
+  background: color-mix(in srgb, var(--c-success) 16%, transparent);
+  border-left-color: var(--c-success);
+}
+.md-output .code-block--diff .dl--del {
+  background: color-mix(in srgb, var(--c-danger) 14%, transparent);
+  border-left-color: var(--c-danger);
+}
+.md-output .code-block--diff .dl--add .dl__c::before { color: var(--c-success-text); }
+.md-output .code-block--diff .dl--del .dl__c::before { color: var(--c-danger-text); }
+.md-output .code-block--diff .dl--hunk {
+  background: color-mix(in srgb, var(--c-info) 10%, transparent);
+  color: var(--c-info-text);
+}
+.md-output .code-block--diff .dl--meta { color: var(--text-muted); }

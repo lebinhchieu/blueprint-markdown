@@ -5,11 +5,11 @@
 1. [Grammar overview](#grammar-overview)
 2. [Shared color tokens](#color-tokens)
 3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer, legend
+   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer, legend, annotated/marker, pins, compare
 4. [Leaf blocks (::)](#leaf-blocks)
-   - progress, legend-item
+   - progress, legend-item, pin
 5. [Inline (: )](#inline)
-   - chip, icon, color, kbd, button, tooltip, rating, comment, ai
+   - chip, icon, color, kbd, button, tooltip, rating, comment, ai, tag, marker
 6. [Fenced code extensions](#fenced-code)
 7. [Present mode (narration)](#present)
    - narration, say, cue
@@ -183,12 +183,18 @@ Wide right.
 |------|--------|---------|
 | `count` | `2`–`4` | `2` |
 | `gap` | `sm` \| `md` \| `lg` | `md` |
+| `min` | CSS length (`320px`, `20rem`) | — |
+
+`min` switches to auto-fit: as many columns as fit, each at least that wide (`count` is then ignored).
 
 **`:::col` attributes**
 
 | Attr | Values | Default |
 |------|--------|---------|
 | `span` | integer (columns to span) | `1` |
+| `sticky` | flag | — |
+
+`{sticky}` pins the column while a taller sibling scrolls (it scrolls inside itself if taller than the viewport). Unpinned below 768 px.
 
 ---
 
@@ -290,6 +296,67 @@ The API accepts up to 1000 requests per minute.
 **`:::previous`** is a plain `:::` container nested inside `:::revision`.
 
 For word-level change emphasis, use `==highlight==` inside the current or previous block.
+
+---
+
+### `:::annotated` / `:::marker` / `:::pins` / `::pin`
+
+Numbered markers that link material to margin notes. A number appears on the material and on
+its note; hovering or clicking either lights both (scoped to the nearest `:::annotated`).
+
+```
+:::annotated
+```ts start=40 marks="1:1 4:2" title="auth.ts"
+function login(user) {
+  ...
+```
+The :marker[token is signed]{n=1} before it is stored.
+
+:::pins
+![screen](shot.png)
+::pin{x=14 y=50 n=3}
+::pin{x=48 y=36 w=34 h=30 n=4}
+:::
+
+:::marker{n=1 title="Why sign first"}
+Note text.
+:::
+:::
+```
+
+On a wide container (≥ 760 px) notes sit in a side column level with their marker; narrow
+screens stack them under the material.
+
+| Directive | Form | Attrs |
+|-----------|------|-------|
+| `:::annotated` | container | — (holds the material and its `:::marker` notes) |
+| `:::marker` | container | `n` (1–3 digits, or bare `{1}`), `title` |
+| `:marker[phrase]` | inline | `n` — underlines the phrase and tags it with the badge |
+| `:::pins` | container | wraps an image and its `::pin` leaves |
+| `::pin` | leaf | `x`, `y` (0–100 %, required); `w`, `h` (%) turn the point into an outlined region; `n`; `label` (tooltip) |
+
+Numbers repeat freely across separate `:::annotated` blocks. A fence uses `marks="line:n …"`
+(see [Fenced code extensions](#fenced-code)); marker lines are 1-based within the block.
+
+---
+
+### `:::compare`
+
+Before/after pair, both sides visible (unlike `:::revision`, which hides the old text).
+Stacks below 768 px.
+
+```
+:::compare
+:::before{title="Old"}
+limit = 1000
+:::
+:::after
+limit = 500
+:::
+:::
+```
+
+`title` defaults to Before / After.
 
 ---
 
@@ -624,6 +691,25 @@ Same attribute table as `:comment[note]` above (`author`, `date`, `color`, defau
 
 ---
 
+### `:tag[label]`
+
+Truth status of a claim, optionally with the source behind it. Known labels pick their own
+colour: `verified`/`pass` green, `inferred`/`not verified`/`unverified` amber,
+`failed`/`fail`/`broken` red; anything else gray. `color` overrides.
+
+```
+:tag[verified]{src="src/core/fence.ts:38"}
+:tag[inferred]
+:tag[custom]{color=info}
+```
+
+| Attr | Values | Default |
+|------|--------|---------|
+| `src` | `file:line` text; click copies it | — |
+| `color` | [color token](#color-tokens) | by label |
+
+---
+
 ## Fenced code extensions {#fenced-code}
 
 The enhanced renderer reads metadata after the language identifier in a code fence:
@@ -637,6 +723,25 @@ The enhanced renderer reads metadata after the language identifier in a code fen
 | Line ranges | `{1,3-5}` | Highlights lines 1 and 3–5 with `.hl` class |
 | Title | `title="filename"` | Renders a header bar above the code |
 | Present-mode name | `#id` | Names the block for `:::say{on="id"}`; no visible change |
+| Line numbers | `start=40` | Adds a gutter numbered from 40. `{…}` and `marks` stay 1-based within the block |
+| Diff | ` ```diff ` (+ `lang=ts`) | Tinted +/- rows; with `@@` hunks, old/new line-number gutter. See below |
+| Markers | `marks="3:1 7:2"` | Badge ① on line 3, ② on line 7, linked to `:::marker{n=1}` / `{n=2}` (see `:::annotated`) |
+
+**` ```diff `** renders a unified diff: added/removed rows are tinted, `@@` hunk headers drive an
+old/new line-number gutter, and `lang=ts` syntax-highlights the code under the signs. Paste
+`git diff` output as-is, or write a bare `+`/`-` snippet with no headers. Signs and numbers are
+generated content, so copying gives plain code. `title=`, `{lines}` and `marks=` work as in any
+fence (line numbers there count rows of the diff, headers included).
+
+````
+```diff lang=ts title="auth.ts"
+@@ -10,4 +10,5 @@ function login()
+   const user = find(id)
+-  return token
++  const token = sign(user)
++  return token
+```
+````
 
 **` ```mermaid `** (the language identifier `mermaid`) emits a `<div class="mermaid">` block; `mermaid.js` renders it on page load.
 
