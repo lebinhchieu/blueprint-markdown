@@ -1,6 +1,6 @@
 {
   "name": "blueprint-markdown-skills",
-  "description": "blueprint-markdown and mermaid-diagrams skills",
-  "version": "1.3.0",
+  "description": "blueprint-markdown, mermaid-diagrams and blueprint-grill skills",
+  "version": "1.4.0",
   "author": { "name": "Chieu Le" }
 }

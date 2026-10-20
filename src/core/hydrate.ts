@@ -7,11 +7,14 @@
  *   - Accordion coordinated collapse ([data-accordion] containers)
  *   - File-ref copy buttons
  *   - Revision gutter-marker click → floating previous-version popover
+ *   - Grilling Q&A (:::question) answers, persisted in localStorage (qa.ts)
  *
  * Uses document-level event delegation (wired once, immune to morphdom) and
  * module-level state stores so that VS Code's morphdom patching does not
  * reset the active tab or open disclosure on every keystroke.
  */
+
+import { wireQa, restoreQa } from './qa'
 
 // ─── State stores (survive morphdom re-renders) ───────────────────────────────
 
@@ -37,6 +40,7 @@ export function hydrate(root: HTMLElement): void {
 function wireOnce(): void {
   if (wired) return
   wired = true
+  wireQa()
   document.addEventListener('click', onDocClick)
   // `toggle` doesn't bubble — use capture phase to intercept at document level.
   document.addEventListener('toggle', onDocToggle, true)
@@ -146,6 +150,9 @@ function restoreState(_root: HTMLElement): void {
     if (!detailsState.has(i)) return
     el.open = detailsState.get(i)!
   })
+
+  // Grilling Q&A answers (keyed by question id, not index)
+  restoreQa()
 }
 
 // ─── Revision panel helpers ───────────────────────────────────────────────────

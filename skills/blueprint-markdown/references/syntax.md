@@ -3,7 +3,7 @@
 ## Contents
 
 Color tokens · Containers (card, cards, callouts, details, accordion, columns/col,
-timeline/event, tabs/tab, steps/step, revision/previous, annotated/marker/pins/pin, compare) ·
+timeline/event, tabs/tab, steps/step, revision/previous, annotated/marker/pins/pin, compare, question/option/qa-copy) ·
 Leaf (progress) · Inline (chip, icon, color, kbd, button, tooltip, rating, comment, ai, tag) ·
 Fenced code extensions · Strict syntax nuances · Fail-soft rule.
 
@@ -354,6 +354,42 @@ limit = 500
 ```
 
 `title` defaults to Before / After.
+
+---
+
+### `:::question` / `:::option` / `:::qa-copy`
+
+Interactive Q&A (for the grilling skill). The reader picks options / types notes in the
+preview; answers persist in the browser's localStorage and are **not** written to the file.
+`:::qa-copy` shows progress and a **Copy answers** button (paste the text back to the agent).
+
+```
+:::question{id="r1-q1" title="Storage backend"}
+Which store holds sessions?
+:::option{title="SQLite" rec}
+One file, zero setup. Any blueprint markdown here: code, images, mermaid.
+:::
+:::option{title="Postgres"}
+Needs a server.
+:::
+:::
+
+:::qa-copy
+:::
+```
+
+| Directive | Attr | Values |
+|-----------|------|--------|
+| `question` | `id` | unique per doc, never reused (`r<round>-q<n>`); answers key off it |
+| | `title` | short label, used in the copied text |
+| | `multi` | bare flag: checkboxes instead of single choice |
+| | `rec="text"` | recommended answer when there are no `:::option` children |
+| `option` | `title` | label used in the copied text |
+| | `rec` | bare flag: recommended option (chip + **Accept recommended** picks it) |
+| | `id` | optional (default `o<index>`) |
+
+Every question gets a Notes/other textarea. Clicks inside an option's body never select it —
+only its header button does. `qa-copy` is a container (empty), not a leaf.
 
 ---
 

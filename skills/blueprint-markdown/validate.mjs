@@ -75,6 +75,10 @@ const REGISTRY = {
   compare:   ['container'],
   before:    ['container'],
   after:     ['container'],
+  // question.ts — grilling Q&A; qa-copy is an empty container, not a leaf
+  question:  ['container'],
+  option:    ['container'],
+  'qa-copy': ['container'],
   // inline-widgets.ts (listed for near-miss context only — not block-checked)
   chip:      ['inline'],
   icon:      ['inline'],

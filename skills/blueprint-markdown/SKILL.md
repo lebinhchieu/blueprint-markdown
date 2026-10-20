@@ -71,6 +71,7 @@ Containers (`:::`):
 - `annotated` + `marker{n title}` + `pins` + `::pin{x y n}` (x,y required, 0-100) — numbered
   markers linking code lines, image regions or phrases (`:marker[phrase]{n=1}`) to margin
   notes; notes pair with material by number, inside one `:::annotated`
+- `question{id title multi rec="…"}` + `option{title rec}` + `qa-copy` — answerable Q&A (answers stay in browser localStorage; Copy button). Used by the blueprint-grill skill
 - `toc=h1|h2|h3` on card/callout/details/step makes the title a real heading (feeds TOC rail)
 
 Leaf (`::`): `::progress{value max color label}`
