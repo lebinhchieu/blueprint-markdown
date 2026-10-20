@@ -5,7 +5,7 @@ description: >
   (doc, PR, code, notes) into a presentation". Writes a NEW blueprint-markdown document
   built to present itself, then generates its Kokoro narration audio. To write it without
   audio, use prepare-present. Not for adding narration to an existing doc as-is — that's
-  blueprint-markdown's "Present mode" section.
+  prepare-present.
 ---
 
 Two steps: write the document, then generate its audio.

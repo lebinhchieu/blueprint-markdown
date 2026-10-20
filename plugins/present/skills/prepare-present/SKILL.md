@@ -2,17 +2,68 @@
 name: prepare-present
 description: >
   Triggers: "prepare a presentation / talk / walkthrough about X", "draft the
-  presentation but don't narrate", "just write the presentation doc". Writes a NEW
-  self-presenting blueprint-markdown document (page + :::narration script) WITHOUT
+  presentation but don't narrate", "just write the presentation doc", "present / narrate
+  this doc to me". Writes a self-presenting blueprint-markdown document (page +
+  :::narration script) — NEW, or by adding a script to an existing doc — WITHOUT
   generating audio. The present skill runs this, then narrates.
 ---
 
 Output is a self-playing explainer: viewers press **Present** and a neutral narrator talks
 them through it, alone, without you there. The page is the slide; the narration is the talk.
 
-**Syntax lives in the blueprint-markdown skill** — directives, `{#id}` / `:cue{#id}` names,
-`:::narration` / `:::say`, and its "Narration rules". Load it first. This skill only adds
-what a presentation needs on top.
+Load the `blueprint-markdown` skill for directive syntax (and `mermaid-diagrams` for
+diagrams). The narration syntax is below — only this skill knows it.
+
+**Adding narration to an existing doc** (no new page): do §0, §3 and §4 step 1 only (about 20–25 segments for a two-page doc; one `:::say` per idea). Leave the rest of the
+document unchanged apart from the names, so it reads and renders exactly as before.
+
+---
+
+## 0. Narration syntax
+
+Present mode: a `:::narration` script gives the doc a **Present** button — a voiced
+walkthrough that rings each segment's blocks, highlights the item inside being discussed,
+shows a margin note and captions the speech. Names and script are invisible without it.
+
+**Name the blocks** the script points at:
+
+| Target | How |
+|--------|-----|
+| Any directive (callout, event, step, card, col, …) | `{#id}` in its attrs: `:::event{#t3 date="v1"}` |
+| Code block | `#id` after the language: ` ```php {3-6} #fix title="A.php" ` |
+| Heading, paragraph, table row, list item | `:cue{#id}` at the end of its text: `\| **What you see** :cue{#see} \|` |
+| Whole list / table | `:cue{#id list}` / `:cue{#id table}` in its first item / cell |
+
+Same id on several blocks lights them together. Name a heading with `:cue`, never a trailing
+`{#id}` (that only works inside `:::explorer`; elsewhere it prints literally). `:cue` takes
+`#` like every name — `:cue{see}` renders nothing.
+
+**Script** — one `:::narration` at the **end** of the file, one `:::say` per segment, in
+playing order:
+
+```
+:::narration
+:::say{on="answer" note="Fixed and proven on a real migrate"}
+Here's the short version. Both bugs are fixed. The proof is a real migrate.
+:::
+:::say{on="try3 fix" lines="3-5" note="Flag set in the same run"}
+:at{#try3} Try 3 is the final version. :at{lines="4"} If roles were already mapped, it returns early.
+:::
+:::
+```
+
+| Attr | Meaning |
+|------|---------|
+| `on` | space-separated ids to spotlight; every id must name a block, or it lights nothing |
+| `lines` | 1-based lines to light inside the named code block(s); same ranges as `{3-6}` |
+| `note` | margin note, one line; keep `{` `}` out of values |
+
+`:::narration{lang="vi"}` narrates in Vietnamese; `voice=` overrides the generated-audio
+voice. The body is spoken and captioned — plain prose, no markdown or tables; split into
+sentences at `.` `!` `?` + space (`1.9.10` stays whole). `:at{#id}` / `:at{lines="4"}` before
+a sentence pins the highlight (not spoken); see §3.
+
+Playback: Space play/pause · ← → prev/next · Esc exit · click a narrated block to jump.
 
 ---
 
@@ -106,7 +157,7 @@ directions — nobody is there to follow them.
 
 ## 4. Finish — verify, don't assume
 
-1. Run `blueprint-markdown`'s `validate.mjs` on the file — must pass; fixes `on=` and `:at{#id}` ids naming nothing.
+1. Run `blueprint-markdown`'s `validate.mjs` on the file once — must pass; it reports `on=` and `:at{#id}` ids naming nothing.
 2. Word count of all `:::say` bodies within ±15 % of the length budget.
 3. **Do not run narrate.** Report: file path, segment count, estimated minutes, and that
    audio isn't generated yet — `npm run narrate -- <file>` (or the present skill) does that.

@@ -128,7 +128,7 @@ manually with `/plugin marketplace update lebinhchieu/blueprint-markdown`.
 
 | File | Purpose |
 |------|---------|
-| `SKILL.md` | Skill definition — name, description, grammar rules, authoring principles |
+| `SKILL.md` | Skill definition — name, description, grammar, traps, component catalog |
 | `references/syntax.md` | Full per-directive attribute reference (loaded on demand) |
 | `assets/sample.md` | Demo fixture exercising every directive — useful as a test file |
 

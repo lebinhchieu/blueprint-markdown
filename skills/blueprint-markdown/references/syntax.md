@@ -1,20 +1,15 @@
 # Blueprint Markdown — Full Attribute Reference
 
-## Table of Contents
+## Contents
 
-1. [Grammar overview](#grammar-overview)
-2. [Shared color tokens](#color-tokens)
-3. [Containers (:::)](#containers)
-   - card, cards, callout/named types, details, accordion, columns/col, timeline/event, tabs/tab, steps/step, revision/previous, explorer, legend, annotated/marker, pins, compare
-4. [Leaf blocks (::)](#leaf-blocks)
-   - progress, legend-item, pin
-5. [Inline (: )](#inline)
-   - chip, icon, color, kbd, button, tooltip, rating, comment, ai, tag, marker
-6. [Fenced code extensions](#fenced-code)
-7. [Present mode (narration)](#present)
-   - narration, say, cue
-8. [Strict syntax rules](#strict-rules)
-9. [Fail-soft rule](#fail-soft)
+Color tokens · Containers (card, cards, callouts, details, accordion, columns/col,
+timeline/event, tabs/tab, steps/step, revision/previous, annotated/marker/pins/pin, compare) ·
+Leaf (progress) · Inline (chip, icon, color, kbd, button, tooltip, rating, comment, ai, tag) ·
+Fenced code extensions · Strict syntax nuances · Fail-soft rule.
+
+Look up one entry: `grep -n '^### ' references/syntax.md`, then Read with offset/limit.
+`:::explorer` and `:::legend` live in the mermaid-diagrams skill; narration (`:::narration`,
+`:::say`, `:cue`, `:at`) in prepare-present.
 
 ---
 
@@ -335,7 +330,9 @@ screens stack them under the material.
 | `:::pins` | container | wraps an image and its `::pin` leaves |
 | `::pin` | leaf | `x`, `y` (0–100 %, required); `w`, `h` (%) turn the point into an outlined region; `n`; `label` (tooltip) |
 
-Numbers repeat freely across separate `:::annotated` blocks. A fence uses `marks="line:n …"`
+Notes pair with material by number only, inside one `:::annotated` (a note with no matching
+badge renders, but lights nothing); `::pin` without `x` and `y` renders nothing. Numbers repeat
+freely across separate `:::annotated` blocks. A fence uses `marks="line:n …"`
 (see [Fenced code extensions](#fenced-code)); marker lines are 1-based within the block.
 
 ---
@@ -360,157 +357,6 @@ limit = 500
 
 ---
 
-### `:::explorer`
-
-Pins a mermaid diagram beside its per-node detail sections. Clicking a box scrolls to that
-box's section, so you read the detail without losing sight of the picture.
-
-> **These examples demonstrate syntax only.** What a heading says, how long a section runs,
-> and what kind of detail it carries are the author's decisions. Nothing about the wording or
-> structure below is a convention to copy.
-
-````
-## Login flow
-
-:::explorer
-```mermaid
-graph TD
-  subgraph boot["Startup"]
-    auth["AuthService"] --> store["TokenStore"]
-  end
-  store --> cache["Cache"]
-  style auth stroke-dasharray: 6 4
-```
-
-### Startup {#boot}
-Body for the subgraph.
-
-### AuthService {#auth}
-Body for this node. Any markdown works here — paragraphs, tables, code fences, lists,
-sub-headings, nested directives:
-
-| Column | Column |
-|--------|--------|
-| value  | value  |
-
-:::warning{title="A nested directive"}
-Works inside a section.
-:::
-
-### TokenStore {#store}
-Body for this node.
-
-### Cache {#cache}
-Body for this node.
-:::
-````
-
-| Attr | Values | Default | Notes |
-|------|--------|---------|-------|
-| `pin` | `left`, `top` | `left` | `top` stacks the diagram above the detail on any width |
-| `width` | CSS length — `%`, `px`, `rem`, `em`, `ch`, `vw` | `45%` | Diagram column width. Anything else falls back to the default |
-
-**Splitting** — the **first** `mermaid` fence pins, along with anything above it; everything
-after it becomes the detail pane, including nested directives such as the closing `Not shown`
-callout. Later mermaid fences are ordinary diagrams inside the detail pane. To give the pinned
-diagram a color key, wrap its fence in [`:::legend`](#containers) — the whole legend block pins.
-
-**Titling** — the block has no title of its own. Put a heading immediately *before* it, one
-level above the section headings inside (`##` outside, `###` inside), so the sections nest
-under it in the reading rail and multiple blocks in one file stay distinguishable. A heading
-placed *inside* the block lands in the detail column and labels only half the view.
-
-**Content** — the detail pane is a full document, not captions. Tables, code fences, nested
-directives, sub-headings (`####` and deeper), lists and images all work under a section
-heading; write each section as long as the subject needs, in whatever style suits it. The only
-restriction is on the section headings themselves — see *Pairing* below.
-
-**Pairing** — one rule: the heading carries a `{#id}` anchor naming the mermaid node's own id.
-
-```
-graph TD              auth["AuthService"]     ↔   ### AuthService {#auth}
-stateDiagram-v2       auth : AuthService      ↔   ### AuthService {#auth}
-classDiagram          class auth["Auth"]      ↔   ### Auth {#auth}
-subgraph              subgraph boot["Boot"]   ↔   ### Boot {#boot}
-```
-
-The anchor is stripped from the rendered heading — it never shows to the reader — which is
-what lets the box label and the heading text say whatever reads best, independently of the
-key that links them. Subgraphs pair exactly like nodes.
-
-Three ways this fails silently, all of them fail-soft — nothing errors, the box simply goes
-dead:
-
-| Mistake | Result |
-|---------|--------|
-| Heading has no `{#id}` | Its box is never linked and stays unmarked |
-| `{#id}` doesn't match any node id | Nothing pairs |
-| `{#id}` isn't the **last** thing in the heading | Treated as ordinary text and rendered literally |
-
-**Linked nodes are marked** with a dot, so an *unmarked* box reliably means "nothing more to
-read". A node with no matching heading, or a heading with no matching node, renders normally —
-neither errors.
-
-**Layout**
-
-| Situation | Behaviour |
-|-----------|-----------|
-| Wide, side by side | Diagram is as tall as the detail column, capped at one screen — a short section list gets a short diagram, not a screen-tall one |
-| Narrow, or `pin=top` | Stacks, diagram sticky at the top |
-| Stacked diagram over 60% of the viewport height | Doesn't pin at all — it would cover the text it points at |
-
-**Limits**
-
-- **Linking works for `graph`/`flowchart`, `stateDiagram-v2`, and `classDiagram`.** Every
-  other type renders pinned but never links, and that is not a gap to be filled cheaply:
-
-  | Type | Why not |
-  |------|---------|
-  | `erDiagram` | Entities *are* addressable, but mermaid 11.15 rejects aliases — `auth["Auth"]` is a parse error — so the box could only ever be labelled with the raw id |
-  | `sequenceDiagram`, `C4Context`, `timeline`, `journey`, `gitGraph`, mermaid's own `mindmap` | The author's id never reaches the rendered SVG. Elements are numbered positionally (`actor0`, `node-0`, `task0`), so any matching would silently point at the wrong section as soon as the diagram is reordered |
-
-  Writing `{#id}` anchors in an unsupported type is harmless — the diagram pins and the
-  sections read normally, they just aren't clickable.
-- **Section headings must be top-level inside the block.** A heading wrapped in a nested
-  directive stops being a link target, silently.
-- **Node fill and border can't be restyled by the renderer.** `classDef` and `style` are
-  written inline with `!important`, which is why a linked node is marked with an added dot
-  rather than a changed border. Your own `classDef` colors always win — use the CSS variables
-  from [color tokens](#color-tokens) there, as described under
-  [fenced code extensions](#fenced-code).
-
----
-
-### `:::legend`
-
-Declares a color→meaning legend for a mermaid diagram (or any content). Renders as a panel in
-the diagram's top-left corner, shown expanded by default — click it to collapse to a small
-button, click again to expand. Row layout for a wide/horizontal chart, column for a
-tall/vertical one, decided from the diagram's own aspect ratio. `::legend-item` children are
-pulled out before the rest renders normally, so the diagram itself is untouched.
-
-````
-:::legend
-::legend-item{color=primary label="Entry point"}
-::legend-item{color=success label="Terminal state"}
-```mermaid
-graph TD
-  A[Start]:::primary --> B[Done]:::success
-  classDef primary fill:var(--c-primary-bg),stroke:var(--c-primary),color:var(--c-primary-text)
-  classDef success fill:var(--c-success-bg),stroke:var(--c-success),color:var(--c-success-text)
-```
-:::
-````
-
-**No items, no panel** — a `:::legend` with no `::legend-item` children renders its content
-unchanged, fail-soft.
-
-**One diagram per block** — `:::legend` is meant to pair with a single diagram; the legend
-button and panel attach to whichever `.mermaid` element is its child, the same one-diagram
-assumption `:::explorer` makes.
-
----
-
 ## Leaf blocks (::) {#leaf-blocks}
 
 ### `::progress`
@@ -527,22 +373,6 @@ A labeled progress bar.
 | `max` | integer | `100` |
 | `color` | color token | `primary` |
 | `label` | string | — |
-
-### `::legend-item`
-
-One entry in a `:::legend` panel — a color swatch plus a label. Rendered standalone (outside
-`:::legend`) as a plain inline swatch+label, fail-soft.
-
-```
-::legend-item{color=success label="Terminal state"}
-```
-
-| Attr | Values | Default |
-|------|--------|---------|
-| `color` | color token or hex | `gray` |
-| `label` | string | — |
-
----
 
 ## Inline (:) {#inline}
 
@@ -722,7 +552,6 @@ The enhanced renderer reads metadata after the language identifier in a code fen
 |-----------|--------|--------|
 | Line ranges | `{1,3-5}` | Highlights lines 1 and 3–5 with `.hl` class |
 | Title | `title="filename"` | Renders a header bar above the code |
-| Present-mode name | `#id` | Names the block for `:::say{on="id"}`; no visible change |
 | Line numbers | `start=40` | Adds a gutter numbered from 40. `{…}` and `marks` stay 1-based within the block |
 | Diff | ` ```diff ` (+ `lang=ts`) | Tinted +/- rows; with `@@` hunks, old/new line-number gutter. See below |
 | Markers | `marks="3:1 7:2"` | Badge ① on line 3, ② on line 7, linked to `:::marker{n=1}` / `{n=2}` (see `:::annotated`) |
@@ -761,73 +590,13 @@ class Fail alert
 The same `var()` resolution applies to `stroke-width`, `stroke-dasharray`, and `linkStyle`
 (edges, not just nodes) — any mermaid style property, not only `classDef`/`style`.
 
-**Every color needs a legend, no size exception** — wrap the diagram in
-[`:::legend`](#containers) with one `::legend-item` per `classDef`; see the
-[mermaid-diagrams skill](../../mermaid-diagrams/SKILL.md) §4 for the full rule.
+**Every color needs a legend** — `:::legend` + `::legend-item`; syntax and rule in the
+[mermaid-diagrams skill](../../mermaid-diagrams/SKILL.md) §4.
 
 Standard GFM mark: `==text==` renders as `<mark>` — in surrounding prose only. Mermaid node
 labels (`["..."]`) don't run through this renderer at all; inside one, `==text==` renders as
 literal `==text==`. For bold/italic *inside* a label, use `<b>`/`<i>` directly in the quoted
 string — confirmed to render as real formatting under `securityLevel:'strict'`, not stripped.
-
----
-
-## Present mode (narration) {#present}
-
-A document with a `:::narration` script gets a **Present** button: a voiced walkthrough that
-spotlights each segment's blocks, dims the rest, shows a margin note and a synced caption.
-Everything below renders **hidden** — with Present off, the page looks exactly as without it.
-Authoring rules (segment count, tone, what to say) are in SKILL.md §Present mode.
-
-### Naming a block
-
-| Where | Syntax | Names |
-|-------|--------|-------|
-| Any container or leaf directive | `{#id}` in its attr block | the directive's outer element |
-| Fenced code | `#id` after the language: ` ```ts {2} #id title="a.ts" ` | the code block (and its lines, for `lines=`) |
-| Inline, in a heading / paragraph / table row / list item | `:cue{#id}` | the nearest enclosing row, heading, list item, then paragraph |
-| Inline, widened | `:cue{#id list}` / `:cue{#id table}` | the enclosing list / table |
-
-Ids may repeat: every block with the same id lights together. Name a heading with
-`:cue{#id}`, not a trailing `{#id}` — that only works inside `:::explorer`, and renders as
-literal text anywhere else.
-
-### `:::narration`
-
-Container for the script; no attributes. Put it at the end of the document. Its children are
-`:::say` blocks, played in order.
-
-### `:::say`
-
-| Attr | Values | Default |
-|------|--------|---------|
-| `on` | space-separated ids to spotlight | — (nothing lit) |
-| `lines` | `3-6`, `2,4-5` — 1-based lines within the named code block(s) | whole block |
-| `note` | one-line margin note | — |
-
-Body: the spoken narration, plain prose. It's split into sentences at `.` `!` `?` followed
-by a space (so `1.9.10` stays whole) and spoken one sentence at a time.
-
-```
-:::narration
-:::say{on="see user" note="Bug 2 is silent"}
-The two bugs behave very differently. Bug 1 is loud. Bug 2 is silent.
-:::
-:::say{on="fix" lines="3-6" note="Nullable lookup replaces firstOrFail"}
-Instead of a lookup that throws, it returns null and moves on.
-:::
-:::
-```
-
-### `:cue{#id}`
-
-Inline marker, renders an empty hidden `<span>`. Bare word after the id widens the target:
-`list` or `table`. Without an id it renders nothing.
-
-**Presenting:** Space play/pause · ← → previous/next · Esc exit · click a narrated block to
-jump to it. Voices come from the browser's Web Speech API (Microsoft Edge "Natural" voices
-rank first); with no voice available the captions still advance on a timer. A cue that
-names nothing shows `⚠ cue not found` in the note.
 
 ---
 
@@ -840,7 +609,7 @@ The SKILL.md traps table covers all common failures. Three additional nuances:
 - **Unclosed container** renders with class `directive-unclosed` (visible but unstyled) and
   silently consumes everything to end-of-file into its body.
 - **A fenced block hides directives from the parser entirely.** Lines inside ``` / ~~~ are
-  never classified, so a `:::explorer` shown as an example inside a ` ```` ` fence is not
+  never classified, so a directive shown as an example inside a ` ```` ` fence is not
   parsed — and `validate.mjs` may attribute an error elsewhere in the file to that example's
   line number. Check the real unclosed block, not the reported line.
 

@@ -1,441 +1,123 @@
 ---
 name: blueprint-markdown
 description: >
-  Triggers: Plan Mode plan files (~/.claude/plans/*.md), implementation-notes files,
-  any doc for the blueprint-markdown viewer, any component (card, callout, tabs, steps,
-  timeline, progress, chip, icon, …), "write it nicely / make it pretty / use cards /
-  add callouts", and "present / narrate this doc to me" (adds a Present-mode narration script
-  to an existing doc; a new presentation from scratch is the present skill).
-  Rule: Only write in blueprint-markdown for file output, otherwise use plain markdown.
+  Rich markdown for the blueprint-markdown viewer: Plan Mode plan files (~/.claude/plans/*.md),
+  implementation notes, any doc using components (card, callout, tabs, steps, timeline, chip,
+  icon, progress, …) or asked to "write it nicely / use cards / add callouts". File output only; plain markdown for chat, GitHub, PRs, wikis.
 ---
 
-The blueprint-markdown viewer extends CommonMark with one grammar covering every rich
-component. That grammar has exactly three forms. Everything else in this skill is either
-the component catalog or the authoring judgment about when to use enhanced syntax vs plain.
+Extends CommonMark with one grammar for every component. Diagrams: `mermaid-diagrams` skill
+(also owns `:::explorer`, `:::legend`). Narration/presentations: `prepare-present` skill.
 
----
+## Plain vs enhanced
 
-## When to use enhanced syntax vs plain markdown
+Enhanced directives only for files the blueprint viewer renders, or when the user asks for
+rich components. Anywhere else (GitHub README, PR body, Slack, wiki) stay plain: `:::card` is
+literal text in a plain viewer. Target unclear → ask once, or default to plain. GFM (headings,
+tables, lists, `- [ ]`, `==mark==`, fences) always works; prefer it when a directive adds
+nothing. If raw source reads worse with the directive, drop it. Max ~2 nesting levels.
+This skill covers syntax only. If the `skimmable-writing` skill is available, follow it for
+document structure and prose (deliverable-first); if not, just lead each section with its point.
 
-**Use enhanced directives** when the document is destined for the blueprint-markdown viewer,
-when the user explicitly asks for rich components, or when a guide/report/page would clearly
-benefit from visual structure (callouts, cards, steps, timeline).
+## Grammar — three forms
 
-**Stay in plain markdown** for GitHub READMEs, PR descriptions, Slack messages, wiki pages,
-or any `.md` file that won't be rendered by the viewer. The reason: directives like `:::card`
-are not valid CommonMark — a plain viewer renders them as literal text, which is broken output.
+> **Colon count is the grammar.** `:::` container (opens **and closes** with `:::`) ·
+> `::` leaf, only `progress`, `pin` (+ `legend-item`, see mermaid-diagrams) · `:` inline. In doubt, `:::`.
 
-**When the target is ambiguous**, ask one quick question ("Is this for the blueprint-markdown
-viewer, or a plain markdown target like GitHub?") or default to plain and mention you can
-enrich it if they want.
-
-**Mixed documents are fine.** Standard markdown (headings, bold, lists, tables, fenced code,
-`- [ ]` tasks, `==highlight==`) always works everywhere and should be preferred over a
-directive when the directive doesn't add meaningfully to the reading experience.
-
----
-
-## The grammar — three forms, one rule
-
-All custom components use the same grammar. Learn these three forms and you know every feature.
-
-> **Colon count *is* the grammar.** `:::` = container block, and it opens **and closes** with `:::`.
-> `::` = leaf block, used by **`progress`, `legend-item` and `pin`**. `:` = inline. When in doubt, it's `:::`.
-
-### 1. Container block (open with `:::`, close with `:::`)
 ```
 :::name{attrs}
-Body **markdown** — any nested content, including other directives.
+Body **markdown**, may nest other directives.
 :::
-```
 
-### 2. Leaf block (`::`, single-line — `progress` and `legend-item`)
-```
 ::name{attrs}
-```
 
-### 3. Inline
-```
 :name[visible text]{attrs}
 ```
 
-**Attributes** are uniform across all three forms:
-- `key=value` or `key="multi word"` — named attributes
-- `{danger}` or `{success}` — bare value shorthand (each directive defines what bare value means)
-- `.class` and `#id` — CSS hooks
-- `{open}`, `{fill}` — boolean flags (no value needed)
+Attrs: `key=value`, `key="multi word"`, bare `{danger}` (each directive defines what bare
+means), `.class`, `#id`, flags `{open}`. One `{…}` block only.
 
----
+## Silent-failure traps
 
-## Exact syntax — silent-failure traps
+None of these errors; the directive just renders as text or unstyled. Unclosed container eats
+the rest of the file.
 
-The parser enforces rules that produce **no error message when broken** — the directive just
-renders as plain text or an unstyled block. Check every directive you write against these:
+| ✓ | ✗ |
+|---|---|
+| `:::info` | `::: info` (no space after colons) |
+| `:::callout{type=info title="X"}` | `{info} {title="X"}` (one `{…}`) |
+| `:::cards` → `:::card` | `::::card` (nest by repeating `:::`) |
+| `title="Two words"` | `title=Two words` (quote multi-word) |
+| `{danger open}` (first bare = primary) | `{open danger}` (color lost) |
+| `:::callout{…}` … `:::` | `::callout{…}` … `::` |
+| `::progress{…}` | `:::progress{…}` (`::` leaf-only) |
+| `:::col` | `:::column` |
+| `:::steps` → `:::step{…}` | `:::steps` over a `1.` list (tabs/steps style only their own children) |
+| opener alone on its line, body below | body on the opener line |
 
-| Rule | ✓ Correct | ✗ Wrong (silent fail) |
-|------|-----------|----------------------|
-| No space after colons | `:::info` | `::: info` |
-| One `{…}` block only | `:::callout{type=info title="X"}` | `:::callout{info} {title="X"}` |
-| Nesting = repeated `:::`, never `::::` | `:::cards` → `:::card` | `::::card` |
-| Multi-word values must be quoted | `title="Two words"` | `title=Two words` |
-| Bare-word order matters (first = primary) | `{danger open}` → color=danger | `{open danger}` → color lost |
-| Blocks open AND close with `:::` | `:::callout{…}` … `:::` | `::callout{…}` … `::` |
-| `::` is leaf-only (`progress`, `legend-item`, `pin`) | `::progress{…}` | `:::progress{…}` |
-| Use `col`, not `column` | `:::col` | `:::column` |
-| Steps/tabs only style their own children | `:::steps` → `:::step{…}` | `:::steps` with a `1.` list |
-| `:::explorer` pairs **only** by `{#id}` | `cache["Cache"]` + `### Cache {#cache}` | `cache["Cache"]` + `### Cache` — no anchor, so the box goes dead with no error |
-| `:::explorer` `{#id}` must be **last** in the heading | `### Cache {#cache}` | `### {#cache} Cache` (renders as literal text, no pairing) |
-| `:::explorer` links `graph`/`flowchart`, `stateDiagram-v2`, `classDiagram` | `stateDiagram-v2` + `idle : Idle` | `sequenceDiagram`, `erDiagram` (render pinned, never link) |
-| `:::explorer` section headings must be top-level in the block | `### Cache {#cache}` | the same heading wrapped in a nested `:::card` (drops out of the pairing) |
-| `:::marker` notes pair with material by number only | `marks="3:1"` + `:::marker{n=1}` inside one `:::annotated` | `n=1` note with no matching badge (note renders, nothing lights) |
-| `::pin` needs `x` and `y` (0–100) | `::pin{x=30 y=20 n=1}` | `::pin{n=1}` (renders nothing) |
-| Every `:::say{on="…"}` id must name a block | `:::tip{#why}` … `on="why"` | `on="why"` with no `#why` anywhere (lights nothing) |
-| `:cue` takes `#`, like every other name | `:cue{#see}` | `:cue{see}` (renders nothing) |
+## Catalog
 
-Every container needs a matching closing `:::`. An unclosed block silently consumes the rest
-of the document.
+Attrs, defaults and the color/icon palette: `references/syntax.md` — find an entry with
+`grep -n '^##' references/syntax.md`, then Read with offset/limit; don't read the whole file.
 
----
+Containers (`:::`):
+- `card{title icon}`, `cards{cols=1-4}` (grid of cards)
+- `note|tip|info|warning|danger|success{title icon}`; `callout{type title icon}` for any type
+- `details{title open}`; `accordion` (one open at a time) around `details`
+- `columns{count=2-4 gap=sm|md|lg}` or `{min=320px}` (auto-fit, replaces `count`; px/rem/em/ch) with `col{span sticky}` (`sticky` is a bare flag)
+- `timeline` with `event{date icon color}`
+- `tabs` with `tab{title}`; `steps` (auto-numbered) with `step{title}`
+- `revision{note date}` with `:::previous` nested inside it (flag a changed passage); `compare` with `before{title}` / `after`
+- `annotated` + `marker{n title}` + `pins` + `::pin{x y n}` (x,y required, 0-100) — numbered
+  markers linking code lines, image regions or phrases (`:marker[phrase]{n=1}`) to margin
+  notes; notes pair with material by number, inside one `:::annotated`
+- `toc=h1|h2|h3` on card/callout/details/step makes the title a real heading (feeds TOC rail)
 
-## Component catalog (one example per feature)
+Leaf (`::`): `::progress{value max color label}`
 
-Read `references/syntax.md` for the full attribute reference per directive. This section is
-just enough to write from memory.
+Inline (`:`): `:chip[text]{success}` · `:icon[home]{fill size=20}` · `:color[text]{danger}` ·
+`:kbd[Ctrl+K]` · `:button[text]{href variant}` · `:tooltip[text]{tip="…"}` · `:rating{value=4 max=5}` ·
+`:comment[note]{author date}` · `:ai[note for the AI]` · `:tag[verified]{src="file:line"}`
+(`verified`, `inferred`, `not verified`)
 
-### Containers (:::)
+Examples:
 
-**Card**
-```
-:::card{title="Zero boilerplate" icon=auto_awesome}
-Write clean markdown inside.
-:::
-```
-Card grid: `:::cards{cols=3}` containing `:::card` children.
-
-**Callout / alert** — named types: `note`, `tip`, `info`, `warning`, `danger`, `success`
-```
-:::warning{title="Heads up"}
-Custom-titled warning.
-:::
-
-:::callout{type=danger title="Stop" icon=error}
-Generic escape hatch for any type.
-:::
-```
-
-**Collapse / expand**
-```
-:::details{title="Show more" open}
-Hidden content revealed on click. `{open}` starts expanded.
-:::
-```
-
-**Accordion** — groups `:::details` blocks so opening one closes others
-```
-:::accordion
-:::details{title="Item 1"}
-Content.
-:::
-:::details{title="Item 2"}
-Content.
-:::
-:::
-```
-
-**Columns**
-```
-:::columns{count=2 gap=lg}
-:::col
-Left content.
-:::
-:::col
-Right content.
-:::
-:::
-```
-
-**Timeline**
-```
-:::timeline
-:::event{date="2024-01" icon=rocket color=primary}
-**Launched** — first public release.
-:::
-:::
-```
-
-**Tabs**
-```
-:::tabs
-:::tab{title="npm"}
-`npm install x`
-:::
-:::tab{title="pnpm"}
-`pnpm add x`
-:::
-:::
-```
-
-**Steps** (auto-numbered)
-```
-:::steps
-:::step{title="Install"}
-Run `npm install`.
-:::
-:::step{title="Open"}
-Drag the file onto `viewer.html`.
-:::
-:::
-```
-
-**Title as a real heading** — `toc=h1|h2|h3` on `card`, `callout` (+ its named types),
-`details`, or `step` renders that title as a real heading tag (looks identical to the
-default) so it feeds the TOC rail (`blueprintMarkdown.toc`) *and* the document
-outline/screen-reader heading navigation, not just the rail. Any other `toc=` value is
-ignored. Not supported on `tab` (its title is a hidden-panel button label).
-```
-:::details{title="Case 1" toc=h2 open}
-Shows up in the TOC as a real h2, same look as a plain title.
-:::
-```
-
-**Revision** — flag a changed passage without altering how the current content looks
-```
-:::revision{note="Tightened the rate limit" date="2026-06-26"}
-The API accepts up to 500 requests per minute.
-
-:::previous
-The API accepts up to 1000 requests per minute.
-:::
-:::
-```
-
-**Marked-up material** — numbered markers link code lines, image regions or phrases to
-margin notes. Full attrs in `references/syntax.md`.
 ````
 :::annotated
-```ts start=40 marks="1:1 4:2"
-…
+```ts start=40 marks="1:1"
+const t = sign(user)
 ```
-:::pins
-![shot](a.png)
-::pin{x=30 y=20 n=3}
-:::
 :::marker{n=1 title="Why"}
-Note.
+Sign before storing.
 :::
 :::
 ````
-`:marker[phrase]{n=1}` tags prose the same way.
 
-**Compare** — `:::compare` with `:::before{title=…}` / `:::after`: both sides visible.
-
-**Columns** — `:::columns{min=320px}` auto-fits; `:::col{sticky}` pins a short column beside a long one.
-
-**Explorer** — pins a mermaid diagram beside its detail sections. The first `mermaid` fence
-pins; everything after it scrolls in the detail pane. Clicking a box scrolls to its section and
-flashes both; clicking a section brings its box into view. A box with no matching heading
-renders unmarked, so an *unmarked* box means "nothing more to read". Links
-`graph`/`flowchart`, `stateDiagram-v2` and `classDiagram`; other types render pinned but never
-link.
-
-**Pairing — one rule.** A heading declares the mermaid node's own id with a `{#id}` anchor,
-which must be the **last** thing in the heading and is stripped from the rendered output.
-Subgraphs pair the same way.
-
-````
-## Login flow
-
-:::explorer
-```mermaid
-graph TD
-  subgraph boot["Startup"]
-    auth["AuthService"] --> store["TokenStore"]
-  end
-  store --> cache["Cache"]
 ```
-
-### Startup {#boot}
-Body for the subgraph.
-
-### AuthService {#auth}
-Body for this node — any markdown: tables, code fences, nested directives, sub-headings.
-
-### TokenStore {#store}
-Body for this node.
-
-### Cache {#cache}
-Body for this node.
+:::cards{cols=2}
+:::card{title="Fast" icon=bolt}
+Body with :chip[new]{success}.
 :::
-````
-
-`{pin=left}` (default) or `{pin=top}`; `{width=45%}` sets the diagram column.
-
-**The detail pane is a full document.** Tables, code fences, nested callouts, sub-headings and
-images all work under a section heading — write sections as long as the subject needs. The one
-rule: the anchored headings themselves must be top-level inside the block, so never wrap one in
-a `:::card` or other directive — it drops out of the pairing.
-
-> **The examples above show syntax, not house style.** What goes in a heading and how a section
-> is written are the author's call — the examples are deliberately minimal so nothing about
-> their wording, ordering, or the kind of detail they include should be copied as a convention.
-
-**Legend** — declares a color→meaning legend for a mermaid diagram (or any content), rendered
-as a panel in the diagram's top-left corner, shown expanded by default; click it to collapse to
-a small button, click again to expand. Row layout for a wide chart, column for a tall one.
-Filters its `::legend-item` children out of the normal render flow; everything else (the fence)
-renders unchanged. Inside `:::explorer`, wrap the fence in `:::legend` the same way — it pins
-with the diagram.
-
-````
-:::legend
-::legend-item{color=primary label="Entry point"}
-::legend-item{color=success label="Terminal state"}
-```mermaid
-graph TD
-  A[Start]:::primary --> B[Done]:::success
-  classDef primary fill:var(--c-primary-bg),stroke:var(--c-primary),color:var(--c-primary-text)
-  classDef success fill:var(--c-success-bg),stroke:var(--c-success),color:var(--c-success-text)
-```
-:::
-````
-
-`color` accepts the same tokens as everything else (`primary/success/warning/danger/info/gray/…`)
-or a hex value.
-
-### Leaf blocks (::)
-
-```
-::progress{value=70 max=100 color=primary label="Build coverage"}
-::legend-item{color=success label="Terminal state"}
-```
-
-### Inline elements (:)
-
-```
-Status: :chip[Active]{success}  :chip[Beta]{color=warning variant=outline}  :chip[Minor]{low}
-Icon: :icon[home]  :icon[settings]{fill size=20 color=info}
-Color: :color[critical issue]{danger}
-Keys: :kbd[Ctrl+K]
-Truth: :tag[verified]{src="src/a.ts:21"}  :tag[inferred]  :tag[not verified]
-Button: :button[Get started]{href="/start" color=primary variant=solid}
-Hover: :tooltip[this word]{tip="Tooltip content."}
-Stars: :rating{value=4 max=5}
-Comment: :comment[Should we clarify this?]{author="Alice" date="2026-07-30"}
-AI note: :ai[Double-check this assumption next time]
-```
-
-### Reused GFM — no directive needed
-
-| Feature | Syntax |
-|---------|--------|
-| Task list | `- [ ]` / `- [x]` |
-| Table | pipe tables |
-| Mark / highlight | `==text==` |
-| Code + line highlight | ` ```js {1,3-5} title="app.js" ` |
-| Code diff | ` ```diff lang=ts ` (paste `git diff`, or bare `+`/`-` lines) |
-| Mermaid diagram | ` ```mermaid ` |
-| Heading anchor | `### Title {#anchor}` — **only inside `:::explorer`**, where it sets the pairing key. Elsewhere `markdown-it-attrs` is not installed, so the braces render as literal text; ordinary heading ids are slugified from the heading text automatically |
-
----
-
-## Present mode — narrating a document
-
-When asked to **present / narrate / walk someone through** a document, don't answer in chat:
-add a narration script to the file. The viewer then shows a **Present** button that plays it
-as a voiced walkthrough — each segment rings its blocks, highlights the item inside them
-being talked about (list item, row, step, card, diagram node), shows a margin note, and
-captions the narration.
-
-**1. Name the blocks** the script will point at. Names are invisible until presenting.
-
-| Target | How to name it |
-|--------|----------------|
-| Any directive (callout, event, step, card, col…) | `{#id}` in its attr block: `:::event{#t3 date="v1"}` |
-| Code block | `#id` on the fence line: ` ```php {3-6} #fix title="A.php" ` |
-| Heading, paragraph, table row, list item | `:cue{#id}` at the end of its text: `\| **What you see** :cue{#see} \|` |
-| Whole list / table | `:cue{#id list}` / `:cue{#id table}` in its first item / cell |
-
-The same id on several blocks lights them together (a heading and its lead paragraph).
-
-**2. Write the script** as one `:::narration` block at the **end** of the file, one `:::say`
-per segment, in the order they play:
-
-```
-:::narration
-:::say{on="answer" note="Fixed and proven on a real migrate"}
-Here's the short version. Both bugs are fixed. The proof is a real migrate, not only unit tests.
-:::
-:::say{on="try3 fix" lines="3-5" note="Flag set in the same run"}
-Try 3 is the final version. If roles were already mapped, the step returns early.
+:::warning{title="Heads up"}
+Callout body.
 :::
 :::
 ```
 
-- `on` — space-separated ids to spotlight. `lines` — 1-based lines to light inside the named
-  code block(s), same range syntax as the fence's `{3-6}`. `note` — the margin sticky note.
-- The highlighted item follows the narration automatically: a sentence that opens with
-  "First, / Second, …" or reuses an item's words lights that item. To pin it instead, put
-  `:at{#id}` (a named item) or `:at{lines="4"}` (lines of the lit code) before a sentence —
-  it holds until the next `:at`, and isn't spoken.
-- The body is spoken and captioned: plain prose, no markdown, no tables.
-- `:::narration{lang="vi"}` narrates in Vietnamese; `voice=` overrides the generated-audio voice.
+GFM extras: ` ```js {1,3-5} title="app.js" ` line highlight/title · ` ```diff lang=ts ` (paste
+`git diff`) · ` ```mermaid ` · ` ```ts start=40 marks="1:1" ` markers.
+Heading `{#anchor}` works only inside `:::explorer`; elsewhere it prints literally.
 
-**Narration rules**
+Colors: `primary success warning danger info gray low` (+ `purple teal pink cyan`; aliases
+`green amber red blue yellow`; hex ok). Prefer tokens.
 
-- **Explain why, not what.** The listener can read the block; say why it matters, what it
-  proves, or what would have gone wrong.
-- **Short sentences** — one clause each where possible. They're spoken one at a time.
-- **One idea per segment.** Split a segment that needs "also".
-- **Name the weakest evidence and open risks** in their own segment, and flag the note
-  (`note="⚠ Weakest evidence"`). Never let a walkthrough sound more certain than the doc is.
-- **About 20–25 segments for a two-page doc**; fewer, shorter ones for a short doc.
-- **Write for the ear:** "version 4 to 5", not "v4 → v5"; spell out symbols. Open with the
-  headline, close with what's left.
-- **Notes are one line** — the takeaway, not a repeat of the narration. Keep `{` `}` out of
-  attribute values.
+## Validate
 
-Leave the rest of the document unchanged apart from the names — it must read and render
-exactly as before. Then run `validate.mjs`: it reports any `on=` id that names nothing.
-
----
-
-## Authoring principles
-
-**Shallow nesting.** More than two directive levels deep usually signals the content needs
-restructuring, not more nesting.
-
-**Read the raw source.** A well-written `.md` file should be perfectly legible even before
-rendering. If a directive makes the raw text harder to scan than a plain list or heading
-would, use the plain version.
-
-**Reuse GFM before reaching for a directive.** A two-column `:::columns` is right for a
-comparison layout; a simple list of items is right for a simple list.
-
-**Color tokens** — `primary success warning danger info gray low`. Full palette, aliases, and hex syntax in `references/syntax.md`.
-
----
-
-## Validation
-
-After writing a document, run the standalone validator to catch silent failures:
+Run once, after the file is written:
 
 ```bash
-node skills/blueprint-markdown/validate.mjs path/to/file.md
+node <this skill's dir>/validate.mjs path/to/file.md
 ```
 
-Checks: unclosed containers, unknown/typo'd names, wrong form (e.g. `:::progress`),
-near-miss lines (`::: card` with a space, `::::name` with four colons), and Present-mode
-`on=` ids that name no block.
-
-> **Coverage note:** block directives only (`:::container`, `::leaf`). Inline `:name[text]`
-> directives are not checked — review those manually.
-
----
-
-## Reference files
-
-Read these as needed — they are not loaded by default:
-
-- **`references/syntax.md`** — full per-directive attribute tables, the color-token palette,
-  Material Symbols icon notes, Present-mode narration, and the fail-soft rule. Read it when you need a specific
-  attribute name or value set.
+Catches unclosed containers, unknown names, wrong form (`:::progress`), near-misses
+(`::: card`, `::::name`). Block directives only; check inline `:name[…]` by eye.
