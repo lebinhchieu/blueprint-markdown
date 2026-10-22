@@ -19,6 +19,7 @@ interface QaState {
 
 const PREFIX = 'em-qa:'
 let wired = false
+let copyTimer: ReturnType<typeof setTimeout> | undefined
 
 // The source document's URI keeps answers separate per file in the preview;
 // exported HTML has no preview settings, so fall back to its path.
@@ -69,14 +70,41 @@ function applyState(q: HTMLElement, st: QaState): void {
   const ta = q.querySelector<HTMLTextAreaElement>('[data-qa-note]')
   if (ta && document.activeElement !== ta && ta.value !== st.note) ta.value = st.note
   q.toggleAttribute('data-accepted', st.accepted)
+  q.querySelector('[data-qa-accept]')?.setAttribute('aria-pressed', String(st.accepted))
   q.toggleAttribute('data-answered', isAnswered(st))
 }
 
 function updateProgress(): void {
   const qs = allQuestions()
   const done = qs.filter(q => q.hasAttribute('data-answered')).length
-  document.querySelectorAll<HTMLElement>('[data-qa-progress]').forEach(el => {
-    el.textContent = `${done}/${qs.length} answered`
+  document.querySelectorAll<HTMLElement>('.qa-copy').forEach(bar => {
+    const prog = bar.querySelector<HTMLElement>('[data-qa-progress]')
+    if (prog) {
+      prog.textContent = `${done}/${qs.length}`
+      prog.title = `${done} of ${qs.length} answered`
+    }
+    const segs = bar.querySelector<HTMLElement>('[data-qa-segs]')
+    if (!segs) return
+    // morphdom may have wiped the segments (or the count changed): rebuild
+    if (segs.children.length !== qs.length) {
+      segs.textContent = ''
+      qs.forEach((_, i) => {
+        const b = document.createElement('button')
+        b.type = 'button'
+        b.className = 'qa-copy__seg'
+        b.setAttribute('data-qa-seg', String(i))
+        b.appendChild(document.createElement('i'))
+        segs.appendChild(b)
+      })
+    }
+    qs.forEach((q, i) => {
+      const seg = segs.children[i] as HTMLElement
+      const ok = q.hasAttribute('data-answered')
+      seg.toggleAttribute('data-done', ok)
+      const label = `${[qidOf(q), q.dataset.qaTitle].filter(Boolean).join(' ')}: ${ok ? 'answered' : 'unanswered'}`
+      seg.title = label
+      seg.setAttribute('aria-label', label)
+    })
   })
 }
 
@@ -148,6 +176,19 @@ function onClick(e: Event): void {
     if (!q) return
     const qid = qidOf(q)
     const st = load(qid)
+    if (st.accepted) {
+      st.accepted = false
+      if (optionsOf(q).length) st.opts = []
+      else if (st.note === q.dataset.qaRec) {
+        st.note = ''
+        const ta = q.querySelector<HTMLTextAreaElement>('[data-qa-note]')
+        if (ta) ta.value = ''
+      }
+      save(qid, st)
+      applyState(q, st)
+      updateProgress()
+      return
+    }
     if (optionsOf(q).length) {
       const recs = recOptionIds(q)
       if (!recs.length) return
@@ -166,13 +207,22 @@ function onClick(e: Event): void {
     return
   }
 
+  const seg = t.closest<HTMLElement>('[data-qa-seg]')
+  if (seg) {
+    const target = allQuestions()[Number(seg.dataset.qaSeg)]
+    if (!target) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    target.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' })
+    target.querySelector<HTMLElement>('button')?.focus({ preventScroll: true })
+    return
+  }
+
   const copy = t.closest<HTMLElement>('[data-qa-copy]')
   if (copy) {
     navigator.clipboard.writeText(buildAnswers()).then(() => {
       copy.setAttribute('data-copied', '')
-      const prev = copy.textContent
-      copy.textContent = 'Copied ✓'
-      setTimeout(() => { copy.removeAttribute('data-copied'); copy.textContent = prev }, 1200)
+      clearTimeout(copyTimer)
+      copyTimer = setTimeout(() => copy.removeAttribute('data-copied'), 1500)
     }).catch(() => { /* clipboard blocked — no-op */ })
   }
 }

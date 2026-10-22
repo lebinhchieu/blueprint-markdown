@@ -42,7 +42,7 @@ Never edit the grilling skill. Load `blueprint-markdown` for syntax.
    ````
 
    - Every question in the frontier goes in the same round; one `:::qa-copy` at the end.
-   - `rec` on an option / `rec="text"` on a text-only question = your ➡️ recommended answer.
+   - `rec` on an option / `rec="text"` on a text-only question = your recommended answer (shown as a "Rec" marker).
    - Use `:::option` when choices deserve rich content (code, diagram, image, table); plain
      text questions need no options. `multi` flag = pick several.
    - Ids are `r<round>-q<n>`, **never reused** — answers persist per id in the user's browser.
