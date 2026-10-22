@@ -2547,11 +2547,11 @@ kbd {
 .l-done,.l-undo{display:none}
 [data-accepted] .l-idle{display:none}
 [data-accepted] .l-done{display:inline}
-[data-accepted] [data-qa-accept]:is(:hover,.is-hover) .l-done{display:none}
-[data-accepted] [data-qa-accept]:is(:hover,.is-hover) .l-undo{display:inline}
+[data-accepted] [data-qa-accept]:hover .l-done{display:none}
+[data-accepted] [data-qa-accept]:hover .l-undo{display:inline}
 [data-qa-copy][data-copied] .l-idle{display:none}
 [data-qa-copy][data-copied] .l-done{display:inline}
-/* ═══ Variant A — Bold & labeled: same layout as today, every control made legible ═══ */
+/* Question head, Accept, Rec */
 .question{padding:.6rem var(--sp-md)}
 .question[data-answered]{border-left-color:var(--c-success);background:color-mix(in srgb,var(--c-success) 5%,var(--bg-raised))}
 .question__head{align-items:center;flex-wrap:wrap}
@@ -2560,11 +2560,10 @@ kbd {
 
 /* Accept: tinted pill with border + icon + explicit label */
 .question__accept{display:inline-flex;align-items:center;gap:.35rem;min-height:2rem;padding:.25rem .85rem .25rem .65rem;font:inherit;font-size:var(--font-size-sm);font-weight:600;line-height:1.2;white-space:nowrap;cursor:pointer;
-  color:var(--c-primary-text);background:var(--c-primary-bg);border:1.5px solid var(--c-primary);border-radius:var(--radius-full);box-shadow:var(--shadow-sm)}
-.question__accept{margin-left:auto}
-.question__accept:is(:hover,.is-hover){background:color-mix(in srgb,var(--c-primary) 22%,var(--bg-raised));box-shadow:var(--shadow-md)}
+  color:var(--c-primary-text);background:var(--c-primary-bg);border:1.5px solid var(--c-primary);border-radius:var(--radius-full);box-shadow:var(--shadow-sm);margin-left:auto}
+.question__accept:hover{background:color-mix(in srgb,var(--c-primary) 22%,var(--bg-raised));box-shadow:var(--shadow-md)}
 .question[data-accepted] .question__accept{color:var(--c-success-text);background:var(--c-success-bg);border-color:var(--c-success)}
-.question[data-accepted] .question__accept:is(:hover,.is-hover){background:color-mix(in srgb,var(--c-success) 20%,var(--bg-raised))}
+.question[data-accepted] .question__accept:hover{background:color-mix(in srgb,var(--c-success) 20%,var(--bg-raised))}
 
 /* Recommended: solid-bordered pill + accent bar on the row */
 .question__rec{display:inline-flex;align-items:center;gap:.25rem;flex:none;font-size:.72rem;font-weight:500;letter-spacing:.02em;white-space:nowrap;
@@ -2580,14 +2579,12 @@ kbd {
 .question__pick{min-height:2.25rem;padding:.4rem .65rem;gap:.6rem;border-radius:inherit}
 .question__mark{width:1.1rem;height:1.1rem;border-width:2px;border-color:var(--text-muted)}
 .question__opt-body{padding-left:calc(.65rem + .6rem + 1.1rem)}
-.question__option:is(:hover,.is-hover){border-color:var(--text-muted);background:var(--bg-overlay)}
+.question__option:hover{border-color:var(--text-muted);background:var(--bg-overlay)}
 .question__option[data-selected]{border-width:1.5px;border-color:var(--c-success);background:color-mix(in srgb,var(--c-success) 14%,var(--bg-base))}
 .question__option[data-selected][data-qa-rec]{border-left-width:3px}
 .question__option[data-selected] .question__opt-title{font-weight:500}
-.question__pick:focus-visible,.question__pick.is-focus,.question__accept:focus-visible,.qa-copy__btn:focus-visible,.question__note:focus-visible,.qa-copy__seg:focus-visible{outline:2px solid var(--c-info);outline-offset:2px}
-.question__pick:focus-visible,.question__pick.is-focus{outline-offset:-2px}
-
-
+.question__pick:focus-visible,.question__accept:focus-visible,.qa-copy__btn:focus-visible,.question__note:focus-visible,.qa-copy__seg:focus-visible{outline:2px solid var(--c-info);outline-offset:2px}
+.question__pick:focus-visible{outline-offset:-2px}
 
 /* Copy bar: one segment per question (variant B's bar) + inverted (max-contrast) button */
 .qa-copy{gap:.75rem;padding:.5rem .6rem .5rem .9rem;border:1.5px solid var(--border-color);box-shadow:var(--shadow-lg)}
@@ -2595,9 +2592,9 @@ kbd {
 .qa-copy__seg{flex:1 1 0;min-width:6px;display:flex;align-items:center;height:1.5rem;padding:0;border:0;background:none;border-radius:var(--radius-sm);cursor:pointer}
 .qa-copy__seg i{display:block;width:100%;height:8px;border-radius:var(--radius-full);background:var(--bg-overlay);box-shadow:inset 0 0 0 1px var(--border-color)}
 .qa-copy__seg[data-done] i{background:var(--c-success);box-shadow:none}
-.qa-copy__seg:is(:hover,.is-hover) i{box-shadow:0 0 0 2px var(--text-faint)}
+.qa-copy__seg:hover i{box-shadow:0 0 0 2px var(--text-faint)}
 .qa-copy__progress{font-weight:600;font-size:var(--font-size-sm);color:var(--text-base);white-space:nowrap;font-variant-numeric:tabular-nums}
 .qa-copy__btn{display:inline-flex;align-items:center;gap:.4rem;min-height:2.25rem;padding:.35rem 1rem;font:inherit;font-size:var(--font-size-sm);font-weight:500;cursor:pointer;white-space:nowrap;
   color:var(--tooltip-text);background:var(--tooltip-bg);border:1.5px solid var(--tooltip-bg);border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
-.qa-copy__btn:is(:hover,.is-hover){background:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary));border-color:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary))}
+.qa-copy__btn:hover{background:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary));border-color:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary))}
 .qa-copy__btn[data-copied]{color:var(--c-success-text);background:var(--c-success-bg);border-color:var(--c-success)}

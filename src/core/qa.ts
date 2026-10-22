@@ -19,7 +19,7 @@ interface QaState {
 
 const PREFIX = 'em-qa:'
 let wired = false
-let copyTimer: ReturnType<typeof setTimeout> | undefined
+const copyTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>()
 
 // The source document's URI keeps answers separate per file in the preview;
 // exported HTML has no preview settings, so fall back to its path.
@@ -221,8 +221,8 @@ function onClick(e: Event): void {
   if (copy) {
     navigator.clipboard.writeText(buildAnswers()).then(() => {
       copy.setAttribute('data-copied', '')
-      clearTimeout(copyTimer)
-      copyTimer = setTimeout(() => copy.removeAttribute('data-copied'), 1500)
+      clearTimeout(copyTimers.get(copy))
+      copyTimers.set(copy, setTimeout(() => copy.removeAttribute('data-copied'), 1500))
     }).catch(() => { /* clipboard blocked — no-op */ })
   }
 }
