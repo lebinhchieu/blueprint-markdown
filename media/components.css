@@ -2587,14 +2587,14 @@ kbd {
 .question__pick:focus-visible{outline-offset:-2px}
 
 /* Copy bar: one segment per question (variant B's bar) + inverted (max-contrast) button */
-.qa-copy{gap:.75rem;padding:.5rem .6rem .5rem .9rem;border:1.5px solid var(--border-color);box-shadow:var(--shadow-lg)}
-.qa-copy__segs{flex:1;min-width:0;display:flex;gap:4px}
+.qa-copy{flex-wrap:wrap;gap:.25rem .75rem;padding:.5rem .6rem .5rem .9rem;border:1.5px solid var(--border-color);box-shadow:var(--shadow-lg)}
+.qa-copy__segs{flex:1 1 12rem;min-width:0;display:flex;gap:4px}
 .qa-copy__seg{flex:1 1 0;min-width:6px;display:flex;align-items:center;height:1.5rem;padding:0;border:0;background:none;border-radius:var(--radius-sm);cursor:pointer}
 .qa-copy__seg i{display:block;width:100%;height:8px;border-radius:var(--radius-full);background:var(--bg-overlay);box-shadow:inset 0 0 0 1px var(--border-color)}
 .qa-copy__seg[data-done] i{background:var(--c-success);box-shadow:none}
 .qa-copy__seg:hover i{box-shadow:0 0 0 2px var(--text-faint)}
 .qa-copy__progress{font-weight:600;font-size:var(--font-size-sm);color:var(--text-base);white-space:nowrap;font-variant-numeric:tabular-nums}
-.qa-copy__btn{display:inline-flex;align-items:center;gap:.4rem;min-height:2.25rem;padding:.35rem 1rem;font:inherit;font-size:var(--font-size-sm);font-weight:500;cursor:pointer;white-space:nowrap;
+.qa-copy__btn{display:inline-flex;margin-left:auto;align-items:center;gap:.4rem;min-height:2.25rem;padding:.35rem 1rem;font:inherit;font-size:var(--font-size-sm);font-weight:500;cursor:pointer;white-space:nowrap;
   color:var(--tooltip-text);background:var(--tooltip-bg);border:1.5px solid var(--tooltip-bg);border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
 .qa-copy__btn:hover{background:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary));border-color:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary))}
 .qa-copy__btn[data-copied]{color:var(--c-success-text);background:var(--c-success-bg);border-color:var(--c-success)}
