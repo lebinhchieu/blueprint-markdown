@@ -2598,3 +2598,102 @@ kbd {
   color:var(--tooltip-text);background:var(--tooltip-bg);border:1.5px solid var(--tooltip-bg);border-radius:var(--radius-md);box-shadow:var(--shadow-sm)}
 .qa-copy__btn:hover{background:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary));border-color:color-mix(in srgb,var(--tooltip-bg) 82%,var(--c-primary))}
 .qa-copy__btn[data-copied]{color:var(--c-success-text);background:var(--c-success-bg);border-color:var(--c-success)}
+
+/* ─── SVG figure (:::svg / ```svg) ─────────────────────────────────────── */
+
+.em-svg { margin: 0 0 1em; max-width: 100%; font-style: normal; }
+.em-svg__frame {
+  background: var(--bg-raised);
+  border: 1px solid var(--border-color);
+  border-radius: var(--svg-radius);
+  overflow: hidden;
+}
+.em-svg__title {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-xs);
+  padding: var(--sp-xs) var(--sp-md);
+  background: var(--bg-overlay);
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+  border-bottom: 1px solid var(--border-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.em-svg__title .material-symbols-outlined { font-size: 14px; flex: none; }
+.em-svg__canvas {
+  padding: var(--svg-padding);
+  text-align: center;
+  color: var(--text-base);
+  fill: currentColor;   /* on the wrapper, not the svg: author fill= attrs still win */
+  font-family: var(--font-sans);
+  line-height: var(--line-height-tight);
+}
+.em-svg__canvas svg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+  max-height: var(--svg-max-height);
+  vertical-align: middle;
+}
+.em-svg__caption {
+  margin-top: var(--sp-xs);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-tight);
+  text-align: left;
+}
+
+/* Error: reuses .callout--danger; only the source excerpt is new */
+.em-svg-error__src {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm);
+  padding: var(--sp-xs) var(--sp-sm);
+  margin: var(--sp-xs) 0 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Palette classes for SVG authors: .em-svg-<role> = soft fill + accent stroke,
+   .em-svg-<role>-text = label on that fill, .em-svg-<role>-solid = solid fill. */
+.em-svg-primary { fill: var(--c-primary-bg); stroke: var(--c-primary); }
+.em-svg-primary-text { fill: var(--c-primary-text); stroke: none; }
+.em-svg-primary-solid { fill: var(--c-primary); stroke: none; }
+.em-svg-success { fill: var(--c-success-bg); stroke: var(--c-success); }
+.em-svg-success-text { fill: var(--c-success-text); stroke: none; }
+.em-svg-success-solid { fill: var(--c-success); stroke: none; }
+.em-svg-warning { fill: var(--c-warning-bg); stroke: var(--c-warning); }
+.em-svg-warning-text { fill: var(--c-warning-text); stroke: none; }
+.em-svg-warning-solid { fill: var(--c-warning); stroke: none; }
+.em-svg-danger { fill: var(--c-danger-bg); stroke: var(--c-danger); }
+.em-svg-danger-text { fill: var(--c-danger-text); stroke: none; }
+.em-svg-danger-solid { fill: var(--c-danger); stroke: none; }
+.em-svg-info { fill: var(--c-info-bg); stroke: var(--c-info); }
+.em-svg-info-text { fill: var(--c-info-text); stroke: none; }
+.em-svg-info-solid { fill: var(--c-info); stroke: none; }
+.em-svg-gray { fill: var(--c-gray-bg); stroke: var(--c-gray); }
+.em-svg-gray-text { fill: var(--c-gray-text); stroke: none; }
+.em-svg-gray-solid { fill: var(--c-gray); stroke: none; }
+.em-svg-low { fill: var(--c-low-bg); stroke: var(--c-low); }
+.em-svg-low-text { fill: var(--c-low-text); stroke: none; }
+.em-svg-low-solid { fill: var(--c-low); stroke: none; }
+.em-svg-purple { fill: var(--c-purple-bg); stroke: var(--c-purple); }
+.em-svg-purple-text { fill: var(--c-purple-text); stroke: none; }
+.em-svg-purple-solid { fill: var(--c-purple); stroke: none; }
+.em-svg-teal { fill: var(--c-teal-bg); stroke: var(--c-teal); }
+.em-svg-teal-text { fill: var(--c-teal-text); stroke: none; }
+.em-svg-teal-solid { fill: var(--c-teal); stroke: none; }
+.em-svg-pink { fill: var(--c-pink-bg); stroke: var(--c-pink); }
+.em-svg-pink-text { fill: var(--c-pink-text); stroke: none; }
+.em-svg-pink-solid { fill: var(--c-pink); stroke: none; }
+.em-svg-cyan { fill: var(--c-cyan-bg); stroke: var(--c-cyan); }
+.em-svg-cyan-text { fill: var(--c-cyan-text); stroke: none; }
+.em-svg-cyan-solid { fill: var(--c-cyan); stroke: none; }
+.em-svg-text { fill: var(--text-base); stroke: none; }
+.em-svg-muted { fill: var(--text-muted); stroke: none; }
+.em-svg-line { fill: none; stroke: var(--border-color); }
