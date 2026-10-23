@@ -118,7 +118,7 @@ and small diagrams); colour with theme tokens `var(--c-info)`, `var(--c-info-bg)
 `var(--c-info-text)`, `var(--text-base)`, `var(--border-color)` or `currentColor`, no hard-coded
 hex/`black`/`#fff`; pair `-bg` fill + `-text` label + `--c-role` stroke. Never `<script>`, `on*=`,
 `<foreignObject>`, external URLs, animation (stripped silently). Don't pre-prefix ids. `title=` is
-the accessible name; `caption=` is inline markdown. To show SVG *source*, use ` ```xml `.
+the accessible name; `caption=` is inline markdown. The fence tag must be lower-case `svg` (` ```SVG ` renders as code), and a fence can't be sized: wide diagrams only, icons go in `:::svg{width=…}`. To show SVG *source*, use ` ```xml `.
 An existing ` ```svg ` fence now draws instead of showing code.
 
 Heading `{#anchor}` works only inside `:::explorer`; elsewhere it prints literally.

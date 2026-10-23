@@ -253,13 +253,16 @@ Directive form: title, caption and width. Colours come from theme tokens, so it 
 </svg>
 :::
 
-Fence form: a quick sketch, no title or caption.
+Fence form: a quick wide sketch (a fence fills the column and has no `width`), no title or caption.
 
 ```svg
-<svg viewBox="0 0 120 60">
-  <circle cx="30" cy="30" r="20" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
-  <path d="M20 30 l8 8 l14 -16" fill="none" style="stroke:var(--c-success)" stroke-width="3"/>
-  <text x="62" y="36" font-size="16">Done</text>
+<svg viewBox="0 0 480 90">
+  <rect x="10" y="20" width="140" height="50" rx="8" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
+  <text x="80" y="51" text-anchor="middle" font-size="16" fill="var(--c-success-text)">Build</text>
+  <rect x="170" y="20" width="140" height="50" rx="8" style="fill:var(--c-info-bg);stroke:var(--c-info)" stroke-width="2"/>
+  <text x="240" y="51" text-anchor="middle" font-size="16" fill="var(--c-info-text)">Test</text>
+  <rect x="330" y="20" width="140" height="50" rx="8" style="fill:var(--c-warning-bg);stroke:var(--c-warning)" stroke-width="2"/>
+  <text x="400" y="51" text-anchor="middle" font-size="16" fill="var(--c-warning-text)">Ship</text>
 </svg>
 ```
 

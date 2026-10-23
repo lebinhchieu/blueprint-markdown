@@ -406,9 +406,13 @@ Two forms, same rendering:
 :::
 
 ```svg
-<svg viewBox="0 0 120 60">
-  <circle cx="30" cy="30" r="20" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
-  <path d="M20 30 l8 8 l14 -16" fill="none" style="stroke:var(--c-success)" stroke-width="3"/>
+<svg viewBox="0 0 480 90">
+  <rect x="10" y="20" width="140" height="50" rx="8" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
+  <text x="80" y="51" text-anchor="middle" font-size="16" fill="var(--c-success-text)">Build</text>
+  <rect x="170" y="20" width="140" height="50" rx="8" style="fill:var(--c-info-bg);stroke:var(--c-info)" stroke-width="2"/>
+  <text x="240" y="51" text-anchor="middle" font-size="16" fill="var(--c-info-text)">Test</text>
+  <rect x="330" y="20" width="140" height="50" rx="8" style="fill:var(--c-warning-bg);stroke:var(--c-warning)" stroke-width="2"/>
+  <text x="400" y="51" text-anchor="middle" font-size="16" fill="var(--c-warning-text)">Ship</text>
 </svg>
 ```
 ````
@@ -416,7 +420,7 @@ Two forms, same rendering:
 | Form | Attrs | Notes |
 |------|-------|-------|
 | `:::svg{…}` … `:::` | `title`, `caption`, `width` | Container only (`::svg` and `::: svg` don't work). Body is the raw `<svg>` (a single ` ```svg ` fence inside is unwrapped). Other attrs are ignored. |
-| ` ```svg ` fence | none | Frame only; info-string words (`title=`) are ignored. Use `xml` (or a 4-backtick outer fence) to show SVG *source*. |
+| ` ```svg ` fence | none | Frame only; info-string words (`title=`) are ignored. The tag must be lower-case `svg` (` ```SVG ` renders as code). Fills the column (no `width`): use it for wide diagrams; icons and small drawings go in `:::svg{width=…}`. Use `xml` (or a 4-backtick outer fence) to show SVG *source*. |
 
 | Attr | Values | Default |
 |------|--------|---------|
@@ -432,7 +436,7 @@ Two forms, same rendering:
 - Allowed: shapes, `text`/`tspan`/`textPath`, gradients, `pattern`, `clipPath`, `mask`, `marker`, basic `filter` blur/shadow, `<style>` (rules scoped to the figure; no `@` rules), `<title>`/`<desc>`, and raster `<image href="data:image/png|jpeg|gif|webp;base64,…">`. Other `data:` URIs are removed.
 - Ids, `#ref`, `url(#…)` and author class names are prefixed per block, so figures never clash; don't prefix by hand. Only `em-svg-*` classes pass through.
 - Limits: 256 KB source, 20 000 elements, depth 64. Over a limit or malformed markup shows a red "Can't draw this SVG" callout in place.
-- Accepted residuals: decompression-bomb image dimensions, animated GIF/WebP.
+- Accepted residuals: decompression-bomb image dimensions, animated GIF/WebP, huge `feGaussianBlur` `stdDeviation`, and `pattern`→`pattern` reference chains (not capped; keep these modest).
 
 **Theme tokens** (defined for every theme)
 
