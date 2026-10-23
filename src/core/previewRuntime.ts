@@ -137,6 +137,8 @@ let observer: IntersectionObserver | null = null
 let gen = 0
 let cur: { theme: string; mermaid: MermaidApi; v: (n: string) => string } | null = null
 let worker: Promise<void> | null = null
+/** The mermaid.run currently in flight; a new pass waits for it before writing the DOM. */
+let inflight: Promise<unknown> | null = null
 let idleWaiters: Array<() => void> = []
 let initKey = ''
 let fontsReady: Promise<void> | null = null
@@ -170,7 +172,9 @@ async function work(): Promise<void> {
     }
     const info = pend.get(el)
     if (!info || !cur || !el.isConnected) continue
-    await renderOne(el, info, cur)
+    // One bad block must not kill the worker: `worker` would stay set and every
+    // later lazy render would silently stop.
+    await renderOne(el, info, cur).catch(() => {})
     await yieldToBrowser()
   }
 }
@@ -202,9 +206,11 @@ async function renderOne(
     await loadFonts()
     el.innerHTML = info.source
     delete el.dataset['processed']
-    await c.mermaid.run({ nodes: [el] }).catch(() => {
+    inflight = c.mermaid.run({ nodes: [el] }).catch(() => {
       // Mermaid parse errors are non-fatal
     })
+    await inflight
+    inflight = null
     // A newer pass (morphdom) may have reset this element mid-run.
     if (myGen !== gen || pend.get(el) !== info) return
     svgCacheSet(info.key, el.innerHTML)
@@ -303,16 +309,27 @@ export async function renderMermaid(
   const v = (name: string) => css.getPropertyValue(name).trim()
   cur = { theme, mermaid, v }
 
-  const hits: HTMLElement[] = []
-  const eager: HTMLElement[] = []
-  const lazy: HTMLElement[] = []
-
-  blocks.forEach(el => {
+  // Read every source now (sync), but write the DOM only after any in-flight
+  // mermaid.run settles: that run targets an element morphdom already reset and
+  // would otherwise land its stale SVG on top of what this pass restores.
+  const plan = blocks.map(el => {
     // After morphdom, the block contains the raw source text (HTML-escaped by
     // fence.ts). textContent gives the decoded string that mermaid can parse.
     const source = resolveCssVars((el.textContent ?? '').trim(), v)
     const key = `${theme}\n${source}`
-    const cached = svgCache.get(key)
+    return { el, source, key, cached: svgCache.get(key) }
+  })
+  if (inflight) {
+    const myGen = gen
+    await inflight
+    if (myGen !== gen) return // a newer pass owns the DOM now
+  }
+
+  const hits: HTMLElement[] = []
+  const eager: HTMLElement[] = []
+  const lazy: HTMLElement[] = []
+
+  plan.forEach(({ el, source, key, cached }) => {
     if (cached !== undefined) {
       el.innerHTML = cached
       el.dataset.processed = 'true'
