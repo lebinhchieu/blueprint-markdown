@@ -440,9 +440,9 @@ interface Frame {
 
 const NAME_RE = /^[A-Za-z][A-Za-z0-9:_.-]*$/
 
-function run(src: string): SvgResult {
+function run(src: string, salt: number): SvgResult {
   const n = src.length
-  const scope = 's' + cyrb53(src.trim()).toString(36)
+  const scope = 's' + cyrb53(src.trim() + (salt ? '\0' + salt : '')).toString(36)
   const out: string[] = []
   const stack: Frame[] = []
   let rootSeen = false
@@ -662,13 +662,13 @@ function run(src: string): SvgResult {
   return { ok: true, html, scope }
 }
 
-export function sanitizeSvg(src: string): SvgResult {
+export function sanitizeSvg(src: string, salt = 0): SvgResult {
   if (src.charCodeAt(0) === 0xfeff) src = src.slice(1)
   if (src.trim() === '') return { ok: false, error: { kind: 'empty' } }
   const bytes = src.length * 3 > SVG_MAX_BYTES ? new TextEncoder().encode(src).length : src.length
   if (bytes > SVG_MAX_BYTES) return { ok: false, error: { kind: 'too-large', kb: Math.ceil(bytes / 1024) } }
   try {
-    return run(src)
+    return run(src, salt)
   } catch (e) {
     if (e instanceof Fail) return { ok: false, error: e.error }
     return { ok: false, error: { kind: 'malformed' } }

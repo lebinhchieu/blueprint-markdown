@@ -171,6 +171,12 @@ const hostile = [
   ['data: on use/other dropped', S(`<use href="data:image/png;base64,AAAA"/><linearGradient id="g" href="data:image/png;base64,AAAA"/>${R}`), (r) => r.ok && !/data:/.test(r.html)],
   ['feImage dropped', S(`<filter id="f"><feImage href="data:image/png;base64,AAAA"/></filter>${R}`), (r) => r.ok && !/feImage|data:/i.test(r.html)],
   ['image 200KB valid', S(`<image href="data:image/png;base64,${'A'.repeat(200000)}" width="4" height="4"/>${R}`), (r) => r.ok && r.html.includes('A'.repeat(1000))],
+  ['image SVG-in-PNG payload', S(`<image href="data:image/png;base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+" width="2" height="2"/>${R}`), (r) => r.ok && r.html.includes('base64,PHN2ZyBvbmxvYWQ9YWxlcnQoMSk+') && !/<svg[^>]*onload/.test(r.html)],
+  ['image truncated base64', S(`<image href="data:image/png;base64,iVBORw0KGg" width="2" height="2"/>${R}`), (r) => r.ok && !/<image/.test(r.html)],
+  ['image body byte-exact (case kept)', S(`<image href="data:IMAGE/JPEG;base64,/9j/AbCdEf+g" width="2" height="2"/>${R}`), (r) => r.ok && r.html.includes('href="data:image/jpeg;base64,/9j/AbCdEf+g"')],
+  ['image dup href invalid + xlink valid', S(`<image href="http://e.test/a.png" xlink:href="data:image/png;base64,AAAA" width="2" height="2"/>${R}`), (r) => r.ok && r.html.includes('href="data:image/png;base64,AAAA"') && !/e\.test|xlink/.test(r.html) && (r.html.match(/href=/g) || []).length === 1],
+  ['image dup href valid + xlink invalid', S(`<image href="data:image/gif;base64,AAAA" xlink:href="data:image/svg+xml;base64,AAAA" width="2" height="2"/>${R}`), (r) => r.ok && (r.html.match(/href=/g) || []).length === 1 && !/svg\+xml/.test(r.html)],
+  ['image obfuscated data: scheme', S(`<image href="d&#97;ta:image/png;base64,AAAA" width="2" height="2"/><image href="da&#x9;ta:text/html;base64,AAAA" width="2" height="2"/>${R}`), (r) => r.ok && (r.html.match(/<image /g) || []).length === 1 && !/text\/html/.test(r.html)],
   ['quoted } in style value', S(`<style>.a{font-family:"}body{display:none";fill:red} .b{fill:blue}</style>${R}`), (r) => r.ok && !/(^|[^.\w ])body\{/.test(r.html.replace(/\.s\w+ body\{/g, '')) && !/display:none/.test(r.html)],
   ['quoted ; and newline in string', S(`<style>.a{font-family:"a;fill:red\n";x:y} .b{fill:blue}</style>${R}`), (r) => r.ok && !/fill:red/.test(r.html)],
   ['</style><script> inside style', S(`<style>.a{fill:red}</style><script>alert(1)</script>${R}`), (r) => r.ok && !/script|alert/.test(r.html)],
@@ -320,6 +326,44 @@ const normTree = (s) => {
   }
   ok(okCount >= 1500, `fuzz produced enough ok results (${okCount})`)
   console.log(`fuzz: ${N} cases, ${okCount} ok, ${errCount} errors`)
+}
+
+// ───────── re-scan negatives: the independent scanner must reject what the sanitizer would never emit
+{
+  const neg = [
+    ['data: on use', '<svg><use href="data:image/png;base64,AAAA"></use></svg>'],
+    ['data: on image svg+xml', '<svg><image href="data:image/svg+xml;base64,AAAA"></image></svg>'],
+    ['data: on image charset', '<svg><image href="data:image/png;charset=x;base64,AAAA"></image></svg>'],
+    ['data: in other attr', '<svg><image href="data:image/png;base64,AAAA" fill="data:image/png;base64,AAAA"></image></svg>'],
+    ['data: uppercase mime', '<svg><image href="data:image/PNG;base64,AAAA"></image></svg>'],
+    ['http on image', '<svg><image href="http://e.test/a.png"></image></svg>'],
+  ]
+  for (const [nm, h] of neg) {
+    const before = failures
+    const origErr = console.error
+    console.error = () => {}
+    rescan(h, 'neg')
+    console.error = origErr
+    ok(failures === before + 1, `rescan rejects: ${nm}`)
+    failures = before
+  }
+}
+
+// ───────── salt (F5): distinct scopes for duplicate blocks
+{
+  const src = S(`<defs><linearGradient id="g"><stop offset="0" stop-color="red"/></linearGradient></defs><style>.a{fill:url(#g)}</style><rect class="a" id="r" x="1" y="1" width="5" height="5"/>`)
+  const base = sanitizeSvg(src)
+  ok(base.ok && JSON.stringify(sanitizeSvg(src, 0)) === JSON.stringify(base), 'salt 0 byte-identical to unsalted')
+  const rs = [0, 1, 2].map((k) => sanitizeSvg(src, k))
+  ok(rs.every((r) => r.ok), 'salted ok')
+  ok(new Set(rs.map((r) => r.scope)).size === 3, 'salt 0/1/2 distinct scopes')
+  ok(rs[1].html !== rs[2].html && !rs[1].html.includes(rs[2].scope) && !rs[2].html.includes(rs[1].scope) && !rs[0].html.includes(rs[1].scope), 'salted outputs share no id/class')
+  rs.forEach((r, k) => {
+    ok(JSON.stringify(sanitizeSvg(src, k)) === JSON.stringify(r), `salt ${k} deterministic`)
+    rescan(r.html, `salt${k}`)
+    const r2 = sanitizeSvg(r.html)
+    ok(r2.ok && normScope(r.html, r.scope) === normScope(normScope(r2.html, r2.scope), r.scope), `salt ${k} idempotent modulo scope`)
+  })
 }
 
 // ───────── perf / limits ─────────
