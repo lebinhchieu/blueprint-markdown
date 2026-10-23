@@ -141,6 +141,11 @@
   --chip-radius: var(--radius-full);
   --chip-font-size: 0.75rem;
 
+  /* SVG figure */
+  --svg-radius:     var(--radius-lg);
+  --svg-padding:    var(--sp-md);
+  --svg-max-height: 32rem;     /* tall/tiny viewBox drawings letterbox instead of ballooning */
+
   /* Tooltip */
   --tooltip-bg:     #2c2018;
   --tooltip-text:   #faf6ef;
