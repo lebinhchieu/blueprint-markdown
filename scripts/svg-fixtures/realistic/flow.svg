@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- flowchart -->
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 400 200" role="img">
+  <title>Flow</title><desc>Two boxes and an arrow</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/></marker>
+    <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6cf"/><stop offset="100%" stop-color="#39c"/></linearGradient>
+  </defs>
+  <rect x="20" y="60" width="120" height="60" rx="8" fill="url(#g1)" stroke="#036" stroke-width="2"/>
+  <rect x="260" y="60" width="120" height="60" rx="8" fill="var(--c-primary)" stroke="currentColor"/>
+  <line x1="140" y1="90" x2="258" y2="90" stroke="#333" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="80" y="95" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="14">Start &amp; go</text>
+  <text x="320" y="95" text-anchor="middle" font-size="14">End</text>
+</svg>
