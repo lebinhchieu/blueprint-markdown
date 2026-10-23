@@ -76,6 +76,8 @@ const REGISTRY = {
   before:    ['container'],
   after:     ['container'],
   // question.ts — grilling Q&A; qa-copy is an empty container, not a leaf
+  // svg.ts — raw SVG body; the ```svg fence is the other form (no directive)
+  svg:       ['container'],
   question:  ['container'],
   option:    ['container'],
   'qa-copy': ['container'],
@@ -108,7 +110,7 @@ const RE_LEAF  = /^\s*::([A-Za-z][\w-]*)(\{(?:"(?:\\.|[^"\\])*"|[^{}"])*\})?\s*$
 function classifyLine(line) {
   if (RE_CLOSE.test(line)) return { kind: 'CLOSE' }
   const m3 = line.match(RE_OPEN)
-  if (m3) return { kind: 'OPEN', name: m3[1] }
+  if (m3) return { kind: 'OPEN', name: m3[1], attrsRaw: m3[2] ?? '' }
   const m2 = line.match(RE_LEAF)
   if (m2) return { kind: 'LEAF', name: m2[1] }
   return { kind: 'TEXT' }
@@ -178,7 +180,7 @@ function parseBlock(lines, start, stopAtClose) {
       flushText()
       const inner = parseBlock(lines, i + 1, true)
       nodes.push({
-        type: 'directive', form: 'container', name: cls.name,
+        type: 'directive', form: 'container', name: cls.name, attrsRaw: cls.attrsRaw,
         children: inner.nodes, closed: inner.closedByFence,
       })
       i = inner.nextIndex
@@ -242,6 +244,22 @@ function lineHint(name, form) {
   return ln != null ? ` (line ${ln})` : ''
 }
 
+// :::svg{title caption width} — anything else is ignored by the renderer, so say so.
+const SVG_ATTRS = new Set(['title', 'caption', 'width'])
+
+function unknownSvgAttrs(attrsRaw) {
+  const body = attrsRaw
+    .replace(/^\{|\}$/g, '')
+    .replace(/"(?:\\.|[^"\\])*"/g, '""')   // drop quoted values
+    .replace(/(^|\s)[#.][\w-]+/g, '$1')      // {#id} and {.class} are generic
+  const bad = []
+  for (const tok of body.split(/\s+/).filter(Boolean)) {
+    const key = tok.split('=')[0]
+    if (!SVG_ATTRS.has(key)) bad.push(key)
+  }
+  return bad
+}
+
 // Walk AST
 const errors = []
 
@@ -261,6 +279,16 @@ function walk(nodes) {
         `"${node.name}"${lineHint(node.name, node.form)} used as ${node.form} ` +
         `but only supports: ${forms.join(', ')}`
       )
+    }
+
+    if (node.name === 'svg' && node.form === 'container') {
+      const bad = unknownSvgAttrs(node.attrsRaw ?? '')
+      if (bad.length) {
+        errors.push(
+          `:::svg${lineHint('svg', 'container')} has unknown attribute(s): ${bad.join(', ')} — ` +
+          `only ${[...SVG_ATTRS].join(', ')} are supported`
+        )
+      }
     }
 
     if (node.children) walk(node.children)
@@ -283,6 +311,45 @@ rawLines.forEach((line, i) => {
   else if (RE_NEAR_SPACE_2.test(line))
     warnings.push(`Line ${i + 1}: space after :: — "${line.trim()}"`)
 })
+
+// SVG blocks (```svg fence and :::svg body) are untrusted: the renderer sanitizes them silently
+// (D7), so the author only learns here that something will be dropped.
+const svgWarnings = []
+const SVG_RISKS = [
+  [/<script\b/i, '<script>'],
+  [/\son[a-z]+\s*=/i, 'on*= event handler'],
+  [/<foreignObject\b/i, '<foreignObject>'],
+  [/(?:\bhref\s*=\s*["']?\s*|url\(\s*["']?\s*|@import\s*["']?\s*)(?:https?:)?\/\//i, 'external URL'],
+  [/<(?:animate|animateTransform|animateMotion|set)\b/i, 'SMIL animation'],
+]
+{
+  let fence = null     // { char, len, svg }
+  let inSvgDirective = false
+  rawLines.forEach((line, i) => {
+    const fm = matchFence(line)
+    if (fence) {
+      if (fm && fm.char === fence.char && fm.len >= fence.len && line.trim().replace(/[`~]/g, '') === '') fence = null
+      else if (fence.svg) scanSvgLine(line, i)
+      return
+    }
+    if (inSvgDirective) {
+      if (RE_CLOSE.test(line)) inSvgDirective = false
+      else scanSvgLine(line, i)
+      return
+    }
+    if (fm) {
+      fence = { ...fm, svg: /^\s*[`~]+\s*svg\b/i.test(line) }
+      return
+    }
+    const open = line.match(RE_OPEN)
+    if (open && open[1] === 'svg') inSvgDirective = true
+  })
+  function scanSvgLine(line, i) {
+    for (const [re, what] of SVG_RISKS) {
+      if (re.test(line)) svgWarnings.push(`Line ${i + 1}: svg block contains ${what} — the renderer removes it`)
+    }
+  }
+}
 
 // Present-mode cues: a segment pointing at an unnamed block lights nothing, silently.
 // Names come from {#id} on a directive, #id on a fence line, or an inline :cue{#id}.
@@ -341,6 +408,11 @@ if (warnings.length) {
   warnings.forEach(w => console.warn(`   ${w}`))
 }
 
+if (svgWarnings.length) {
+  console.warn(`\n⚠  Unsafe SVG content in ${label} (removed when rendered):`)
+  svgWarnings.forEach(w => console.warn(`   ${w}`))
+}
+
 if (errors.length) {
   console.error(`\n✗  Errors in ${label}:`)
   errors.forEach(e => console.error(`   ${e}`))
@@ -349,9 +421,9 @@ if (errors.length) {
   process.exit(1)
 }
 
-if (!warnings.length) {
+if (!warnings.length && !svgWarnings.length) {
   console.log(`✓  ${label}: block directives OK`)
 } else {
-  console.log(`✓  ${label}: no errors (${warnings.length} near-miss warning(s) above)`)
+  console.log(`✓  ${label}: no errors (${warnings.length + svgWarnings.length} warning(s) above)`)
 }
 console.log('   Note: inline :name[text] directives are not checked here.')

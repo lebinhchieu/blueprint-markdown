@@ -8,6 +8,7 @@
  *   4. Line numbers:       ```js start=40  → gutter numbered from 40 (highlight/marks stay 1-based)
  *   5. Numbered markers:   ```js marks="3:1 7:2"  → badge ① on line 3, ② on line 7 (see markers.ts)
  *   6. Diffs:              ```diff lang=ts  → tinted +/- rows, old/new gutter (see diff.ts)
+ *   7. SVG:                ```svg  → sanitized inline figure (see svgBlock.ts)
  *
  * Meta syntax: the info string after the language identifier may contain:
  *   - A highlight range like `{1}`, `{1,3-5}`, `{2-4}`  (curly braces)
@@ -25,6 +26,7 @@ import { parseLineRanges } from './ranges'
 import { hljsDefineVue } from './hljsVueLanguage'
 import { escapeHtml, splitHighlightedLines } from './codeLines'
 import { renderDiff } from './diff'
+import { renderSvgBlock } from './svgBlock'
 
 hljs.registerLanguage('vue', hljsDefineVue)
 
@@ -168,6 +170,18 @@ export function installFenceRenderer(md: MarkdownIt): void {
       const code = escapeHtml(token.content.trim())
       const cue = meta.cue ? ` data-cue="${escapeHtml(meta.cue)}"` : ''
       return `<div class="mermaid"${cue}>${code}</div>\n`
+    }
+
+    // SVG: sanitized inline figure (fence form: no title/caption/width; info-string title= ignored).
+    if (meta.lang === 'svg') {
+      const figure = renderSvgBlock(token.content, { cue: meta.cue }, escapeHtml)
+      // Scroll sync: only VS Code's outer md stamps data-line (absolute doc line) on the
+      // token. On privateMd (fence inside a directive) it is absent, token.map would be
+      // relative to the text run, so emit no wrapper and let the enclosing directive carry it.
+      const line = token.attrGet('data-line')
+      return line !== null && /^\d+$/.test(line)
+        ? `<div class="code-line" data-line="${line}">${figure}</div>\n`
+        : figure
     }
 
     // Diff: its own row renderer; titles, cues, {hl} and marks still apply

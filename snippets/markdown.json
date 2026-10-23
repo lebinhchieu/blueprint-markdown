@@ -305,6 +305,17 @@
     ],
     "description": "Mermaid diagram block"
   },
+  "Blueprint: svg": {
+    "prefix": "bp-svg",
+    "body": [
+      ":::svg{title=\"${1:Title}\" caption=\"${2:Caption}\" width=${3:480}}",
+      "<svg viewBox=\"0 0 ${4:200} ${5:100}\" xmlns=\"http://www.w3.org/2000/svg\">",
+      "  $0",
+      "</svg>",
+      ":::"
+    ],
+    "description": "SVG drawing (sanitized, theme-aware figure)"
+  },
   "Blueprint: annotated": {
     "prefix": "bp-annotated",
     "body": [
