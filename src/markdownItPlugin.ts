@@ -31,7 +31,7 @@ import { installInlineRule, installHexColorRule } from './core/inline'
 import { installFenceRenderer } from './core/fence'
 import { installInlineCodeRenderer } from './core/inline-code'
 import { createRenderTree } from './core/renderer'
-import { resetSvgScopes } from './core/svgBlock'
+import { resetSvgOccurrences } from './core/svgBlock'
 
 // ─── Theme resolution ─────────────────────────────────────────────────────────
 
@@ -244,7 +244,7 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
   // markdown.preview.refresh fires.
   // Per-render svg scope counter (svgBlock.ts): reset first so repeats get stable suffixes.
   md.core.ruler.before('normalize', 'em_svg_reset', (state: StateCore) => {
-    if (!state.inlineMode) resetSvgScopes()
+    if (!state.inlineMode) resetSvgOccurrences()
     return false
   })
   md.core.ruler.push('em_theme_marker', (state: StateCore) => {

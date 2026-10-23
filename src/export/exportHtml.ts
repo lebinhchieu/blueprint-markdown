@@ -26,6 +26,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import MarkdownIt from 'markdown-it'
 import { installBlueprintMarkdown } from '../markdownItPlugin'
+import { resetSvgOccurrences } from '../core/svgBlock'
 
 // Google Fonts URL covering all four families used by the extension.
 const GOOGLE_FONTS_URL =
@@ -106,6 +107,7 @@ export async function exportToHtml(context: vscode.ExtensionContext, arg?: { uri
   const md = installBlueprintMarkdown(
     new MarkdownIt({ html: true, linkify: true }),
   )
+  resetSvgOccurrences()
   const rendered = md.render(document.getText())
 
   // ── 3. Extract theme from the injected marker ───────────────────────────────

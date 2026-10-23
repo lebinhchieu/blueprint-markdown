@@ -23,21 +23,15 @@ export interface SvgBlockOpts {
 
 /**
  * Scope is a hash of the source, so the same drawing twice in one document would share
- * ids (`url(#g)` resolves to the first, possibly hidden, copy). Each repeat in a render
- * gets a distinct suffix. The counter resets at the start of every outer render
- * (markdownItPlugin), so output stays deterministic: same doc -> same bytes.
+ * ids (`url(#g)` resolves to the first, possibly hidden, copy). The n-th repeat of a source
+ * in a render is sanitized with salt n (first occurrence: salt 0, unchanged output).
+ * Module state, not markdown-it env: nested directive text renders with a fresh private-md
+ * env. Reset at the start of every outer render (markdownItPlugin, exportHtml) so the
+ * output stays deterministic: same doc -> same bytes.
  */
-const scopeSeen = new Map<string, number>()
-export function resetSvgScopes(): void {
-  scopeSeen.clear()
-}
-
-function uniqueScope(html: string, scope: string): { html: string; scope: string } {
-  const n = scopeSeen.get(scope) ?? 0
-  scopeSeen.set(scope, n + 1)
-  if (n === 0) return { html, scope }
-  const next = `${scope}x${n}`
-  return { html: html.split(scope).join(next), scope: next }
+const occurrences = new Map<string, number>()
+export function resetSvgOccurrences(): void {
+  occurrences.clear()
 }
 
 const DEFAULT_LABEL = 'SVG drawing'
@@ -113,10 +107,12 @@ export function renderSvgBlock(
   renderInline?: (md: string) => string,
 ): string {
   const cue = opts.cue ? ` data-cue="${esc(opts.cue)}"` : ''
-  const res = sanitizeSvg(src)
+  const key = src.trim()
+  const n = occurrences.get(key) ?? 0
+  occurrences.set(key, n + 1)
+  const res = sanitizeSvg(src, n)
   if (!res.ok) return renderSvgError(src, res.error, esc, cue)
 
-  const { html, scope } = uniqueScope(res.html, res.scope)
   const title = opts.title?.trim()
   const caption = opts.caption?.trim()
   const label = esc(title || DEFAULT_LABEL)
@@ -131,7 +127,7 @@ export function renderSvgBlock(
   return (
     `<figure class="em-svg"${widthStyle(opts.width)}${cue}>` +
     `<div class="em-svg__frame">${titleBar}` +
-    `<div class="em-svg__canvas ${scope}" role="img" aria-label="${label}">${html}</div>` +
+    `<div class="em-svg__canvas ${res.scope}" role="img" aria-label="${label}">${res.html}</div>` +
     `</div>${captionHtml}</figure>\n`
   )
 }
