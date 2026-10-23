@@ -432,7 +432,7 @@ Two forms, same rendering:
 
 - Always give a `viewBox`; omit `width`/`height` on `<svg>` (size the figure with `width=`). Add `width=` for icons and small diagrams, otherwise a viewBox-only drawing fills the column (capped at 32rem tall).
 - Colour with theme tokens through `var()` or `currentColor`; no hard-coded hex (brand colours excepted; they don't follow dark themes). Unfilled `<text>`/shapes already take `--text-base`, so never set `fill="black"`/`"#000"`/`"#fff"`.
-- Never: `<script>`, `on*=` handlers, `<foreignObject>`, external URLs (`http(s):`), animation/SMIL (`<animate>`, `<set>`, CSS `@keyframes`). The renderer removes them silently, and `validate.mjs` warns.
+- Never: `<script>`, `on*=` handlers, `<foreignObject>`, external URLs (`http(s):`), animation/SMIL (`<animate>`, `<set>`, CSS `@keyframes`). The renderer removes them silently; `validate.mjs` warns on `<script>`, `on*=`, `<foreignObject>`, external URLs and SMIL, but not on CSS `@keyframes`.
 - Allowed: shapes, `text`/`tspan`/`textPath`, gradients, `pattern`, `clipPath`, `mask`, `marker`, basic `filter` blur/shadow, `<style>` (rules scoped to the figure; no `@` rules), `<title>`/`<desc>`, and raster `<image href="data:image/png|jpeg|gif|webp;base64,…">`. Other `data:` URIs are removed.
 - Ids, `#ref`, `url(#…)` and author class names are prefixed per block, so figures never clash; don't prefix by hand. Only `em-svg-*` classes pass through.
 - Limits: 256 KB source, 20 000 elements, depth 64. Over a limit or malformed markup shows a red "Can't draw this SVG" callout in place.
