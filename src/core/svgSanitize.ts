@@ -10,6 +10,7 @@
  */
 
 export const SVG_MAX_BYTES = 256 * 1024
+const MAX_OUT = 2 * SVG_MAX_BYTES // sanitized output cap (CSS scoping can expand selectors)
 
 export type SvgError =
   | { kind: 'empty' }
@@ -106,7 +107,7 @@ function decodeEntities(s: string): string {
       if (!(n > 0 && n <= 0x10ffff) || (n >= 0xd800 && n <= 0xdfff)) return m
       return String.fromCodePoint(n)
     }
-    const v = NAMED_ENTITIES[body]
+    const v = Object.hasOwn(NAMED_ENTITIES, body) ? NAMED_ENTITIES[body] : undefined
     return v === undefined ? m : v
   })
 }
@@ -146,33 +147,33 @@ function rewriteUrls(v: string, scope: string): string | null {
   return v.replace(URL_ID, (_m, _q, id: string) => `url(#${scope}-${id})`)
 }
 
-/** Balanced-paren walk: every `var(` must be var(--name) or var(--name, safe-fallback). */
+/** Balanced-paren walk: every `var(` must be var(--name) or var(--name, safe-fallback).
+ *  Linear: one stack pass; var( nesting capped so each char is inspected by ≤ MAX_VAR_NEST inner checks. */
+const MAX_VAR_NEST = 4
 function varsOk(v: string): boolean {
-  let depth = 0
-  for (const c of v) {
-    if (c === '(') depth++
-    else if (c === ')' && --depth < 0) return false
-  }
-  if (depth !== 0) return false
   const lv = v.toLowerCase()
-  let from = 0
-  for (;;) {
-    const at = lv.indexOf('var(', from)
-    if (at < 0) return true
-    let d = 1
-    let j = at + 4
-    while (j < v.length && d > 0) {
-      if (v[j] === '(') d++
-      else if (v[j] === ')') d--
-      j++
+  const stack: number[] = [] // for each open paren: start index of a var( inner, or -1
+  let varDepth = 0
+  for (let i = 0; i < v.length; i++) {
+    const c = v[i]
+    if (c === '(') {
+      const isVar = i >= 3 && lv.startsWith('var', i - 3)
+      if (isVar) {
+        if (++varDepth > MAX_VAR_NEST) return false
+        stack.push(i + 1)
+      } else stack.push(-1)
+    } else if (c === ')') {
+      const st = stack.pop()
+      if (st === undefined) return false
+      if (st >= 0) {
+        varDepth--
+        const m = /^\s*--[\w-]+\s*(?:,([#\w\s.,%()-]*))?$/.exec(v.slice(st, i))
+        if (!m) return false
+        if (m[1] && /url\s*\(/i.test(m[1])) return false
+      }
     }
-    if (d !== 0) return false
-    const inner = v.slice(at + 4, j - 1)
-    const m = /^\s*--[\w-]+\s*(?:,([#\w\s.,%()-]*))?$/.exec(inner)
-    if (!m) return false
-    if (m[1] && /url\s*\(/i.test(m[1])) return false
-    from = at + 4
   }
+  return stack.length === 0
 }
 
 /** Strings: reject any quoted string holding { } ; or a newline, or unbalanced quotes. */
@@ -448,6 +449,7 @@ function run(src: string): SvgResult {
   let rootClosed = false
   let elements = 0
   let drawable = 0
+  let outLen = 0
   const useTargets = new Set<string>()
   const containsUse = new Set<string>()
   let i = 0
@@ -590,7 +592,11 @@ function run(src: string): SvgResult {
         i = next
         if (key === 'style' && stack.length > 0 && (top().mode === 'keep' || top().mode === 'unwrap')) {
           const css = scopeCss(decodeEntities(content), scope)
-          if (css) out.push(`<style>${escText(css)}</style>`)
+          if (css) {
+            outLen += css.length
+            if (outLen > MAX_OUT) throw new Fail({ kind: 'too-complex' })
+            out.push(`<style>${escText(css)}</style>`)
+          }
         }
       }
       continue
@@ -632,13 +638,16 @@ function run(src: string): SvgResult {
   if (!rootSeen) throw new Fail({ kind: 'not-svg' })
   for (const t of useTargets) if (containsUse.has(t)) throw new Fail({ kind: 'too-complex' })
   if (drawable === 0) throw new Fail({ kind: 'nothing-to-draw' })
-  return { ok: true, html: out.join(''), scope }
+  const html = out.join('')
+  if (html.length > MAX_OUT) throw new Fail({ kind: 'too-complex' })
+  return { ok: true, html, scope }
 }
 
 export function sanitizeSvg(src: string): SvgResult {
   if (src.charCodeAt(0) === 0xfeff) src = src.slice(1)
   if (src.trim() === '') return { ok: false, error: { kind: 'empty' } }
-  if (src.length > SVG_MAX_BYTES) return { ok: false, error: { kind: 'too-large', kb: Math.ceil(src.length / 1024) } }
+  const bytes = src.length * 3 > SVG_MAX_BYTES ? new TextEncoder().encode(src).length : src.length
+  if (bytes > SVG_MAX_BYTES) return { ok: false, error: { kind: 'too-large', kb: Math.ceil(bytes / 1024) } }
   try {
     return run(src)
   } catch (e) {
