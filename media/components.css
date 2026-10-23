@@ -2609,9 +2609,7 @@ kbd {
   overflow: hidden;
 }
 .em-svg__title {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-xs);
+  display: block;   /* not flex: ellipsis needs the text node inside a block container */
   padding: var(--sp-xs) var(--sp-md);
   background: var(--bg-overlay);
   color: var(--text-muted);
@@ -2622,7 +2620,7 @@ kbd {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.em-svg__title .material-symbols-outlined { font-size: 14px; flex: none; }
+.em-svg__title .material-symbols-outlined { font-size: 14px; vertical-align: middle; margin-right: var(--sp-xs); }
 .em-svg__canvas {
   padding: var(--svg-padding);
   text-align: center;
@@ -2647,7 +2645,7 @@ kbd {
 }
 
 /* Error: reuses .callout--danger; only the source excerpt is new */
-.em-svg-error__src {
+.em-svg-error pre.em-svg-error__src {
   font-family: var(--font-mono);
   font-size: var(--font-size-sm);
   background: var(--code-bg);
@@ -2658,6 +2656,8 @@ kbd {
   overflow-x: auto;
   white-space: pre;
 }
+
+.em-svg-error pre.em-svg-error__src code { font: inherit; background: none; border: 0; padding: 0; white-space: inherit; }
 
 /* Palette classes for SVG authors: .em-svg-<role> = soft fill + accent stroke,
    .em-svg-<role>-text = label on that fill, .em-svg-<role>-solid = solid fill. */
