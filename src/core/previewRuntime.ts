@@ -115,63 +115,112 @@ function revealTabPanels(blocks: HTMLElement[]): () => void {
   })
 }
 
-export async function renderMermaid(
-  root: HTMLElement,
-  theme: string,
-  mermaid: MermaidApi,
-): Promise<void> {
-  const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
-  if (blocks.length === 0) return
-  const restorePanels = revealTabPanels(blocks)
-  try {
-    await renderBlocks(blocks, root, theme, mermaid)
-  } finally {
-    restorePanels()
+// ── Lazy rendering ────────────────────────────────────────────────────────────
+//
+// Rendering every diagram on init blocks the main thread (mermaid.run is
+// synchronous-heavy per diagram) and hangs the preview on large docs. Instead:
+// cache hits are restored synchronously (no flicker on morphdom re-runs); cache
+// misses get an empty placeholder (.mermaid has min-height) and are rendered one
+// at a time, nearest-the-top first, as an IntersectionObserver reports them
+// within ~1 viewport. Blocks inside an inactive `.tab-panel` are display:none,
+// so they never intersect — they render when the tab opens and the observer
+// fires (revealTabPanels still guards the measurement). Blocks inside
+// `.em-explorer` render eagerly: explorerSync pairs SVG nodes right after the
+// first batch and would otherwise see an empty pin.
+
+interface Pending { source: string; key: string }
+
+/** Blocks awaiting render in the current pass (cleared each pass). */
+let pend = new Map<HTMLElement, Pending>()
+let queue: HTMLElement[] = []
+let observer: IntersectionObserver | null = null
+let gen = 0
+let cur: { theme: string; mermaid: MermaidApi; v: (n: string) => string } | null = null
+let worker: Promise<void> | null = null
+let idleWaiters: Array<() => void> = []
+let initKey = ''
+let fontsReady: Promise<void> | null = null
+
+const yieldToBrowser = () => new Promise<void>(r => setTimeout(r, 0))
+
+function waitIdle(): Promise<void> {
+  return worker ? new Promise<void>(r => idleWaiters.push(r)) : Promise.resolve()
+}
+
+function enqueue(el: HTMLElement): void {
+  if (!pend.has(el) || queue.includes(el)) return
+  queue.push(el)
+  queue.sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1))
+  kick()
+}
+
+function kick(): void {
+  if (worker) return
+  worker = work()
+}
+
+async function work(): Promise<void> {
+  for (;;) {
+    const el = queue.shift()
+    if (!el) {
+      // Sync check-and-clear: a kick() after this line starts a fresh worker.
+      worker = null
+      idleWaiters.splice(0).forEach(r => r())
+      return
+    }
+    const info = pend.get(el)
+    if (!info || !cur || !el.isConnected) continue
+    await renderOne(el, info, cur)
+    await yieldToBrowser()
   }
 }
 
-async function renderBlocks(
-  blocks: HTMLElement[],
-  root: HTMLElement,
-  theme: string,
-  mermaid: MermaidApi,
-): Promise<void> {
-
-  // Needed up front, not just for themeVariables below — resolveCssVars uses
-  // it to turn a diagram's own `var(--x)` into a literal value mermaid can
-  // parse, so the cache key (computed per block right after) reflects the
-  // resolved text.
-  const css = getComputedStyle(root.ownerDocument.body)
-  const v = (name: string) => css.getPropertyValue(name).trim()
-
-  // Classify each block as a cache hit or miss.
-  const pending: Array<{ el: HTMLElement; key: string }> = []
-
-  blocks.forEach(el => {
-    // After morphdom, the block contains the raw source text (HTML-escaped by
-    // fence.ts). textContent gives the decoded string that mermaid can parse.
-    const rawSource = (el.textContent ?? '').trim()
-    const source = resolveCssVars(rawSource, v)
-    const key = `${theme}\n${source}`
-    const cached = svgCache.get(key)
-    if (cached !== undefined) {
-      // Restore the previously rendered SVG — no mermaid work needed.
-      el.innerHTML = cached
-      el.dataset.processed = 'true'
-    } else {
-      // Reset to source text so mermaid can parse it, then queue for rendering.
-      el.innerHTML = source
-      delete el.dataset['processed']
-      pending.push({ el, key })
+function loadFonts(): Promise<void> {
+  // Wait for DM Sans before mermaid measures text widths.
+  return (fontsReady ??= (async () => {
+    try {
+      await Promise.all([
+        document.fonts.load('400 1em "DM Sans"'),
+        document.fonts.load('700 1em "DM Sans"'),
+      ])
+      await document.fonts.ready
+    } catch {
+      // Font API unavailable — render anyway
     }
-  })
+  })())
+}
 
-  // If nothing changed, skip initialize/font-load/run entirely.
-  if (pending.length === 0) {
-    enhanceMermaidZoom(blocks)
-    return
+async function renderOne(
+  el: HTMLElement,
+  info: Pending,
+  c: NonNullable<typeof cur>,
+): Promise<void> {
+  const myGen = gen
+  const restore = revealTabPanels([el])
+  try {
+    initMermaid(c.mermaid, c.theme, c.v)
+    await loadFonts()
+    el.innerHTML = info.source
+    delete el.dataset['processed']
+    await c.mermaid.run({ nodes: [el] }).catch(() => {
+      // Mermaid parse errors are non-fatal
+    })
+    // A newer pass (morphdom) may have reset this element mid-run.
+    if (myGen !== gen || pend.get(el) !== info) return
+    svgCacheSet(info.key, el.innerHTML)
+    pend.delete(el)
+    observer?.unobserve(el)
+    enhanceMermaidZoom([el])
+  } finally {
+    restore()
   }
+}
 
+/** mermaid.initialize is global: once per theme/colour change, not per block. */
+function initMermaid(mermaid: MermaidApi, theme: string, v: (n: string) => string): void {
+  const key = `${theme}|${v('--bg-base')}|${v('--text-base')}|${v('--c-primary')}`
+  if (key === initKey) return
+  initKey = key
   const isDark = isDarkColor(v('--bg-base'), theme !== 'light')
 
   mermaid.initialize({
@@ -226,26 +275,84 @@ async function renderBlocks(
       altBackground:        v('--bg-surface')        || (isDark ? '#252018' : '#f2ebe0'),
     },
   })
+}
 
-  // Wait for DM Sans before mermaid measures text widths.
-  try {
-    await Promise.all([
-      document.fonts.load('400 1em "DM Sans"'),
-      document.fonts.load('700 1em "DM Sans"'),
-    ])
-    await document.fonts.ready
-  } catch {
-    // Font API unavailable — render anyway
-  }
+/**
+ * Resolves once the first batch is rendered: every cache hit, every eager
+ * block, and every block within ~1 viewport of the initial scroll position.
+ * Off-screen diagrams keep rendering later as they near the viewport.
+ */
+export async function renderMermaid(
+  root: HTMLElement,
+  theme: string,
+  mermaid: MermaidApi,
+): Promise<void> {
+  // New pass: morphdom reset every block, so drop the previous pass's state.
+  gen++
+  observer?.disconnect()
+  observer = null
+  pend = new Map()
+  queue = []
 
-  await mermaid.run({ nodes: pending.map(p => p.el) }).catch(() => {
-    // Mermaid parse errors are non-fatal
+  const blocks = Array.from(root.querySelectorAll<HTMLElement>('.mermaid'))
+  if (blocks.length === 0) return
+
+  // resolveCssVars needs the computed style up front, so the cache key reflects
+  // the resolved text.
+  const css = getComputedStyle(root.ownerDocument.body)
+  const v = (name: string) => css.getPropertyValue(name).trim()
+  cur = { theme, mermaid, v }
+
+  const hits: HTMLElement[] = []
+  const eager: HTMLElement[] = []
+  const lazy: HTMLElement[] = []
+
+  blocks.forEach(el => {
+    // After morphdom, the block contains the raw source text (HTML-escaped by
+    // fence.ts). textContent gives the decoded string that mermaid can parse.
+    const source = resolveCssVars((el.textContent ?? '').trim(), v)
+    const key = `${theme}\n${source}`
+    const cached = svgCache.get(key)
+    if (cached !== undefined) {
+      el.innerHTML = cached
+      el.dataset.processed = 'true'
+      hits.push(el)
+      return
+    }
+    // Empty placeholder (min-height keeps the layout); source is stashed in
+    // `pend` and handed to mermaid at render time.
+    el.textContent = ''
+    delete el.dataset['processed']
+    pend.set(el, { source, key })
+    ;(el.closest('.em-explorer') || typeof IntersectionObserver === 'undefined' ? eager : lazy).push(el)
   })
 
-  // Cache the rendered SVGs for future incremental updates.
-  pending.forEach(p => svgCacheSet(p.key, p.el.innerHTML))
+  if (hits.length) {
+    const restore = revealTabPanels(hits)
+    try { enhanceMermaidZoom(hits) } finally { restore() }
+  }
+  if (pend.size === 0) return
 
-  enhanceMermaidZoom(blocks)
+  // Configure before anything async: mermaid.min.js auto-runs on DOMContentLoaded
+  // unless startOnLoad is already false, which would render every block at once.
+  initMermaid(mermaid, theme, v)
+  eager.forEach(enqueue)
+
+  if (lazy.length) {
+    let firstBatch!: () => void
+    const first = new Promise<void>(r => (firstBatch = r))
+    observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        const el = e.target as HTMLElement
+        if (e.isIntersecting) enqueue(el)
+        else queue = queue.filter(q => q !== el) // scrolled past before its turn
+      })
+      firstBatch()
+    }, { rootMargin: '100% 0px' })
+    lazy.forEach(el => observer!.observe(el))
+    await first
+  }
+  await waitIdle()
 }
 
 // ─── Orchestrator ─────────────────────────────────────────────────────────────
