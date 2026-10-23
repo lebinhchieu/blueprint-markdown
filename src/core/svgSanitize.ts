@@ -135,7 +135,7 @@ const scopeClass = (tok: string, scope: string) => (tok.startsWith('em-svg-') ? 
 
 // ───────────────────────── CSS ─────────────────────────
 
-const BAD_VALUE = /\\|\/\*|@|<|>|expression|javascript|-moz-binding|behavior|\b(?:image-set|image|src|element|cross-fade|paint)\s*\(/i
+const BAD_VALUE = /\\|\/\*|@|<|>|expression|javascript|-moz-binding|behavior|\b(?:image-set|image|src|element|cross-fade|paint|attr|env)\s*\(/i
 const URL_ID = /url\(\s*(['"]?)#([A-Za-z][\w.-]*)\1\s*\)/gi
 
 /** Rewrite url(#id) → url(#scope-id). null = some other url( present → reject. */
@@ -434,6 +434,7 @@ interface Frame {
   key: string // lower-case raw name (for closer matching)
   tag: string // canonical emitted tag ('' if not emitted)
   mode: Mode
+  id?: string // emitted (scoped) id, for <use> amplification check
 }
 
 const NAME_RE = /^[A-Za-z][A-Za-z0-9:_.-]*$/
@@ -447,6 +448,8 @@ function run(src: string): SvgResult {
   let rootClosed = false
   let elements = 0
   let drawable = 0
+  const useTargets = new Set<string>()
+  const containsUse = new Set<string>()
   let i = 0
 
   const top = () => stack[stack.length - 1]
@@ -602,7 +605,17 @@ function run(src: string): SvgResult {
     else if (canonTag) {
       const textOnly = canonTag === 'title' || canonTag === 'desc'
       frame = { key, tag: canonTag, mode: textOnly ? 'textonly' : 'keep' }
-      out.push(`<${canonTag}${buildAttrs(canonTag, attrs, scope, stack.length === 0)}>`)
+      const built = buildAttrs(canonTag, attrs, scope, stack.length === 0)
+      out.push(`<${canonTag}${built}>`)
+      const idm = / id="([^"]*)"/.exec(built)
+      if (idm) frame.id = idm[1]
+      if (canonTag === 'use') {
+        // <use> must not sit in / be an element that is itself a <use> target (reference amplification)
+        for (const f of stack) if (f.id) containsUse.add(f.id)
+        if (frame.id) containsUse.add(frame.id)
+        const hm = / href="#([^"]*)"/.exec(built)
+        if (hm) useTargets.add(hm[1])
+      }
       if (DRAWABLE.has(canonTag)) drawable++
     } else frame = { key, tag: '', mode: 'drop' }
 
@@ -617,6 +630,7 @@ function run(src: string): SvgResult {
 
   if (stack.length > 0) throw new Fail({ kind: 'malformed' })
   if (!rootSeen) throw new Fail({ kind: 'not-svg' })
+  for (const t of useTargets) if (containsUse.has(t)) throw new Fail({ kind: 'too-complex' })
   if (drawable === 0) throw new Fail({ kind: 'nothing-to-draw' })
   return { ok: true, html: out.join(''), scope }
 }
