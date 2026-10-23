@@ -21,6 +21,25 @@ export interface SvgBlockOpts {
   cue?: string
 }
 
+/**
+ * Scope is a hash of the source, so the same drawing twice in one document would share
+ * ids (`url(#g)` resolves to the first, possibly hidden, copy). Each repeat in a render
+ * gets a distinct suffix. The counter resets at the start of every outer render
+ * (markdownItPlugin), so output stays deterministic: same doc -> same bytes.
+ */
+const scopeSeen = new Map<string, number>()
+export function resetSvgScopes(): void {
+  scopeSeen.clear()
+}
+
+function uniqueScope(html: string, scope: string): { html: string; scope: string } {
+  const n = scopeSeen.get(scope) ?? 0
+  scopeSeen.set(scope, n + 1)
+  if (n === 0) return { html, scope }
+  const next = `${scope}x${n}`
+  return { html: html.split(scope).join(next), scope: next }
+}
+
 const DEFAULT_LABEL = 'SVG drawing'
 const EXCERPT_LINES = 6
 const EXCERPT_COLS = 120
@@ -97,6 +116,7 @@ export function renderSvgBlock(
   const res = sanitizeSvg(src)
   if (!res.ok) return renderSvgError(src, res.error, esc, cue)
 
+  const { html, scope } = uniqueScope(res.html, res.scope)
   const title = opts.title?.trim()
   const caption = opts.caption?.trim()
   const label = esc(title || DEFAULT_LABEL)
@@ -111,7 +131,7 @@ export function renderSvgBlock(
   return (
     `<figure class="em-svg"${widthStyle(opts.width)}${cue}>` +
     `<div class="em-svg__frame">${titleBar}` +
-    `<div class="em-svg__canvas ${res.scope}" role="img" aria-label="${label}">${res.html}</div>` +
+    `<div class="em-svg__canvas ${scope}" role="img" aria-label="${label}">${html}</div>` +
     `</div>${captionHtml}</figure>\n`
   )
 }
