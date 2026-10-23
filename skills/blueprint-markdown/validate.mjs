@@ -319,7 +319,7 @@ const SVG_RISKS = [
   [/<script\b/i, '<script>'],
   [/\son[a-z]+\s*=/i, 'on*= event handler'],
   [/<foreignObject\b/i, '<foreignObject>'],
-  [/(?:\bhref\s*=\s*["']?\s*|url\(\s*["']?\s*|@import\s*["']?\s*)(?:https?:)?\/\//i, 'external URL'],
+  [/(?:\bhref\s*=\s*(?:["']\s*)?|url\(\s*(?:["']\s*)?|@import\s*(?:["']\s*)?)(?:https?:)?\/\//i, 'external URL'],
   [/<(?:animate|animateTransform|animateMotion|set)\b/i, 'SMIL animation'],
 ]
 {

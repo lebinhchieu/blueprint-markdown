@@ -19,9 +19,9 @@ function unwrapFence(lines: string[]): string[] {
   let last = lines.length - 1
   while (last >= 0 && lines[last].trim() === '') last--
   if (first < 0 || last <= first) return lines
-  const open = lines[first].match(/^\s*(`{3,}|~{3,})\s*(svg|xml)?\s*$/i)
+  const open = lines[first].trim().match(/^(`{3,}|~{3,})\s*(svg|xml)?$/i)
   if (!open) return lines
-  const close = lines[last].match(/^\s*(`{3,}|~{3,})\s*$/)
+  const close = lines[last].trim().match(/^(`{3,}|~{3,})$/)
   if (!close || close[1][0] !== open[1][0] || close[1].length < open[1].length) return lines
   const inner = lines.slice(first + 1, last)
   // A second fence line inside means this is not one single wrapping block.
@@ -40,7 +40,7 @@ export const svgDirectives: Record<string, DirectiveSpec> = {
         return renderSvgError('', { kind: 'malformed' }, ctx.esc, '')
       }
       let lines: string[] = []
-      for (const c of children) if (c.type === 'text') lines = lines.concat(c.lines)
+      for (const c of children) if (c.type === 'text') for (const l of c.lines) lines.push(l)
       const src = unwrapFence(lines).join('\n')
       return renderSvgBlock(
         src,
