@@ -154,9 +154,10 @@ function varsOk(v: string): boolean {
     else if (c === ')' && --depth < 0) return false
   }
   if (depth !== 0) return false
+  const lv = v.toLowerCase()
   let from = 0
   for (;;) {
-    const at = v.toLowerCase().indexOf('var(', from)
+    const at = lv.indexOf('var(', from)
     if (at < 0) return true
     let d = 1
     let j = at + 4
@@ -386,6 +387,11 @@ function buildAttrs(tag: string, raw: RawAttr[], scope: string, isRoot: boolean)
       if (toks.length) out.push(`class="${escAttr(toks.join(' '))}"`)
       continue
     }
+    if (cn === 'aria-labelledby') {
+      const toks = value.split(/\s+/).filter((t) => ID_RE.test(t)).map((t) => `${scope}-${t}`)
+      if (toks.length) out.push(`aria-labelledby="${escAttr(toks.join(' '))}"`)
+      continue
+    }
     if (cn === 'style') {
       style = filterDecls(value, scope)
       continue
@@ -446,8 +452,9 @@ function run(src: string): SvgResult {
   const top = () => stack[stack.length - 1]
   const dropping = () => stack.length > 0 && top().mode === 'drop'
 
+  let lowerSrc: string | undefined
   const rawSkip = (key: string, from: number): { content: string; next: number } => {
-    const lower = src.toLowerCase()
+    const lower = (lowerSrc ??= src.toLowerCase())
     const at = lower.indexOf('</' + key, from)
     if (at < 0) throw new Fail({ kind: 'malformed' })
     let j = at + 2 + key.length
@@ -491,10 +498,13 @@ function run(src: string): SvgResult {
     }
     if (src.startsWith('<!', i)) {
       // DOCTYPE (with optional [internal subset]) and anything else <!…>: dropped, never expanded
+      if (++elements > MAX_ELEMENTS) throw new Fail({ kind: 'too-complex' })
       let j = i + 2
       const gt = src.indexOf('>', j)
-      const br = src.indexOf('[', j)
-      if (br >= 0 && (gt < 0 || br < gt)) {
+      if (gt < 0) throw new Fail({ kind: 'malformed' })
+      let br = -1
+      for (let k = j; k < gt; k++) if (src[k] === '[') { br = k; break }
+      if (br >= 0) {
         const close = src.indexOf(']', br + 1)
         if (close < 0) throw new Fail({ kind: 'malformed' })
         j = close + 1
