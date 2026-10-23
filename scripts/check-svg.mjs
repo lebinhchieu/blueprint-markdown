@@ -43,7 +43,7 @@ function rescan(html, label) {
   const bad = (m) => fail(`rescan[${label}]: ${m}\n  ${html.slice(0, 300)}`)
   checks++
   if (!/^<svg[\s>]/.test(html) || !html.endsWith('</svg>')) return bad('not <svg>…</svg>')
-  if (/<script|foreignobject|<!|<\?/i.test(html)) return bad('forbidden marker')
+  if (/<script|<!|<\?/i.test(html)) return bad('forbidden marker')
   const tagRe = /<(\/?)([A-Za-z][\w:-]*)((?:[^>"]|"[^"]*")*)>/g
   let m
   let consumed = 0
@@ -69,8 +69,9 @@ function rescan(html, label) {
   for (const s of html.matchAll(/<style>([\s\S]*?)<\/style>/g)) {
     if (/@|url\((?!#)|\\|expression|javascript|https?:|<|&(?!amp;|lt;|gt;)/i.test(s[1])) return bad(`style ${s[1]}`)
   }
-  // text between tags must have no raw '<'
-  if (/>[^<]*</.test('')) return bad('x')
+  // leftover text (tags removed): no raw < or >, only safe entities
+  const left = html.replace(tagRe, '')
+  if (/[<>]/.test(left.replace(/<style>[\s\S]*?<\/style>/g, '')) || /&(?!amp;|lt;|gt;|quot;)/.test(left)) return bad('unescaped text')
   if (consumed === 0) return bad('no tags')
 }
 
@@ -193,6 +194,8 @@ console.log(`hostile: ${hostile.length}`)
   ok(syn.ok && /viewBox="0 0 120 60"/.test(syn.html), 'viewBox synthesized from width/height')
   const hv = sanitizeSvg('<svg viewBox="0 0 9 9"><rect fill="var(--c-primary)" stroke="currentColor" width="5" height="5"/></svg>')
   ok(hv.ok && /style="fill:var\(--c-primary\)"/.test(hv.html) && /stroke="currentColor"/.test(hv.html) && !/ fill=/.test(hv.html), 'var() presentation attr moved to style')
+  const al = sanitizeSvg('<svg viewBox="0 0 9 9" aria-labelledby="t d x:y"><title id="t">T</title><desc id="d">D</desc><rect width="5" height="5"/></svg>')
+  ok(al.ok && al.html.includes(`aria-labelledby="${al.scope}-t ${al.scope}-d"`), 'aria-labelledby tokens scoped')
   const cd = sanitizeSvg('<svg viewBox="0 0 9 9"><rect width="5" height="5"/></svg>')
   ok(cd.ok && !/xmlns|role|aria/.test(cd.html), 'no xmlns/role/aria added')
 }
@@ -205,7 +208,7 @@ const normTree = (s) => {
       if (m[1]) continue
       let name = m[2].toLowerCase()
       if (name === 'a' || name === 'style') continue
-      const attrs = [...m[3].matchAll(/\s([^\s=]+)\s*=/g)].map((x) => x[1].toLowerCase().replace('xlink:href', 'href')).filter((x) => !x.startsWith('xmlns')).sort()
+      const attrs = [...m[3].matchAll(/\s([^\s=]+)\s*=\s*"([^"]*)"/g)].map((x) => x[1].toLowerCase().replace('xlink:href', 'href') + '=' + x[2]).filter((x) => !x.startsWith('xmlns')).sort()
       toks.push(name + '[' + attrs.join(',') + ']')
     } else if (m[5] && m[5].trim()) toks.push('#' + m[5].replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim())
   }
@@ -222,10 +225,18 @@ const normTree = (s) => {
     if (r.ok && /<style>/.test(src)) ok(/<style>/.test(r.html), `realistic ${f} keeps <style>`)
     if (r.ok) {
       // <a> + dropped-xmlns are the only expected structural differences; both normalised away
-      const prep = (x) => x.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<style>[\s\S]*?<\/style>/g, '')
-        .replace(/\s(?:fill|stroke|stop-color|flood-color)="var\([^"]*"/g, ' style="x"').replace(/\sviewBox="[^"]*"/g, '')
-      const a = normTree(prep(src))
-      const b = normTree(prep(r.html))
+      const hadVB = /viewBox=/i.test(src)
+      const prep = (x, side) => {
+        let t = x.replace(/<\?[\s\S]*?\?>|<!--[\s\S]*?-->|<style>[\s\S]*?<\/style>/g, '')
+        if (side === 'in') t = t.replace(/\s(fill|stroke|stop-color|flood-color)="(var\([^"]*)"/g, ' style="$1:$2"')
+        else {
+          t = t.split(r.scope + '-').join('')
+          if (!hadVB) t = t.replace(/\sviewBox="[^"]*"/, '')
+        }
+        return t
+      }
+      const a = normTree(prep(src, 'in'))
+      const b = normTree(prep(r.html, 'out'))
       ok(a === b, `realistic ${f} structural equality\n  in:  ${a.slice(0, 300)}\n  out: ${b.slice(0, 300)}`)
     }
   }
@@ -246,10 +257,18 @@ const normTree = (s) => {
     '<svg>', '</svg>', '<a href="javascript:x()">', '</a>', '<title>', '</title>', '<!DOCTYPE x [', ']>', '\u0000', 'style="fill:var(--a)"', ' class="mermaid"']
   let okCount = 0
   let errCount = 0
-  const N = 2500
+  const N = 7000
   for (let n = 0; n < N; n++) {
     let s = pick(seeds)
-    const ops = 1 + Math.floor(rnd() * 5)
+    if (n % 2) {
+      // gentle mode: one value-level mutation that keeps the markup well-formed, so most cases reach the re-scan
+      const p = s.indexOf('<rect') >= 0 ? s.indexOf('<rect') + 5 : s.indexOf('<svg') + 4
+      const ins = pick([' onload="x()"', ' href="http://e.test"', ' fill="url(http://e.test)"', ' class="mermaid code-line"', ' style="fill:url(http://e.test);position:fixed"',
+        ' id="a b"', ' ONCLICK="x()"', ' xlink:href="javascript:x()"', ' data-x="1"', ' fill="var(--c-primary)"', ' style="transform:scale(9)"', ' x="&#60;script&#62;"'])
+      s = s.slice(0, p) + ins + s.slice(p)
+      if (rnd() < 0.5) { const q = Math.floor(rnd() * s.length); s = s.slice(0, q) + pick(['<script>x</script>', '<foreignObject/>', '<g onclick="x()"/>', '<rect x="1" y="1" width="2" height="2"/>', '<!-- c -->']) + s.slice(q) }
+    }
+    const ops = n % 2 ? 0 : 1 + Math.floor(rnd() * 5)
     for (let k = 0; k < ops; k++) {
       const p = Math.floor(rnd() * (s.length + 1))
       switch (Math.floor(rnd() * 6)) {
@@ -274,7 +293,7 @@ const normTree = (s) => {
       } else fail(`fuzz #${n} pass 2 errored ${JSON.stringify(r2.error)}\n  src: ${JSON.stringify(s).slice(0, 300)}`)
     } else errCount++
   }
-  ok(okCount > 200, `fuzz produced enough ok results (${okCount})`)
+  ok(okCount >= 2000, `fuzz produced enough ok results (${okCount})`)
   console.log(`fuzz: ${N} cases, ${okCount} ok, ${errCount} errors`)
 }
 
@@ -290,6 +309,14 @@ const normTree = (s) => {
     selectors: '<svg><style>' + '.a'.repeat(50_000) + '{fill:red}</style><rect/></svg>',
     decls: '<svg><style>.a{' + 'fill:red;'.repeat(11_000) + '}</style><rect/></svg>',
     comments: '<svg>' + '<!--'.repeat(25_000),
+    styleSpam: '<svg>' + '<style></style>'.repeat(16_000) + '</svg>',
+    scriptSpam: '<svg>' + '<script></script>'.repeat(14_000) + '</svg>',
+    bangSpam: '<svg>' + '<!x>'.repeat(25_000) + '</svg>',
+    bangBracket: '<svg>' + '<!x [ ]>'.repeat(12_000) + '</svg>',
+    varSpam: '<svg><rect style="fill:' + 'var(--a)'.repeat(8_000) + '"/></svg>',
+    varSpamBig: '<svg><rect style="fill:' + 'var(--a)'.repeat(30_000) + '"/></svg>',
+    styleBig: '<svg><style>' + '.a{fill:red}'.repeat(20_000) + '</style><rect/></svg>',
+    attrsBig: '<svg>' + '<rect x="1" y="2" width="3" height="4" fill="red"/>'.repeat(4_800) + '</svg>',
     varnest: '<svg><rect style="fill:' + 'var('.repeat(30_000) + '"/></svg>',
     spaces: '<svg' + ' '.repeat(100_000),
     siblings: '<svg>' + '<rect/>'.repeat(14_000) + '</svg>',
