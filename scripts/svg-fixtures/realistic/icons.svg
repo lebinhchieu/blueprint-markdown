@@ -1,0 +1,7 @@
+<svg viewBox="0 0 120 40" width="120" height="40">
+  <style>.dot{fill:#e33}.lbl{font-size:10px;fill:#222}</style>
+  <defs><symbol id="s" viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" class="dot"/></symbol></defs>
+  <use href="#s" x="0" y="0" width="20" height="20"/>
+  <use xlink:href="#s" x="40" y="0" width="20" height="20" xmlns:xlink="http://www.w3.org/1999/xlink"/>
+  <g transform="translate(80 5)"><polygon points="0,20 15,0 30,20" fill="none" stroke="#090"/><text class="lbl" x="0" y="35">tri</text></g>
+</svg>
