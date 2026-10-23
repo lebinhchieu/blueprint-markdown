@@ -568,7 +568,7 @@ function run(src: string): SvgResult {
       const e = src.indexOf(q, j + 1)
       if (e < 0) throw new Fail({ kind: 'malformed' })
       const rawVal = src.slice(j + 1, e)
-      if (rawVal.length > MAX_ATTR_VALUE) throw new Fail({ kind: 'too-complex' })
+      if (rawVal.length > (key === 'image' && (an === 'href' || an === 'xlink:href') ? SVG_MAX_BYTES : MAX_ATTR_VALUE)) throw new Fail({ kind: 'too-complex' })
       attrs.push({ name: an, value: decodeEntities(rawVal) })
       if (attrs.length > MAX_ATTRS) throw new Fail({ kind: 'too-complex' })
       j = e + 1
@@ -608,7 +608,26 @@ function run(src: string): SvgResult {
     if (parent && parent.mode === 'drop') frame = { key, tag: '', mode: 'drop' }
     else if (parent && parent.mode === 'textonly') frame = { key, tag: '', mode: 'drop' }
     else if (key === 'a') frame = { key, tag: '', mode: 'unwrap' }
-    else if (canonTag) {
+    else if (key === 'image') {
+      // raster data: URI only (D15); anything else drops the whole element, children dropped
+      let href: string | null = null
+      for (const nm of ['href', 'xlink:href']) {
+        const a = attrs.find((x) => x.name === nm)
+        if (!a) continue
+        const v = a.value.replace(/[\u0000-\u0020\u007f-\u009f]/g, '')
+        const m = /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/]+={0,2})$/i.exec(v)
+        if (m && m[2].length % 4 === 0) {
+          href = `data:image/${m[1].toLowerCase()};base64,${m[2]}`
+          break
+        }
+      }
+      if (href === null) frame = { key, tag: '', mode: 'drop' }
+      else {
+        frame = { key, tag: 'image', mode: 'drop' }
+        out.push(`<image${buildAttrs('image', attrs, scope, false)} href="${href}">`)
+        drawable++
+      }
+    } else if (canonTag) {
       const textOnly = canonTag === 'title' || canonTag === 'desc'
       frame = { key, tag: canonTag, mode: textOnly ? 'textonly' : 'keep' }
       const built = buildAttrs(canonTag, attrs, scope, stack.length === 0)

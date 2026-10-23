@@ -27,7 +27,7 @@ const ok = (cond, msg) => { checks++; if (!cond) fail(msg) }
 // ───────── independent re-scan (own tables) ─────────
 const R_TAGS = new Set(('svg g defs symbol use path rect circle ellipse line polyline polygon text tspan textpath title desc ' +
   'lineargradient radialgradient stop pattern clippath mask marker filter fegaussianblur fedropshadow feoffset feflood ' +
-  'femerge femergenode fecomposite style').split(' '))
+  'femerge femergenode fecomposite style image').split(' '))
 const R_ATTRS = new Set(('x y width height cx cy r rx ry x1 y1 x2 y2 points d pathlength dx dy rotate textlength lengthadjust refx refy ' +
   'markerwidth markerheight markerunits orient viewbox preserveaspectratio transform fx fy fr gradientunits gradienttransform ' +
   'spreadmethod patternunits patterncontentunits patterntransform clippathunits maskunits maskcontentunits primitiveunits ' +
@@ -58,9 +58,10 @@ function rescan(html, label) {
       const an = a[1].toLowerCase()
       const val = a[2]
       if (!R_ATTRS.has(an) || /^on/.test(an)) return bad(`attr ${an}`)
-      if (an === 'href' && !/^#[\w.-]+$/.test(val)) return bad(`href ${val}`)
+      if (an === 'href' && !/^#[\w.-]+$/.test(val) && !(name.toLowerCase() === 'image' && /^data:image\/(?:png|jpeg|gif|webp);base64,[A-Za-z0-9+\/]+={0,2}$/.test(val))) return bad(`href ${val.slice(0, 80)}`)
       if (/url\(/i.test(val) && !/^(?:[^u]|u(?!rl\())*(?:url\(#[\w.-]+\)(?:[^u]|u(?!rl\())*)+$/i.test(val)) return bad(`url ${val}`)
-      if (/javascript:|https?:|data:|expression|@import|&#|\\/i.test(val) && an !== 'aria-label') return bad(`value ${val}`)
+      if (/javascript:|https?:|expression|@import|&#|\\/i.test(val) && an !== 'aria-label') return bad(`value ${val}`)
+      if (/data:/i.test(val) && an !== 'aria-label' && !(an === 'href' && name.toLowerCase() === 'image')) return bad(`value ${val}`)
     }
     if (used !== rest.length) return bad(`unparsed attr text: ${rest}`)
     consumed++
@@ -156,6 +157,20 @@ const hostile = [
   ['multibyte over byte cap', '<svg viewBox="0 0 1 1">' + R + '<desc>' + '€'.repeat(90000) + '</desc></svg>', (r) => !r.ok && r.error.kind === 'too-large'],
   ['style output expansion cap', S(`<style>${'.a{fill:red}'.repeat(1)}${'.a,'.repeat(80000)}.b{fill:red}</style>${R}`), (r) => !r.ok || r.html.length <= 512 * 1024],
   ['closed-nested var perf', S(`<rect style="fill:${'var(--a,'.repeat(7000)}red${')'.repeat(7000)}" x="1" y="1" width="3" height="3"/>`), (r) => !r.ok || !/var\(--a,var/.test(r.html)],
+  ...['png', 'gif', 'jpeg', 'webp'].flatMap((m) => ['href', 'xlink:href'].map((h) => [`image ${m} ${h}`, S(`<image ${h}="data:image/${m};base64,iVBORw0KGgo=" x="1" y="1" width="4" height="4"/>${R}`), (r) => r.ok && r.html.includes(`<image `) && r.html.includes(`href="data:image/${m};base64,iVBORw0KGgo="`) && !/xlink/.test(r.html)])),
+  ['image upper-case mime, ws/tab in body', S(`<image href="DATA:IMAGE/PNG;BASE64,iVBO&#9;Rw0K Ggo=" width="4" height="4"/>${R}`), (r) => r.ok && r.html.includes('href="data:image/png;base64,iVBORw0KGgo="')],
+  ['image in defs/pattern', S(`<defs><pattern id="p" width="4" height="4"><image href="data:image/gif;base64,R0lGODlh" width="4" height="4"/></pattern></defs>${R}`), (r) => r.ok && r.html.includes('data:image/gif')],
+  ...[
+    ['svg+xml', 'data:image/svg+xml;base64,PHN2Zz4='], ['text/html', 'data:text/html;base64,PGI+'], ['octet-stream', 'data:application/octet-stream;base64,AAAA'],
+    ['non-base64', 'data:image/png,abcd'], ['charset', 'data:image/png;charset=utf-8;base64,AAAA'], ['http', 'http://e.test/a.png'], ['https', 'https://e.test/a.png'],
+    ['relative', 'a.png'], ['protocol-rel', '//e.test/a.png'], ['javascript', 'javascript:alert(1)'], ['id', '#a'], ['entity-obf svg', 'data:image/s&#118;g+xml;base64,PHN2Zz4='],
+    ['tab-obf html', 'da\tta:text/html;base64,PGI+'], ['bad len', 'data:image/png;base64,AAA'], ['quote in body', 'data:image/png;base64,AA&quot;AA'], ['lt in body', 'data:image/png;base64,AA&lt;A'],
+    ['empty body', 'data:image/png;base64,'], ['pad middle', 'data:image/png;base64,AA=AAAAA'],
+  ].map(([nm, v]) => [`image invalid: ${nm}`, S(`<image href="${v}" width="4" height="4"/>${R}`), (r) => r.ok && !/<image|data:|e\.test|javascript/i.test(r.html)]),
+  ['image children dropped', S(`<image href="data:image/png;base64,AAAA" width="2" height="2"><rect id="k"/><script>x</script></image>${R}`), (r) => r.ok && r.html.includes('<image ') && !/id="[^"]*-k"/.test(r.html)],
+  ['data: on use/other dropped', S(`<use href="data:image/png;base64,AAAA"/><linearGradient id="g" href="data:image/png;base64,AAAA"/>${R}`), (r) => r.ok && !/data:/.test(r.html)],
+  ['feImage dropped', S(`<filter id="f"><feImage href="data:image/png;base64,AAAA"/></filter>${R}`), (r) => r.ok && !/feImage|data:/i.test(r.html)],
+  ['image 200KB valid', S(`<image href="data:image/png;base64,${'A'.repeat(200000)}" width="4" height="4"/>${R}`), (r) => r.ok && r.html.includes('A'.repeat(1000))],
   ['quoted } in style value', S(`<style>.a{font-family:"}body{display:none";fill:red} .b{fill:blue}</style>${R}`), (r) => r.ok && !/(^|[^.\w ])body\{/.test(r.html.replace(/\.s\w+ body\{/g, '')) && !/display:none/.test(r.html)],
   ['quoted ; and newline in string', S(`<style>.a{font-family:"a;fill:red\n";x:y} .b{fill:blue}</style>${R}`), (r) => r.ok && !/fill:red/.test(r.html)],
   ['</style><script> inside style', S(`<style>.a{fill:red}</style><script>alert(1)</script>${R}`), (r) => r.ok && !/script|alert/.test(r.html)],
@@ -329,6 +344,7 @@ const normTree = (s) => {
     attrsBig: '<svg>' + '<rect x="1" y="2" width="3" height="4" fill="red"/>'.repeat(4_800) + '</svg>',
     varNestClosed: '<svg>' + ('<rect style="fill:' + 'var(--a,'.repeat(7_000) + 'red' + ')'.repeat(7_000) + '"/>').repeat(3) + '</svg>',
     selExpand: '<svg><style>' + '.a,'.repeat(80_000) + '.b{fill:red}</style><rect/></svg>',
+    imageBig: '<svg><image href="data:image/png;base64,' + 'A'.repeat(200_000) + '" width="4" height="4"/><rect/></svg>',
     varnest: '<svg><rect style="fill:' + 'var('.repeat(30_000) + '"/></svg>',
     spaces: '<svg' + ' '.repeat(100_000),
     siblings: '<svg>' + '<rect/>'.repeat(14_000) + '</svg>',
