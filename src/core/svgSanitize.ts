@@ -440,9 +440,9 @@ interface Frame {
 
 const NAME_RE = /^[A-Za-z][A-Za-z0-9:_.-]*$/
 
-function run(src: string): SvgResult {
+function run(src: string, salt: number): SvgResult {
   const n = src.length
-  const scope = 's' + cyrb53(src.trim()).toString(36)
+  const scope = 's' + cyrb53(src.trim() + (salt ? '\0' + salt : '')).toString(36)
   const out: string[] = []
   const stack: Frame[] = []
   let rootSeen = false
@@ -568,7 +568,7 @@ function run(src: string): SvgResult {
       const e = src.indexOf(q, j + 1)
       if (e < 0) throw new Fail({ kind: 'malformed' })
       const rawVal = src.slice(j + 1, e)
-      if (rawVal.length > MAX_ATTR_VALUE) throw new Fail({ kind: 'too-complex' })
+      if (rawVal.length > (key === 'image' && (an === 'href' || an === 'xlink:href') ? SVG_MAX_BYTES : MAX_ATTR_VALUE)) throw new Fail({ kind: 'too-complex' })
       attrs.push({ name: an, value: decodeEntities(rawVal) })
       if (attrs.length > MAX_ATTRS) throw new Fail({ kind: 'too-complex' })
       j = e + 1
@@ -608,7 +608,26 @@ function run(src: string): SvgResult {
     if (parent && parent.mode === 'drop') frame = { key, tag: '', mode: 'drop' }
     else if (parent && parent.mode === 'textonly') frame = { key, tag: '', mode: 'drop' }
     else if (key === 'a') frame = { key, tag: '', mode: 'unwrap' }
-    else if (canonTag) {
+    else if (key === 'image') {
+      // raster data: URI only (D15); anything else drops the whole element, children dropped
+      let href: string | null = null
+      for (const nm of ['href', 'xlink:href']) {
+        const a = attrs.find((x) => x.name === nm)
+        if (!a) continue
+        const v = a.value.replace(/[\u0000-\u0020\u007f-\u009f]/g, '')
+        const m = /^data:image\/(png|jpeg|gif|webp);base64,([A-Za-z0-9+/]+={0,2})$/i.exec(v)
+        if (m && m[2].length % 4 === 0) {
+          href = `data:image/${m[1].toLowerCase()};base64,${m[2]}`
+          break
+        }
+      }
+      if (href === null) frame = { key, tag: '', mode: 'drop' }
+      else {
+        frame = { key, tag: 'image', mode: 'drop' }
+        out.push(`<image${buildAttrs('image', attrs, scope, false)} href="${href}">`)
+        drawable++
+      }
+    } else if (canonTag) {
       const textOnly = canonTag === 'title' || canonTag === 'desc'
       frame = { key, tag: canonTag, mode: textOnly ? 'textonly' : 'keep' }
       const built = buildAttrs(canonTag, attrs, scope, stack.length === 0)
@@ -643,13 +662,13 @@ function run(src: string): SvgResult {
   return { ok: true, html, scope }
 }
 
-export function sanitizeSvg(src: string): SvgResult {
+export function sanitizeSvg(src: string, salt = 0): SvgResult {
   if (src.charCodeAt(0) === 0xfeff) src = src.slice(1)
   if (src.trim() === '') return { ok: false, error: { kind: 'empty' } }
   const bytes = src.length * 3 > SVG_MAX_BYTES ? new TextEncoder().encode(src).length : src.length
   if (bytes > SVG_MAX_BYTES) return { ok: false, error: { kind: 'too-large', kb: Math.ceil(bytes / 1024) } }
   try {
-    return run(src)
+    return run(src, salt)
   } catch (e) {
     if (e instanceof Fail) return { ok: false, error: e.error }
     return { ok: false, error: { kind: 'malformed' } }
