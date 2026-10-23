@@ -31,6 +31,7 @@ import { installInlineRule, installHexColorRule } from './core/inline'
 import { installFenceRenderer } from './core/fence'
 import { installInlineCodeRenderer } from './core/inline-code'
 import { createRenderTree } from './core/renderer'
+import { resetSvgOccurrences } from './core/svgBlock'
 
 // ─── Theme resolution ─────────────────────────────────────────────────────────
 
@@ -241,6 +242,11 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
   // This runs on the OUTER md only (never privateMd) and calls resolveTheme()
   // fresh on every render so config changes are picked up immediately after
   // markdown.preview.refresh fires.
+  // Per-render svg scope counter (svgBlock.ts): reset first so repeats get stable suffixes.
+  md.core.ruler.before('normalize', 'em_svg_reset', (state: StateCore) => {
+    if (!state.inlineMode) resetSvgOccurrences()
+    return false
+  })
   md.core.ruler.push('em_theme_marker', (state: StateCore) => {
     // Skip nested renderInline() calls — inlineMode=true there — so the <div>
     // is never injected inside button/tooltip/chip anchor text.
