@@ -52,6 +52,7 @@ the rest of the file.
 | `:::callout{…}` … `:::` | `::callout{…}` … `::` |
 | `::progress{…}` | `:::progress{…}` (`::` leaf-only) |
 | `:::col` | `:::column` |
+| `:::svg{…}` + raw `<svg>` + `:::` | `::svg{…}` or `::: svg` (container only) |
 | `:::steps` → `:::step{…}` | `:::steps` over a `1.` list (tabs/steps style only their own children) |
 | opener alone on its line, body below | body on the opener line |
 
@@ -72,6 +73,9 @@ Containers (`:::`):
   markers linking code lines, image regions or phrases (`:marker[phrase]{n=1}`) to margin
   notes; notes pair with material by number, inside one `:::annotated`
 - `question{id title multi rec="…"}` + `option{title rec}` + `qa-copy` — answerable Q&A (answers stay in browser localStorage; Copy button). Used by the blueprint-grill skill
+- `svg{title caption width}` — static inline SVG (body = raw `<svg>`); quick unlabeled form (no attrs, no sizing) is a
+  ` ```svg ` fence. **Use `mermaid` for flows/sequence/ER/state (auto-layout, pan/zoom); `svg` for
+  custom illustrations, icons, charts and layouts mermaid can't express.** Rules below.
 - `toc=h1|h2|h3` on card/callout/details/step makes the title a real heading (feeds TOC rail)
 
 Leaf (`::`): `::progress{value max color label}`
@@ -107,6 +111,16 @@ Callout body.
 
 GFM extras: ` ```js {1,3-5} title="app.js" ` line highlight/title · ` ```diff lang=ts ` (paste
 `git diff`) · ` ```mermaid ` · ` ```ts start=40 marks="1:1" ` markers.
+
+**SVG rules** (`:::svg` / ` ```svg `; details + token table: `references/syntax.md` `:::svg`):
+always a `viewBox`, no `width`/`height` on `<svg>` (size with `:::svg{width=240}`; add it for icons
+and small diagrams); colour with theme tokens `var(--c-info)`, `var(--c-info-bg)`,
+`var(--c-info-text)`, `var(--text-base)`, `var(--border-color)` or `currentColor`, no hard-coded
+hex/`black`/`#fff`; pair `-bg` fill + `-text` label + `--c-role` stroke. Never `<script>`, `on*=`,
+`<foreignObject>`, external URLs, animation (stripped silently). Don't pre-prefix ids. `title=` is
+the accessible name; `caption=` is inline markdown. To show SVG *source*, use ` ```xml `.
+An existing ` ```svg ` fence now draws instead of showing code.
+
 Heading `{#anchor}` works only inside `:::explorer`; elsewhere it prints literally.
 
 Colors: `primary success warning danger info gray low` (+ `purple teal pink cyan`; aliases
@@ -121,4 +135,4 @@ node <this skill's dir>/validate.mjs path/to/file.md
 ```
 
 Catches unclosed containers, unknown names, wrong form (`:::progress`), near-misses
-(`::: card`, `::::name`). Block directives only; check inline `:name[…]` by eye.
+(`::: card`, `::::name`), `::svg`, unknown `:::svg` attrs, and script/`on*=`/`<foreignObject>`/external URLs inside an svg block (warnings). Block directives only; check inline `:name[…]` by eye.

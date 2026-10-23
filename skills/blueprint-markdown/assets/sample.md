@@ -237,6 +237,34 @@ The renderer runs entirely in the browser — no build step required.
 
 ---
 
+## SVG drawings
+
+Directive form: title, caption and width. Colours come from theme tokens, so it follows the theme.
+
+:::svg{title="Request path" caption="Client calls the **API**, which reads the store." width=480}
+<svg viewBox="0 0 480 120">
+  <rect x="10" y="30" width="110" height="60" rx="8" style="fill:var(--c-info-bg);stroke:var(--c-info)" stroke-width="2"/>
+  <text x="65" y="66" text-anchor="middle" font-size="16" fill="var(--c-info-text)">Client</text>
+  <rect x="185" y="30" width="110" height="60" rx="8" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
+  <text x="240" y="66" text-anchor="middle" font-size="16" fill="var(--c-success-text)">API</text>
+  <rect x="360" y="30" width="110" height="60" rx="8" style="fill:var(--c-warning-bg);stroke:var(--c-warning)" stroke-width="2"/>
+  <text x="415" y="66" text-anchor="middle" font-size="16" fill="var(--c-warning-text)">Store</text>
+  <path d="M120 60 H185 M295 60 H360" stroke="currentColor" stroke-width="2" fill="none"/>
+</svg>
+:::
+
+Fence form: a quick sketch, no title or caption.
+
+```svg
+<svg viewBox="0 0 120 60">
+  <circle cx="30" cy="30" r="20" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
+  <path d="M20 30 l8 8 l14 -16" fill="none" style="stroke:var(--c-success)" stroke-width="3"/>
+  <text x="62" y="36" font-size="16">Done</text>
+</svg>
+```
+
+---
+
 ## Inline elements
 
 ### Chips

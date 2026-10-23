@@ -3,7 +3,7 @@
 ## Contents
 
 Color tokens · Containers (card, cards, callouts, details, accordion, columns/col,
-timeline/event, tabs/tab, steps/step, revision/previous, annotated/marker/pins/pin, compare, question/option/qa-copy) ·
+timeline/event, tabs/tab, steps/step, revision/previous, annotated/marker/pins/pin, compare, question/option/qa-copy, svg) ·
 Leaf (progress) · Inline (chip, icon, color, kbd, button, tooltip, rating, comment, ai, tag) ·
 Fenced code extensions · Strict syntax nuances · Fail-soft rule.
 
@@ -390,6 +390,66 @@ Needs a server.
 
 Every question gets a Notes/other textarea. Clicks inside an option's body never select it —
 only its header button does. `qa-copy` is a container (empty), not a leaf.
+
+### `:::svg` — static SVG drawing
+
+Draws inline SVG (custom illustrations, icons, charts, layouts). Static: no pan/zoom. Use
+`mermaid` for flows/sequence/ER/state (auto-layout); `svg` for what mermaid can't express.
+Two forms, same rendering:
+
+````
+:::svg{title="Service" caption="Happy path" width=360}
+<svg viewBox="0 0 240 90">
+  <rect x="10" y="10" width="220" height="70" rx="8" style="fill:var(--c-info-bg);stroke:var(--c-info)" stroke-width="2"/>
+  <text x="120" y="52" text-anchor="middle" font-size="16" fill="var(--c-info-text)">Service</text>
+</svg>
+:::
+
+```svg
+<svg viewBox="0 0 120 60">
+  <circle cx="30" cy="30" r="20" style="fill:var(--c-success-bg);stroke:var(--c-success)" stroke-width="2"/>
+  <path d="M20 30 l8 8 l14 -16" fill="none" style="stroke:var(--c-success)" stroke-width="3"/>
+</svg>
+```
+````
+
+| Form | Attrs | Notes |
+|------|-------|-------|
+| `:::svg{…}` … `:::` | `title`, `caption`, `width` | Container only (`::svg` and `::: svg` don't work). Body is the raw `<svg>` (a single ` ```svg ` fence inside is unwrapped). Other attrs are ignored. |
+| ` ```svg ` fence | none | Frame only; info-string words (`title=`) are ignored. Use `xml` (or a 4-backtick outer fence) to show SVG *source*. |
+
+| Attr | Values | Default |
+|------|--------|---------|
+| `title` | plain text (no markdown); visible title bar and the accessible name | none; accessible name is `SVG drawing` |
+| `caption` | inline markdown, shown under the drawing | none |
+| `width` | 1-4 digits with optional `px` or `%`, e.g. `360`, `50%`; anything else ignored | full column |
+
+**Authoring rules**
+
+- Always give a `viewBox`; omit `width`/`height` on `<svg>` (size the figure with `width=`). Add `width=` for icons and small diagrams, otherwise a viewBox-only drawing fills the column (capped at 32rem tall).
+- Colour with theme tokens through `var()` or `currentColor`; no hard-coded hex (brand colours excepted; they don't follow dark themes). Unfilled `<text>`/shapes already take `--text-base`, so never set `fill="black"`/`"#000"`/`"#fff"`.
+- Never: `<script>`, `on*=` handlers, `<foreignObject>`, external URLs (`http(s):`), animation/SMIL (`<animate>`, `<set>`, CSS `@keyframes`). The renderer removes them silently, and `validate.mjs` warns.
+- Allowed: shapes, `text`/`tspan`/`textPath`, gradients, `pattern`, `clipPath`, `mask`, `marker`, basic `filter` blur/shadow, `<style>` (rules scoped to the figure; no `@` rules), `<title>`/`<desc>`, and raster `<image href="data:image/png|jpeg|gif|webp;base64,…">`. Other `data:` URIs are removed.
+- Ids, `#ref`, `url(#…)` and author class names are prefixed per block, so figures never clash; don't prefix by hand. Only `em-svg-*` classes pass through.
+- Limits: 256 KB source, 20 000 elements, depth 64. Over a limit or malformed markup shows a red "Can't draw this SVG" callout in place.
+- Accepted residuals: decompression-bomb image dimensions, animated GIF/WebP.
+
+**Theme tokens** (defined for every theme)
+
+| Use for | Tokens |
+|---|---|
+| Stroke / accent | `--c-{role}` |
+| Soft fill | `--c-{role}-bg` |
+| Text on a soft fill | `--c-{role}-text` |
+| Text on a solid `--c-{role}` fill | `--text-on-solid` |
+| Roles | `primary success warning danger info gray low purple teal pink cyan` |
+| Neutral text | `--text-base`, `--text-muted`, `--text-faint` |
+| Neutral surfaces / lines | `--bg-base`, `--bg-surface`, `--bg-raised`, `--bg-overlay`, `--border-color` |
+
+Pair a `-bg` fill with a `-text` label and a `--c-role` stroke: readable in all themes.
+Both `fill="var(--c-info)"` and `style="fill:var(--c-info)"` work; optional fallback
+`var(--c-primary, #c05a28)`. Palette classes may replace `var()`: `em-svg-{role}` (soft fill +
+stroke), `em-svg-{role}-text`, `em-svg-{role}-solid`, plus `em-svg-text`, `em-svg-muted`, `em-svg-line`.
 
 ---
 
