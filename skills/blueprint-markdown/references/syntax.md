@@ -299,7 +299,7 @@ For word-level change emphasis, use `==highlight==` inside the current or previo
 Numbered markers that link material to margin notes. A number appears on the material and on
 its note; hovering or clicking either lights both (scoped to the nearest `:::annotated`).
 
-```
+````
 :::annotated
 ```ts start=40 marks="1:1 4:2" title="auth.ts"
 function login(user) {
@@ -317,7 +317,7 @@ The :marker[token is signed]{n=1} before it is stored.
 Note text.
 :::
 :::
-```
+````
 
 On a wide container (≥ 760 px) notes sit in a side column level with their marker; narrow
 screens stack them under the material.
