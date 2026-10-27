@@ -10,21 +10,21 @@ body[data-em-size="S"] .chip { padding: 0.25em 0.6em; }
 body[data-em-size="S"] h1 { font-size: 2.1rem; }
 body[data-em-size="S"] h2 { font-size: 1.4rem; }
 body[data-em-size="S"] h3 { font-size: 1.15rem; }
-/* M = default; also applies when body has no data-em-size (17px body, 15px table/code, 14px chip) */
-body:not([data-em-size]),
+/* M = default; also applies when data-em-size is missing or unknown (17px body, 15px table/code, 14px chip) */
+body:not([data-em-size="S"]):not([data-em-size="L"]),
 body[data-em-size="M"] {
   --font-size-sm:   0.9375rem;
   --font-size-base: 1.0625rem;
   --font-size-lg:   1.1875rem;
   --chip-font-size: 0.875rem;
 }
-body:not([data-em-size]) .chip,
+body:not([data-em-size="S"]):not([data-em-size="L"]) .chip,
 body[data-em-size="M"] .chip { padding: 0.28em 0.7em; }
-body:not([data-em-size]) h1,
+body:not([data-em-size="S"]):not([data-em-size="L"]) h1,
 body[data-em-size="M"] h1 { font-size: 2.25rem; }
-body:not([data-em-size]) h2,
+body:not([data-em-size="S"]):not([data-em-size="L"]) h2,
 body[data-em-size="M"] h2 { font-size: 1.55rem; }
-body:not([data-em-size]) h3,
+body:not([data-em-size="S"]):not([data-em-size="L"]) h3,
 body[data-em-size="M"] h3 { font-size: 1.28rem; }
 /* L (18px body, 16px table/code, 15px chip) */
 body[data-em-size="L"] {
