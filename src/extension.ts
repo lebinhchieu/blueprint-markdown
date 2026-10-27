@@ -244,6 +244,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (
         e.affectsConfiguration('blueprintMarkdown.theme') ||
         e.affectsConfiguration('blueprintMarkdown.toc') ||
+        e.affectsConfiguration('blueprintMarkdown.fontSize') ||
         e.affectsConfiguration('blueprintMarkdown.forceMotion')
       ) {
         refresh()

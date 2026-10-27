@@ -450,7 +450,7 @@ console.log('Wrote: media/hljs.css')
 // ─── Step 3.75: Assemble minified export-styles CSS (combined + per-theme) ───
 
 {
-  const BASE_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css']
+  const BASE_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css', 'sizes.css']
   const baseCss = BASE_CSS.map(f => fs.readFileSync(`media/${f}`, 'utf8')).join('\n')
   const fontsCss = fs.readFileSync('media/fonts.css', 'utf8')
     .replace(/@font-face\s*\{[^}]*\}\s*/g, '')

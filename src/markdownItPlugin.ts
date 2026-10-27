@@ -60,6 +60,14 @@ function resolveToc(): string {
     .get<string>('toc', 'h3')
 }
 
+/** Read blueprintMarkdown.fontSize: 'S' | 'M' | 'L' (anything else → 'M'). */
+function resolveFontSize(): string {
+  const v = vscode.workspace
+    .getConfiguration('blueprintMarkdown')
+    .get<string>('fontSize', 'M')
+  return v === 'S' || v === 'L' ? v : 'M'
+}
+
 function resolveForceMotion(): boolean {
   return vscode.workspace
     .getConfiguration('blueprintMarkdown')
@@ -253,7 +261,7 @@ export function installBlueprintMarkdown(md: MarkdownIt): MarkdownIt {
     if (state.inlineMode) return false
     const theme = resolveTheme()
     const token = new state.Token('html_block', '', 0)
-    token.content = `<div class="em-theme-config" data-em-theme="${theme}" data-em-force-motion="${resolveForceMotion()}" hidden></div>\n`
+    token.content = `<div class="em-theme-config" data-em-theme="${theme}" data-em-force-motion="${resolveForceMotion()}" data-em-size="${resolveFontSize()}" hidden></div>\n`
     state.tokens.unshift(token)
     return false   // non-terminating; let other core rules run
   })
