@@ -571,3 +571,63 @@ body:has(.em-theme-config[data-em-theme="tropical-sorbet-night"]) .md-output mar
   background: #3a2008;
   color: #fde68a;
 }
+
+/* ─── Ivory Stone theme (neutral warm stone, coral accent, mustard warning) ──────────── */
+
+body[data-em-theme="ivory-stone"],
+body:has(.em-theme-config[data-em-theme="ivory-stone"]) {
+  background:
+    radial-gradient(110% 80% at 10%  0%,  rgba(251, 90, 140, .07), transparent 55%),
+    radial-gradient(110% 80% at 90%  8%,  rgba(  6,182, 212, .06), transparent 55%),
+    linear-gradient(160deg, #fdfcfa 0%, #faf8f5 100%);
+  background-attachment: fixed;
+
+  --c-primary:      #fb5a8c;   --c-primary-bg:   #ffe1ec;   --c-primary-text: #c11e54;
+  --c-success:      #22c55e;   --c-success-bg:   #d8f7e2;   --c-success-text: #147a38;
+  --c-warning:      #d99a0b;   --c-warning-bg:   #fbf0cd;   --c-warning-text: #7a4e00;
+  --c-danger:       #ef4444;   --c-danger-bg:    #fde0e0;   --c-danger-text:  #b91c1c;
+  --c-info:         #06b6d4;   --c-info-bg:      #d2f2f7;   --c-info-text:    #0e7490;
+  --c-gray:         #8a7d72;   --c-gray-bg:      #f0e7df;   --c-gray-text:    #4c4138;
+  --c-low:          #eab308;   --c-low-bg:       #fbf1c8;   --c-low-text:     #955a06;
+
+  --c-purple:       #a855f7;   --c-purple-bg:    #f2e4fd;   --c-purple-text:  #7e22ce;
+  --c-teal:         #14b8a6;   --c-teal-bg:      #d3f5ef;   --c-teal-text:    #0f766e;
+  --c-pink:         #ec4899;   --c-pink-bg:      #fce3f0;   --c-pink-text:    #be185d;
+  --c-cyan:         #38bdf8;   --c-cyan-bg:      #dcf1fc;   --c-cyan-text:    #0369a1;
+
+  --bg-base:    #fdfcfa;
+  --bg-surface: #f5f3ef;
+  --bg-raised:  #fefdfb;
+  --bg-overlay: #ebe7e1;
+
+  --text-base:     #2a2622;
+  --text-muted:    #6f675f;
+  --text-faint:    #bdb5ab;
+  --text-on-solid: #ffffff;
+
+  --border-color:       #e6e1da;
+  --border-color-muted: #f0ece6;
+
+  --shadow-sm: 0 1px 2px  rgba(60, 50, 40, .06);
+  --shadow-md: 0 4px 14px rgba(60, 50, 40, .09);
+  --shadow-lg: 0 10px 30px rgba(60, 50, 40, .13);
+
+  --code-bg:     #f5f3ef;
+  --code-border: #e6e1da;
+  --code-hl-bg:  rgba(251, 90, 140, .08);
+
+  --tooltip-bg:   #2a2622;
+  --tooltip-text: #fffdf6;
+}
+
+body[data-em-theme="ivory-stone"] .card,
+body:has(.em-theme-config[data-em-theme="ivory-stone"]) .card {
+  background: linear-gradient(155deg, var(--bg-raised) 0%, var(--bg-surface) 100%);
+  border-color: var(--border-color);
+}
+
+body[data-em-theme="ivory-stone"] .chip,
+body:has(.em-theme-config[data-em-theme="ivory-stone"]) .chip {
+  white-space: normal;
+  line-height: 1.25;
+}

@@ -189,7 +189,8 @@
             "aurora",
             "jewel-garden",
             "tropical-sorbet",
-            "tropical-sorbet-night"
+            "tropical-sorbet-night",
+            "ivory-stone"
           ],
           "enumDescriptions": [
             "Warm Artisan light palette (terracotta on parchment)",
@@ -201,7 +202,8 @@
             "Aurora — iridescent orchid pastels on pearl white",
             "Jewel Garden — rich amethyst & emerald gems on ivory",
             "Tropical Sorbet — bright coral & citrus candy on cream",
-            "Tropical Sorbet Night — coral & citrus candy on warm cocoa"
+            "Tropical Sorbet Night — coral & citrus candy on warm cocoa",
+            "Ivory Stone — neutral warm stone, coral accent, mustard warning"
           ],
           "default": "light",
           "description": "Color theme for the Blueprint Markdown preview. 'auto' follows VS Code's active theme."

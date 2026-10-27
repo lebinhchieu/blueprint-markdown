@@ -261,7 +261,7 @@ console.log('Wrote: media/hljs.css')
 {
   const THEME_ORDER = [
     'dark', 'neon-synthwave', 'neon-cyberpunk', 'neon-vaporwave',
-    'aurora', 'jewel-garden', 'tropical-sorbet', 'tropical-sorbet-night',
+    'aurora', 'jewel-garden', 'tropical-sorbet', 'tropical-sorbet-night', 'ivory-stone',
   ]
   const parts = THEME_ORDER.map(name => fs.readFileSync(`media/themes/${name}.css`, 'utf8'))
   fs.writeFileSync('media/em-theme.css', '/* AUTO-GENERATED — edit files in media/themes/ instead */\n\n' + parts.join('\n'))
@@ -473,6 +473,7 @@ console.log('Wrote: media/hljs.css')
     { name: 'jewel-garden',          themeFile: 'jewel-garden.css',          hljs: [hljs.light] },
     { name: 'tropical-sorbet',       themeFile: 'tropical-sorbet.css',       hljs: [hljs.light] },
     { name: 'tropical-sorbet-night', themeFile: 'tropical-sorbet-night.css', hljs: [hljs.light, hljs.tsn] },
+    { name: 'ivory-stone',           themeFile: 'ivory-stone.css',           hljs: [hljs.light] },
   ]
 
   for (const t of THEMES) {
