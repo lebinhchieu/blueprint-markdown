@@ -1,0 +1,44 @@
+/* sizes.css — theme-independent text size, keyed by body[data-em-size] (S|M|L; missing = M). */
+/* S = today's values, explicit (16px body, 14px table/code, 12px chip) */
+body[data-em-size="S"] {
+  --font-size-sm:   0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg:   1.125rem;
+  --chip-font-size: 0.75rem;
+}
+body[data-em-size="S"] .chip { padding: 0.25em 0.6em; }
+body[data-em-size="S"] h1 { font-size: 2.1rem; }
+body[data-em-size="S"] h2 { font-size: 1.4rem; }
+body[data-em-size="S"] h3 { font-size: 1.15rem; }
+/* M = default; also applies when data-em-size is missing or unknown (17px body, 15px table/code, 14px chip) */
+body:not([data-em-size="S"]):not([data-em-size="L"]),
+body[data-em-size="M"] {
+  --font-size-sm:   0.9375rem;
+  --font-size-base: 1.0625rem;
+  --font-size-lg:   1.1875rem;
+  --chip-font-size: 0.875rem;
+}
+body:not([data-em-size="S"]):not([data-em-size="L"]) .chip,
+body[data-em-size="M"] .chip { padding: 0.28em 0.7em; }
+body:not([data-em-size="S"]):not([data-em-size="L"]) h1,
+body[data-em-size="M"] h1 { font-size: 2.25rem; }
+body:not([data-em-size="S"]):not([data-em-size="L"]) h2,
+body[data-em-size="M"] h2 { font-size: 1.55rem; }
+body:not([data-em-size="S"]):not([data-em-size="L"]) h3,
+body[data-em-size="M"] h3 { font-size: 1.28rem; }
+/* L (18px body, 16px table/code, 15px chip) */
+body[data-em-size="L"] {
+  --font-size-sm:   1rem;
+  --font-size-base: 1.125rem;
+  --font-size-lg:   1.25rem;
+  --chip-font-size: 0.9375rem;
+}
+body[data-em-size="L"] .chip { padding: 0.3em 0.75em; }
+body[data-em-size="L"] h1 { font-size: 2.4rem; }
+body[data-em-size="L"] h2 { font-size: 1.65rem; }
+body[data-em-size="L"] h3 { font-size: 1.36rem; }
+/* all themes: long chips wrap instead of overflowing (today .chip is nowrap) */
+.chip {
+  white-space: normal;
+  line-height: 1.25;
+}

@@ -167,6 +167,7 @@
       "./media/tokens.css",
       "./media/base.css",
       "./media/components.css",
+      "./media/sizes.css",
       "./media/em-theme.css",
       "./media/fonts.css",
       "./media/hljs.css"
@@ -189,7 +190,8 @@
             "aurora",
             "jewel-garden",
             "tropical-sorbet",
-            "tropical-sorbet-night"
+            "tropical-sorbet-night",
+            "ivory-stone"
           ],
           "enumDescriptions": [
             "Warm Artisan light palette (terracotta on parchment)",
@@ -201,7 +203,8 @@
             "Aurora — iridescent orchid pastels on pearl white",
             "Jewel Garden — rich amethyst & emerald gems on ivory",
             "Tropical Sorbet — bright coral & citrus candy on cream",
-            "Tropical Sorbet Night — coral & citrus candy on warm cocoa"
+            "Tropical Sorbet Night — coral & citrus candy on warm cocoa",
+            "Ivory Stone — neutral warm stone, coral accent, mustard warning"
           ],
           "default": "light",
           "description": "Color theme for the Blueprint Markdown preview. 'auto' follows VS Code's active theme."
@@ -220,6 +223,17 @@
           ],
           "default": "h3",
           "description": "Table-of-contents reading rail in the preview and exported HTML."
+        },
+        "blueprintMarkdown.fontSize": {
+          "type": "string",
+          "enum": ["S", "M", "L"],
+          "enumDescriptions": [
+            "Small — body 16px, chips 12px (the original sizes)",
+            "Medium — body 17px, chips 14px",
+            "Large — body 18px, chips 15px"
+          ],
+          "default": "M",
+          "description": "Text and chip size in the preview and exported HTML (all themes)."
         },
         "blueprintMarkdown.forceMotion": {
           "type": "boolean",

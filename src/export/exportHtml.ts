@@ -113,6 +113,8 @@ export async function exportToHtml(context: vscode.ExtensionContext, arg?: { uri
   // ── 3. Extract theme from the injected marker ───────────────────────────────
   const themeMatch = rendered.match(/data-em-theme="([^"]+)"/)
   const theme = themeMatch ? themeMatch[1] : 'light'
+  const sizeMatch = rendered.match(/data-em-size="([SML])"/)
+  const size = sizeMatch ? sizeMatch[1] : 'M'
   const forceMotion = /data-em-force-motion="true"/.test(rendered)
 
   // Strip the hidden em-theme-config marker div — it's only needed by the live
@@ -170,7 +172,7 @@ export async function exportToHtml(context: vscode.ExtensionContext, arg?: { uri
 ${inlinedCss}
 </style>
 </head>
-<body class="md-output" data-em-theme="${escapeAttr(theme)}" data-em-doc="${escapeAttr(title)}">
+<body class="md-output" data-em-theme="${escapeAttr(theme)}" data-em-size="${size}" data-em-doc="${escapeAttr(title)}">
 ${body}
 ${mermaidScript}<script>
 ${exportClientJs}

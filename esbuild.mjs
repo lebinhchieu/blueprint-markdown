@@ -261,7 +261,7 @@ console.log('Wrote: media/hljs.css')
 {
   const THEME_ORDER = [
     'dark', 'neon-synthwave', 'neon-cyberpunk', 'neon-vaporwave',
-    'aurora', 'jewel-garden', 'tropical-sorbet', 'tropical-sorbet-night',
+    'aurora', 'jewel-garden', 'tropical-sorbet', 'tropical-sorbet-night', 'ivory-stone',
   ]
   const parts = THEME_ORDER.map(name => fs.readFileSync(`media/themes/${name}.css`, 'utf8'))
   fs.writeFileSync('media/em-theme.css', '/* AUTO-GENERATED — edit files in media/themes/ instead */\n\n' + parts.join('\n'))
@@ -450,7 +450,7 @@ console.log('Wrote: media/hljs.css')
 // ─── Step 3.75: Assemble minified export-styles CSS (combined + per-theme) ───
 
 {
-  const BASE_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css']
+  const BASE_CSS = ['reset.css', 'tokens.css', 'base.css', 'components.css', 'sizes.css']
   const baseCss = BASE_CSS.map(f => fs.readFileSync(`media/${f}`, 'utf8')).join('\n')
   const fontsCss = fs.readFileSync('media/fonts.css', 'utf8')
     .replace(/@font-face\s*\{[^}]*\}\s*/g, '')
@@ -473,6 +473,7 @@ console.log('Wrote: media/hljs.css')
     { name: 'jewel-garden',          themeFile: 'jewel-garden.css',          hljs: [hljs.light] },
     { name: 'tropical-sorbet',       themeFile: 'tropical-sorbet.css',       hljs: [hljs.light] },
     { name: 'tropical-sorbet-night', themeFile: 'tropical-sorbet-night.css', hljs: [hljs.light, hljs.tsn] },
+    { name: 'ivory-stone',           themeFile: 'ivory-stone.css',           hljs: [hljs.light] },
   ]
 
   for (const t of THEMES) {
