@@ -2,7 +2,7 @@
   "name": "blueprint-markdown-chieu",
   "displayName": "Blueprint Markdown - Chieu",
   "description": "Extends VS Code's built-in Markdown preview with cards, callouts, tabs, steps, timelines, mermaid, and more via ::: directive syntax.",
-  "version": "1.11.0",
+  "version": "1.11.1",
   "publisher": "ChieuLe",
   "license": "MIT",
   "icon": "media/icon.png",
@@ -226,7 +226,11 @@
         },
         "blueprintMarkdown.fontSize": {
           "type": "string",
-          "enum": ["S", "M", "L"],
+          "enum": [
+            "S",
+            "M",
+            "L"
+          ],
           "enumDescriptions": [
             "Small — body 16px, chips 12px (the original sizes)",
             "Medium — body 17px, chips 14px",
