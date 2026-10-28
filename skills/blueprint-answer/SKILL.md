@@ -41,7 +41,7 @@ Pick the one dimension that dominates the content. The form follows from it.
 | **Structure** | What connects to what? | mermaid graph, ER diagram, nested containment, `:::explorer` | list: hides the links; one giant graph: group it |
 | **State** | Which states exist, what moves between them? | `stateDiagram` with named transitions, status lane | flowchart: mixes actions with states |
 | **Comparison** | Which option, and why? | recommendation, then criteria × options table, `:::compare`, `:::cards` | prose per option: the reader builds the table |
-| **Quantity** | How much, what trend? | bar (compare), line (trend), `::progress`, one big number | number table for a trend; many-slice pie |
+| **Quantity** | How much, what trend? | `:::svg` bar (compare) or line (trend), `::progress`, one big number | number table for a trend; many-slice pie |
 | **Space** | Where on screen? | `:::annotated` screenshot with `::pin`s, wireframe | describing positions in words |
 | **Change** | What is different? | ` ```diff `, `:::compare`, `:::revision` | the new state alone: the reader recalls the old |
 | **Cause** | Why did it happen? | causal chain, `:::timeline` with the fault point marked | raw event log with no fault marked |
