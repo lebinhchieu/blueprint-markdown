@@ -59,9 +59,8 @@ Stack three **depths**, so each reader stops when they have enough:
 - **Mechanism**: how it works. The reviewer stops here.
 - **Evidence**: `file:line`, queries, test output, screenshots. The user reads this.
 
-Meaning is the top of the doc (answer first); Mechanism is the visual and its notes; Evidence goes in
-`:::details` (or `:::tabs` per source), folded until wanted. One doc carries all three. When the user is
-the only reader, meaning shrinks to one line.
+Meaning tops the doc (answer first); Mechanism is the visual and its notes; Evidence goes in `:::details`
+(or `:::tabs`), folded. One doc carries all three; for a lone user reader, meaning is one line.
 
 ### 6. Encode on purpose
 - Position carries meaning first (order, grouping), then colour, then shape. About 7 items per view.
@@ -81,34 +80,27 @@ the only reader, meaning shrinks to one line.
   | Inferred / warning / not verified | `warning` |
 
 ### 7. Point into the material
-When the answer rests on actual material (code, text, logs, images), show an excerpt and mark it up in
-place, so the reader never maps a description back to the source.
+When the answer rests on material (code, text, logs, images), show an excerpt marked up in place, so the
+reader never maps a description back to the source.
 - **Excerpt**: the relevant span with real line numbers (` ```ts start=40 `) and a `file:line` header.
 - **Highlight** only the spans that answer the question from step 2: about 3–5 per view, the rest plain.
   Use `marks="…"` or `{1,3-5}` on the fence, in the colour roles from step 6.
 - **Numbered markers** sit on the line, phrase (`:marker[phrase]{n=1}`), or image region (`::pin`), and the
   same number appears on the `:::marker{n title}` note beside it. Use `:::annotated` to pair them.
-- Each note says **why** the span matters, not what it does.
-- Code: fence with `start=`/`marks=`. Text (ticket, spec): quote the sentence, `==mark==` the phrase. Images:
-  `::pin{x y n}` over the image. Logs: keep the relevant lines, mark the one that matters.
-
-Done when every claim that rests on material has a marker pointing at it.
+- Each note says **why** the span matters, not what it does. Text (ticket, spec): quote the sentence,
+  `==mark==` the phrase. Logs: keep the relevant lines, mark the one that matters.
 
 ### 8. Use the width
-Spread content sideways with `:::columns` (stacks on narrow views).
-- **Columns hold things read together**: material ↔ its notes, diagram ↔ its explanation, before ↔
-  after, option ↔ option, peer cards. Each column reads top to bottom on its own.
-- `:::columns{count=2}` or `{min=320px}` so the count follows the width; `col{sticky}` pins a short
-  companion (diagram, legend) while a long partner scrolls. `:::annotated` puts notes beside the excerpt.
-- Prose lines stay readable: the width goes to more columns, not longer lines.
-
-Done when the first screen shows the answer and the main visual.
+Spread content sideways with `:::columns`.
+- **Columns hold things read together**: material ↔ notes, diagram ↔ explanation, before ↔ after,
+  option ↔ option. Each column reads top to bottom on its own.
+- `:::columns{count=2}`; `col{sticky}` keeps a short companion (diagram, legend) in view beside a long
+  partner. The preview stacks columns on narrow views. Width goes to more columns, not longer lines.
 
 ### 9. Only what's true
-Draw only from what you read or ran this session. Tag every claim **verified** (read in code, data, or a run)
-or **inferred** (reasoned, not seen) with `:tag[verified]{src="file:line"}`. Link every box, row, step, and
-highlight to its source: `file:line`, a test name, a screenshot. A gap stays visible, tagged
-`:tag[not verified]` with the reason.
+Draw only from what you read or ran this session. Tag every claim **verified** (read in code, data, or a
+run) or **inferred** (reasoned, not seen) with `:tag[verified]{src="file:line"}`. Link every box, row, step
+and highlight to its source. A gap stays visible as `:tag[not verified]` with the reason.
 
 ### 10. Components that save effort
 Add a component only where it cuts reading effort: `:::tabs` (variants), `:::accordion`/`:::details`
@@ -118,18 +110,14 @@ Add a component only where it cuts reading effort: `:::tabs` (variants), `:::acc
 What does the reader take away in five seconds? It must answer step 2. Cut every element serving a
 different question. A plain-text version should be harder to read.
 
-## Output
+## Output and finish
 
 One `.md` file, default `docs/answers/<topic>.md` (user may override). Never HTML; the terminal never
-carries a diagram. Lead with the answer; then run `node <blueprint-markdown skill dir>/validate.mjs <file>`.
-
-## Finish
-
+carries a diagram. Lead with the answer; run `node <blueprint-markdown skill dir>/validate.mjs <file>`.
 End the doc with the **decision record**, so the reader sees why this form. Skeleton:
 
 ````
 # <Answer as a sentence>
-
 :::tip{title="Answer"}
 <one-line answer> :tag[verified]{src="src/foo.ts:12"}
 :::
@@ -147,10 +135,15 @@ sequenceDiagram
 :::
 
 :::details{title="Evidence"}
-`src/foo.ts:12` <excerpt or test output>
+:::annotated
+```ts start=12 marks="1:1"
+const token = sign(user)
+```
+:::marker{n=1 title="Why"}
+<why this line answers the question>
 :::
-
----
+:::
+:::
 
 ```
 Reader:     <who> → <action>
@@ -160,9 +153,8 @@ Form:       <chosen form>, not <rejected form>: <reason>
 ```
 ````
 
-Done when: decision record present, every claim tagged, every claim on material has a marker, the first
-screen shows answer and main visual, validate passes, five-second test passes. Chat reply: file path and
-the one-line answer.
+Done when: decision record present, every claim tagged and every claim on material has a marker, the first
+screen shows answer and main visual, validate passes, five-second test passes. Chat reply: path + one-line answer.
 
 ## Taste log
 
