@@ -38,7 +38,7 @@ Pick the one dimension that dominates the content. The form follows from it.
 | Dimension | Question it answers | Forms that fit | Losing candidate (why it loses) |
 |---|---|---|---|
 | **Time** | What happens first, next, last? | `sequenceDiagram`, swimlane, `:::steps`, `:::timeline` | box graph: hides the order |
-| **Structure** | What connects to what? | mermaid graph, ER diagram, nested containment, `:::explorer` | list: hides the links; one giant graph: group it |
+| **Structure** | What connects to what? | mermaid flowchart, ER diagram, nested containment, `:::explorer` | list: hides the links; one giant graph: group it |
 | **State** | Which states exist, what moves between them? | `stateDiagram` with named transitions, status lane | flowchart: mixes actions with states |
 | **Comparison** | Which option, and why? | recommendation, then criteria × options table, `:::compare`, `:::cards` | prose per option: the reader builds the table |
 | **Quantity** | How much, what trend? | `:::svg` bar (compare) or line (trend), `::progress`, one big number | number table for a trend; many-slice pie |
