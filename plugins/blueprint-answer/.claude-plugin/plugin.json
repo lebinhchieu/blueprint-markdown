@@ -1,0 +1,6 @@
+{
+  "name": "blueprint-answer-skill",
+  "description": "Answer visually in Blueprint Markdown (cards, diagrams, callouts) instead of HTML — markdown variant of visual-answer",
+  "version": "1.0.0",
+  "author": { "name": "Chieu Le" }
+}

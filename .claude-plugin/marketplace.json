@@ -23,6 +23,11 @@
       "name": "present-skill",
       "source": "./plugins/present",
       "description": "Self-presenting Blueprint Markdown documents with Kokoro narration"
+    },
+    {
+      "name": "blueprint-answer-skill",
+      "source": "./plugins/blueprint-answer",
+      "description": "Visual answers as Blueprint Markdown instead of HTML"
     }
   ]
 }
